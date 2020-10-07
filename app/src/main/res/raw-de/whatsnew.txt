@@ -1,7 +1,15 @@
-Neu in dieser Version ([VERSION]):
+What is new in this version ([VERSION]):
 
-- minimale Widget-Größe angepasst für bessere Integration in benutzerdefinierte Raster-Größen auf dem Home-Screen
-- behoben: Widgets aktualisierten sich nicht immer sofort bei Ortswechsel in der App
-- defekte Option "aktuelle Zeit senden" repariert
-- behoben: Aktualisierungs-Service wurde bei Geräten mit API>25 nicht gestartet, wenn die App nicht im Vordergrund war
+- Wetterwarnungen werden nun regelkonform aktualisiert, wenn die App wieder in den Vordergrund geht
+- behoben: Name der Wetterstation wurde nach einem Zurücksetzen der Favoriten nicht korrekt dargestellt
+- prezise Tag/Nacht-Berechnung und Anzeige des Sonnenaufgangs und Untergangs hinzu gefügt
+- behoben: Abstürze nach einer Aktualisierung von einer älteren App-Version
+- Luftdruck in Bodennähe in der Anzeige hinzu gefügt
+- Sichtweite in der Anzeige hinzu gefügt
+- Balken mit stündlicher Vorhersage wird nun standardmäßig angezeigt
+- erweiterte Optionen zur Anpassung der Darstellung
+
+- Neuerungen der Version 0.50.3 wurden in der App nicht korrekt dargestellt:
+   - die Vorhersage-Intervalle können nun frei gewählt werden: stündlich, 6-stündlich, gemischt (erste 24 Stunden stündlich, danach 6-stündlich).
+   - bei 6-stündiger Vorhersage optionaler Balken, der eine stundengenaue Vorhersage anzeigt
 
