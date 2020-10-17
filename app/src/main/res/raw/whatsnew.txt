@@ -1,13 +1,10 @@
 What is new in this version ([VERSION]):
 
-- fixed error in conversion from pascal to hectopascal (air pressure)
-- fixed app crash when settings were called for the first time
-- hourly weather icon is now the one with the higher priority, when available; this should harmonize more with the 6-hourly and daily icons
-- a cyan bar separates days when applicable
-- sunrise and sunset are now displayed with an arrow and the icon size is slightly reduced
-- a circular progress bar indicates when new weather data and new warnings are loaded
-- the scroll bar has a brighter color and is a little bit wider now
-- optional color gradient to indicate forecast time (turned off by default)
-- userdebug builds now have the possibility to log to logcat (disabled in official versions)
-- weather data is now always updated regularly from the DWD when widgets or Gadgetbridge support are enabled
-- time display in 6-hourly forecast can be configured
+Gadgetbridge weather data format updated to support versions above 0.47.2 (build 181)
+
+IMPORTANT: this version of Tiny Weather Forecast Germany and future versions will only support
+Gadgetbridge versions above 0.47.2, please update Gadgetbridge accordingly to keep the weather
+data supply for your wearable working!
+
+- minor ui improvements (temperature & wind direction display)
+- fixed: crash of bold widget resulting in wrong display under certain conditions
