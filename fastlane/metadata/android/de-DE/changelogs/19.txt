@@ -1,0 +1,18 @@
+
+Version 0.54.0:
+- Geokoordinaten können nun an diese App geteilt werden
+- signifikante Verbesserung der Leistung der Hauptapp durch neues Bitmap-Chaching (Danke an Marc Nause!)
+- Breitengrad wird nun vor Längengrad angegeben
+- neues Widget mit Uhr & Wetter
+- verbessertes Layout im Such-Dialog
+- verbessertes Layout des großen Widgets, vor allem behebt das ein Abschneiden von Informationen auf älteren Geräten
+- behoben: max. Temperatur wurde  im ersten Eintrag der 6-stündigen Vorhersage zu hoch angezeigt
+- behoben: Kommas wurden bei der Eingabe von Geo-Koordinaten nicht akzeptiert
+- behoben: Nebel mit Reifansatz wurde als Wetterzustand nicht korrekt angezeigt
+- zahlreiche, weitere Fehlerkorrekturen
+
+Version 0.54.1:
+- behoben: Überlagerungen im Such-Dialog
+- behoben: Widget-Deckkraft & DWD-Hinweis in Widgets teilweise defekt
+
+Hinweis: Version 0.54.0 ist aufgrund von Fehlern im Repository nicht von F-Droid gebaut worden.

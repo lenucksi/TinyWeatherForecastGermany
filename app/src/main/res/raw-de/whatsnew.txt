@@ -1,5 +1,9 @@
 Neu in dieser Version ([VERSION]):
 
+- behoben: Überlagerungen im Such-Dialog
+- behoben: Widget-Deckkraft & DWD-Hinweis in Widgets teilweise defekt
+
+Version 0.54.0:
 - Geokoordinaten können nun an diese App geteilt werden
 - signifikante Verbesserung der Leistung der Hauptapp durch neues Bitmap-Chaching (Danke an Marc Nause!)
 - Breitengrad wird nun vor Längengrad angegeben
@@ -10,6 +14,8 @@ Neu in dieser Version ([VERSION]):
 - behoben: Kommas wurden bei der Eingabe von Geo-Koordinaten nicht akzeptiert
 - behoben: Nebel mit Reifansatz wurde als Wetterzustand nicht korrekt angezeigt
 - zahlreiche, weitere Fehlerkorrekturen
+
+Hinweis: Version 0.54.0 ist aufgrund von Fehlern im Repository nicht von F-Droid gebaut worden.
 
 
 
