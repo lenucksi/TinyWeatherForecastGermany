@@ -1,10 +1,9 @@
 Neu in dieser Version ([VERSION]):
 
-- fehlende Aktualisierung der Warnungen in der Haupt-App behoben
-- falsche Datums-Umwandlung in den Text-Vorhersagen behoben
-- zu große Schrift im großen Widget korrigiert
-- Angaben im kräftigen Widget dehnen sich nun wieder auf die maximal verfügbare Breite aus
-- Wetter-Warnungen scrollen nun schneller
+- neue Sprache: Niederländisch (Danke an Mondstern!)
+- behoben: gelegentliche App-Abstürze beim Start, wenn bestimmte Wetterdaten nicht vorhanden waren
+- behoben: zu große Schrift des Wochentages im großen Widget
+- behoben: Vorhersage-Werte überdeckten sich in der App auf einigen Geräten
 
 
 

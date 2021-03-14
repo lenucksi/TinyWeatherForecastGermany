@@ -1,7 +1,6 @@
 What is new in this version ([VERSION]):
 
-- fixed missing update of warnings in main app
-- fixed date parsing errors in text forecasts
-- fixed font too big in large widget
-- bold widget now again stretches information to maximum width available
-- weather warnings scroll faster now
+- new language: Dutch (thanks to Mondstern!)
+- fixed occasional app crash when some weather data was missing
+- fixed too large font size of the weekday in the large widget
+- fixed forecast items overlapping in the main app on some devices
