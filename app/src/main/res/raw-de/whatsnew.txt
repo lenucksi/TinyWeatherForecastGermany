@@ -1,12 +1,7 @@
 Neu in dieser Version ([VERSION]):
 
-- neue Sprache: Niederländisch (Danke an Mondstern!)
-- aktualisierte Liste der Wetterstationen
-- diverse Fehler-Korrekturen, einige davon führten zu App-Abstürzen
-- behoben: zu große Schrift des Wochentages im großen Widget
-- behoben: falsche Tages-Beschriftung im großen und kräftigen Widget
-- behoben: Vorhersage-Werte überdeckten sich in der App auf einigen Geräten
-
+- neues Regenradar
+- für die Berechnung von Sonnenaufgang und Untergang wird nun die Zeitumstellung zur angezeigten Zeit berücksichtigt anstelle der aktuellen Zeit
 
 
 
