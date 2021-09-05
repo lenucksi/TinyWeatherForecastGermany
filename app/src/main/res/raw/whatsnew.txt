@@ -1,11 +1,6 @@
-* supports different designs (themes)
-* new, simpler forecast
-* changes rain radar source from MX composite to MN composite
-* new app shortcuts
-* introduces display of relative humidity
+New in version ([VERSION]):
 
-New languages:
-* Italian (thanks to eUgEntOptIc44, mondstern!)
-* Czech (thanks to eUgEntOptIc44, mondstern!)
-* Norwegian Bokmål (thanks to Allan Nordhøy, mondstern!)
+* new language: Polish (thanks to mondstern!)
+* fixes wrong icon for clear night
+* fixes a crash possibility at app launch
 
