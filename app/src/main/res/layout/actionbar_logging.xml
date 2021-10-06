@@ -25,17 +25,17 @@
         android:layout_height="match_parent"
         android:layout_width="match_parent">
 
-
-        <TextView
-                android:id="@+id/actionbar_logging_title"
-                android:layout_height="wrap_content"
-                android:layout_width="wrap_content"
-                android:layout_gravity="left"
-                android:textSize="@dimen/fcmain_textsize_medium"
-                android:text="@string/logging_title"
-                android:layout_alignParentLeft="true"
-                android:textStyle="bold"
-                android:textColor="?attr/colorText" />
+    <TextView
+            android:id="@+id/actionbar_logging_logsize"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:layout_gravity="left"
+            android:textSize="@dimen/fcmain_textsize_medium"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginLeft="6dp"
+            android:text="- kB"
+            android:textColor="?attr/colorText" />
 
         <TextView
                 android:id="@+id/actionbar_logging_level0"
@@ -43,7 +43,7 @@
                 android:layout_width="wrap_content"
                 android:layout_gravity="left"
                 android:textSize="@dimen/fcmain_textsize_medium"
-                android:layout_toRightOf="@id/actionbar_logging_title"
+                android:layout_toRightOf="@id/actionbar_logging_logsize"
                 android:layout_alignParentTop="true"
                 android:layout_marginLeft="6dp"
                 android:text="info:"
@@ -86,25 +86,13 @@
             android:textColor="?attr/colorText" />
 
     <TextView
-            android:id="@+id/actionbar_logging_logsize"
-            android:layout_height="wrap_content"
-            android:layout_width="wrap_content"
-            android:layout_gravity="left"
-            android:textSize="@dimen/fcmain_textsize_medium"
-            android:layout_toRightOf="@id/actionbar_logging_level3"
-            android:layout_alignParentTop="true"
-            android:layout_marginLeft="6dp"
-            android:text="- kB"
-            android:textColor="?attr/colorText" />
-
-    <TextView
             android:id="@+id/actionbar_logging_ramAvail"
             android:layout_height="wrap_content"
             android:layout_width="wrap_content"
             android:layout_gravity="left"
             android:textSize="@dimen/fcmain_textsize_medium"
-            android:layout_alignStart="@id/actionbar_logging_title"
-            android:layout_below="@id/actionbar_logging_title"
+            android:layout_alignStart="@id/actionbar_logging_logsize"
+            android:layout_below="@id/actionbar_logging_logsize"
             android:text="RAM avail:"
             android:textColor="?attr/colorText" />
 
@@ -114,9 +102,10 @@
             android:layout_width="wrap_content"
             android:layout_gravity="left"
             android:textSize="@dimen/fcmain_textsize_medium"
-            android:layout_alignStart="@id/actionbar_logging_level2"
+            android:layout_toRightOf="@id/actionbar_logging_ramAvail"
             android:layout_below="@id/actionbar_logging_level2"
-            android:text="RAM total:"
+            android:layout_marginLeft="6dp"
+            android:text="total:"
             android:textColor="?attr/colorText" />
 
     <TextView
