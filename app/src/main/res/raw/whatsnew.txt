@@ -1,8 +1,8 @@
 New in version ([VERSION]):
 
-- faster start of the app
-- precipitation amount is hidden when it is zero
+- new filter, which warnings should be notified
+- map shows counties, federal states, warning areas at sea and on coasts if desired
+- scaling of temperature in overview chart (app & widgets) can be set to fixed values
+- new option to reset all settings to default values
 - improved translations
-- 6-hourly updates are better synchronized with Mosmix data updates
-- minor improvements in the weather display
 
