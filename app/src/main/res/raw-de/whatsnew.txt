@@ -1,5 +1,6 @@
 Neu in dieser Version ([VERSION]):
 
-- aktualisierte Liste der Wetterstationen
-- neue Vorhersage-Orte (DMO; Direct Model Output) neben den bisherigen Wetterstationen
-- kleinere Fehlerverbesserungen, insbesondere der Benutzeroberfläche
+- Benachrichtigungs-LEDs werden nun unterstützt, inklusive Farbauswahl
+- leichte Performance-Verbesserungen auf älteren Geräten beim Start der App
+- verbesserte Übersetzungen
+- leicht überarbeitete Einstellungen
