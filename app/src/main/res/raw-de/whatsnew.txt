@@ -1,6 +1,6 @@
 Neu in dieser Version ([VERSION]):
 
-- Benachrichtigungs-LEDs werden nun unterstützt, inklusive Farbauswahl
-- leichte Performance-Verbesserungen auf älteren Geräten beim Start der App
-- verbesserte Übersetzungen
-- leicht überarbeitete Einstellungen
+- Behebung eines Absturzes beim Ändern von Einstellungen
+- verbesserte Anzeige von Prognosen, wenn diese vorhanden, aber veraltet sind
+- Die Häufigkeit der Gadgetbridge-Updates ist nun besser auf die Widgets abgestimmt
+- Anzeige der Weckzeit im Uhr-Widget berücksichtigt nun die Zeitzone korrekt
