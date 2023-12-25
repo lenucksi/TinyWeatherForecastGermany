@@ -1,17 +1,9 @@
 New in version ([VERSION]):
 
-- faster app startup
-- wind speed can now be displayed in charts
-- determination of the next weather station in the background
-- improved Gadgetbridge support (WeatherSpec v4)
-- dew point display in weather details
-- revised weather icons, the moon now shows the moon phase
-- the number of affected locations in shared warnings can be limited
-- minor bug fixes and other improvements
-
-New in previous version:
-
-- new: weather maps, pollen forecast, UV hazard index
-- supports UV hazard index and precipitation on wearables with Gadgetbridge
-- numerous, further improvements
+- the bold widget now displays the forecast for more days, depending on the widget size
+- fixed multiple layout issues in the bold widget
+- fixed a bug that displayed a wrong weather station when re-selecting a "SWIS-PUNKT" from the favorites
+- added workaround to prevent the package installer from crashing when installing and/or updating the app
+- widgets are now always updated upon app launch
+- some display options moved to "miscellaneous"
 
