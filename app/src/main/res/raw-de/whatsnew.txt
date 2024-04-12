@@ -1,11 +1,7 @@
 Neu in dieser Version [VERSION]:
 
-- verbesserte Widgets, Datensynchronisierung, Übersetzungen und Gadgetbridge-Unterstützung
-- neue Optionen, um die Datensynchronisierung besser anzupassen
-- schnellerer App-Start
-- die Überprüfung des Standorts im Hintergrund funktioniert nun wie beabsichtigt
-- Fehler den Luftdruck betreffend auf Wearables behoben
-- Fehler behoben: Zeiten für Sonnenaufgang, Sonnenuntergang etc. waren auf Wearables um einen Tag verschoben
-- App-Stores können diese App nun automatisch aktualisieren
+- detailliertere Kartendarstellung und genaueres Regenradar
+- in der Übersichtsgrafik kann die Niederschlagsmenge angezeigt werden
+- diverse Fehlerbehebungen und Layout-Verbesserungen
 
 Für eine detaillierte Liste der Änderungen siehe https://codeberg.org/Starfish/TinyWeatherForecastGermany/src/branch/master/CHANGELOG.md
