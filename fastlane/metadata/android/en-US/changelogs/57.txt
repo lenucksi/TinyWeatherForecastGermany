@@ -1,0 +1,5 @@
+- fixes broken rain radar
+- the UV hazard index forecast displayed in the main app view can be changed to "clear sky"
+- improved performance of the main app view
+- improved translations
+- various bugfixes

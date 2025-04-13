@@ -1,8 +1,9 @@
 Neu in dieser Version [VERSION]:
 
-- die App stürzt nicht mehr beim Öffnen der Wetterkarten ab
-- verbessertes Erscheinungsbild der Widgets auf einigen Geräten und Launchern
-- zu kleine Schrift im "Wetter im Detail"-Widget korrigiert
-- Vorschau-Bild des "Wetter und Zeit"-Widgets korrigiert
+- das Regenradar funktioniert wieder
+- der UV Gefahrenindex, der in der Hauptansicht angezeigt wird, kann auf "klarer Himmel" geändert werden
+- verbesserte Leistung der Hauptansicht
+- verbesserte Übersetzungen
+- diverse Fehlerkorrekturen
 
 Für eine detaillierte Liste der Änderungen siehe https://codeberg.org/Starfish/TinyWeatherForecastGermany/src/branch/master/CHANGELOG.md
