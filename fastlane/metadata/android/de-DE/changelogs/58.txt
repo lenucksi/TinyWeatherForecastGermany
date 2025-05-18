@@ -1,0 +1,5 @@
+- zusätzliche Optionen zum Anpassen der Übersichtsgrafik
+- die Größe der Uhr im Widget kann nun angepasst werden
+- falls es keine Wetterdaten für eine Wetterstation gibt, wird dies angezeigt
+- Widgets werden nun in einigen Launchern besser dargestellt
+- die Pollen-Vorhersage wird nun in den Wetterdetails zuverlässig angezeigt

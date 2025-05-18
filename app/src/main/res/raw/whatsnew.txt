@@ -1,9 +1,9 @@
 New in version [VERSION]:
 
-- fixes broken rain radar
-- the UV hazard index forecast displayed in the main app view can be changed to "clear sky"
-- improved performance of the main app view
-- improved translations
-- various bugfixes
+- additional options for customizing the overview chart
+- the size of the clock in the widget can now be adjusted
+- if there is no weather data for a weather station, this will be displayed
+- widgets are now displayed better with some launchers
+- the pollen forecast is now reliably displayed in the weather details
 
 For a detailed list of changes, see https://codeberg.org/Starfish/TinyWeatherForecastGermany/src/branch/master/CHANGELOG.md
