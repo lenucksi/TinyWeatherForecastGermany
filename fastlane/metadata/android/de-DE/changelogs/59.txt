@@ -1,0 +1,7 @@
+- App-Absturz behoben, der durch Warnungen ohne Ablaufdatum ausgelöst wurde
+- das Regenradar startet nun auch dann zuverlässig, wenn die Daten noch aktuell sind
+- die Niederschlagsmenge in Intervallen wird nun als Summe der Stundenwerte angezeigt
+- bei dem UV-Gefahrenindex "klarer Himmel" wird ein kleines Sonnen-Symbol angezeigt
+- weitere, kleinere Verbesserungen der Benutzeroberfläche und Fehlerbehebungen
+- aktualisierte Liste der Wetterstationen
+- verbesserte Übersetzungen
