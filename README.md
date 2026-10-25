@@ -2,6 +2,9 @@
 
 Weather forecast with widgets for up to 10 days, based on open data from the Deutscher Wetterdienst (DWD).
 
+> **Note**
+> This app will continue to be actively developed as soon as Android becomes an open platform again. Until then, it is unlikely that new features will be added.
+
 ## Features
 
 - weather forecast for up to 10 days for over 6000 locations worldwide
