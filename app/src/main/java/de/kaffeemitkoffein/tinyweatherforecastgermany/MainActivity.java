@@ -1074,6 +1074,24 @@ public class MainActivity extends Activity {
         final LinearLayout main_leftcontainer = (LinearLayout) findViewById(R.id.main_leftcontainer);
         final boolean isLandscape = (main_leftcontainer!=null);
         if (overviewChartImageView!=null){
+            // Issue #304: long-press (or the info icon) opens the illustrated legend.
+            overviewChartImageView.setContentDescription(getResources().getString(R.string.legend_open));
+            overviewChartImageView.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View view) {
+                    startOverviewChartLegend();
+                    return true;
+                }
+            });
+            ImageView legendInfoView = (ImageView) findViewById(R.id.main_overviewchart_legend);
+            if (legendInfoView!=null){
+                legendInfoView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        startOverviewChartLegend();
+                    }
+                });
+            }
             DisplayMetrics displayMetrics = new DisplayMetrics();
             getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
             if (WeatherSettings.displayOverviewChart(context)){
@@ -1093,6 +1111,7 @@ public class MainActivity extends Activity {
                     Bitmap overViewChartBitmap = ForecastBitmap.getOverviewChart(context,displayMetrics.widthPixels,overviewChartHeightPixels,currentWeatherInfo.forecast1hourly,localWarnings);
                     if (overViewChartBitmap!=null){
                         overviewChartImageView.setImageBitmap(overViewChartBitmap);
+                        OverviewChartLegend.setLiveChartBitmap(overViewChartBitmap);
                     }
                 } else {
                     overviewChartImageView.setVisibility(View.GONE);
@@ -1109,6 +1128,7 @@ public class MainActivity extends Activity {
                                 @Override
                                 public void run() {
                                     overviewChartImageView.setImageBitmap(overViewChartBitmap);
+                                    OverviewChartLegend.setLiveChartBitmap(overViewChartBitmap);
                                 }
                             });
                         }
@@ -1116,6 +1136,11 @@ public class MainActivity extends Activity {
                 });
             }
         }
+    }
+
+    private void startOverviewChartLegend(){
+        Intent intent = new Intent(this, OverviewChartLegendActivity.class);
+        startActivity(intent);
     }
 
     private int get24passedPosition(CurrentWeatherInfo currentWeatherInfo,int lasthourlypostion){

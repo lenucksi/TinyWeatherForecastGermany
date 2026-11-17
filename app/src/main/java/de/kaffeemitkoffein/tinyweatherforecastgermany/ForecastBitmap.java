@@ -708,10 +708,11 @@ public class ForecastBitmap{
         final float yNoticeFontSizeScaleFactor = 1.0f;
         float labelTextSize = 100;
         int chartHeight = height;
-        final int alphaClouds = 125;
-        final int alphaRain = 125;
-        final int alphaRainAmount = 256;
-        final int alphaWarnings = 65;
+        // Shared with OverviewChartLegend so the legend always matches the chart.
+        final int alphaClouds = OverviewChartLegend.ALPHA_CLOUDS;
+        final int alphaRain = OverviewChartLegend.ALPHA_RAIN;
+        final int alphaRainAmount = OverviewChartLegend.ALPHA_RAIN_AMOUNT;
+        final int alphaWarnings = OverviewChartLegend.ALPHA_WARNINGS;
         textPaint.setTextSize(labelTextSize);
         while (textPaint.measureText("-XX°")>(width/18f)){
             labelTextSize=labelTextSize-1;

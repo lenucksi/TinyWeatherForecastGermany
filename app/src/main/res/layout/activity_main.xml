@@ -211,6 +211,20 @@
                     android:layout_below="@id/main_spinner_linearlayout"
                     android:background="?attr/colorPrimaryDark"/>
 
+            <ImageView
+                    android:id="@+id/main_overviewchart_legend"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_alignTop="@id/main_overview_chart"
+                    android:layout_alignRight="@id/main_overview_chart"
+                    android:layout_marginTop="2dp"
+                    android:layout_marginRight="2dp"
+                    android:padding="3dp"
+                    android:background="?attr/colorWidgetBackground"
+                    android:tint="?attr/colorText"
+                    android:src="?attr/ic_info_outline"
+                    android:contentDescription="@string/legend_open"/>
+
         </RelativeLayout>
 
         <ListView android:id="@+id/main_listview"
