@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml:kml xmlns:kml="http://www.opengis.net/kml/2.2">
+  <kml:Document>
+    <kml:Placemark>
+      <kml:name>Berlin</kml:name>
+      <kml:description>Berlin-Dahlem</kml:description>
+    </kml:Placemark>
+  </kml:Document>
+</kml:kml>

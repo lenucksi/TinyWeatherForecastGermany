@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE alert [
+  <!ENTITY xxe SYSTEM "file:///etc/passwd">
+]>
+<alert>
+  <identifier>&xxe;</identifier>
+  <sender>attacker@example.invalid</sender>
+</alert>
