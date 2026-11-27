@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">
+  <identifier>2.49.0.1.276.0.DWD.PVW.CAP-AREA-FIXTURE</identifier>
+  <sender>opendata@dwd.de</sender>
+  <sent>2026-11-27T12:00:00+01:00</sent>
+  <status>Actual</status>
+  <msgType>Alert</msgType>
+  <scope>Public</scope>
+  <info>
+    <language>de-DE</language>
+    <category>Met</category>
+    <event>WIND</event>
+    <urgency>Immediate</urgency>
+    <severity>Moderate</severity>
+    <certainty>Likely</certainty>
+    <senderName>Deutscher Wetterdienst</senderName>
+    <headline>Windwarnung</headline>
+    <description>Test fixture for polygon area names.</description>
+    <area>
+      <areaDesc>polygonal event area</areaDesc>
+      <polygon>51.0,9.0 51.1,9.0 51.1,9.1 51.0,9.0</polygon>
+    </area>
+    <area>
+      <areaDesc>polygonal event area</areaDesc>
+      <polygon>52.0,10.0 52.1,10.0 52.1,10.1 52.0,10.0</polygon>
+      <geocode>
+        <valueName>EXCLUDE_POLYGON</valueName>
+        <value>52.05,10.05 52.06,10.05 52.06,10.06</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Stadt Roßwein</areaDesc>
+      <geocode>
+        <valueName>WARNCELLID</valueName>
+        <value>145221070</value>
+      </geocode>
+    </area>
+  </info>
+</alert>
