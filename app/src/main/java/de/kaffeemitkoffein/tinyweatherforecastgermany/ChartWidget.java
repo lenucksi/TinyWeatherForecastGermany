@@ -68,9 +68,11 @@ public class ChartWidget extends ClassicWidget{
             for (int i = 0; i < widget_instances.length; i++) {
                 awm.updateAppWidget(widget_instances[i], getNoDataWidgetViews(c));
             }
-            // sync weather if no information is present, however do not loop syncs if widget update was already
-            // triggered by the sync adapter.
-            if (source!=WidgetRefresher.FROM_SYNCADAPTER){
+            // TASK-63: request data for the selected station even when this
+            // refresh came from the sync adapter (a sync can refresh widgets
+            // before the fetched dataset is stored). The shared timestamp guard
+            // in WidgetRefresher prevents a sync <-> no-data loop.
+            if (WidgetRefresher.requestNoDataSyncAllowed(c,source)){
                 ContentResolver.requestSync(MainActivity.getManualSyncRequest(c,WeatherSyncAdapter.UpdateFlags.FLAG_UPDATE_WEATHER));
             }
         }

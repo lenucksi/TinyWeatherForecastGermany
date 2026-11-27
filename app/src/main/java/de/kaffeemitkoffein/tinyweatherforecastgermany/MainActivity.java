@@ -949,6 +949,21 @@ public class MainActivity extends Activity {
                 weatherForecastRunnable.setWeatherLocations(weatherLocations);
                 executor.execute(weatherForecastRunnable);
             } else {
+                // TASK-63: sync is not due, but the new station may have no
+                // cached dataset at all. The main screen alone cannot fill it
+                // and widgets were never refreshed in this path, so the
+                // no-data state could stick indefinitely. Request the data and
+                // refresh the no-data-aware widgets; the shared throttle guard
+                // keeps their own requests from issuing a second sync.
+                if (weatherCard==null){
+                    if (WidgetRefresher.requestNoDataSyncAllowed(context,WidgetRefresher.FROM_MAIN_APP)){
+                        PrivateLog.log(context,PrivateLog.MAIN,PrivateLog.INFO,
+                                "New station has no cached weather data; requesting sync (reason: station change, sync not due)");
+                        ContentResolver.requestSync(getManualSyncRequest(context,
+                                WeatherSyncAdapter.UpdateFlags.FLAG_UPDATE_WEATHER));
+                    }
+                    WidgetRefresher.refreshNoDataAwareWidgets(context,WidgetRefresher.FROM_MAIN_APP);
+                }
                 // do not load data, just show new location
                 loadCurrentWeather();
             }
