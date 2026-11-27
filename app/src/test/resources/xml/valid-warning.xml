@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">
+  <identifier>2.49.0.1.276.0.DWD.PVW.1234567890</identifier>
+  <sender>opendata@dwd.de</sender>
+  <sent>2026-11-27T12:00:00+01:00</sent>
+  <info>
+    <language>de-DE</language>
+    <event>WIND</event>
+  </info>
+</alert>

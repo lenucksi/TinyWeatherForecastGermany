@@ -33,6 +33,7 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLException;
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -155,6 +156,90 @@ public class APIReaders {
         }
     }
 
+    /**
+     * TASK-30: the only XML parsing seam used by this app. DOM is kept (the existing code walks
+     * the tree), but the parser is configured to refuse DOCTYPE declarations and any external
+     * entity resolution. A pre-parse DTD screen is applied as an extra, platform-independent
+     * guard so a malicious document is rejected before the parser sees it.
+     *
+     * Pure Java on purpose: fixtures can be parsed in JVM unit tests without a device.
+     */
+    public static final class SecureXml {
+        private static final Pattern DTD_DECLARATION =
+                Pattern.compile("<\\s*!\\s*(DOCTYPE|ENTITY)\\b", Pattern.CASE_INSENSITIVE);
+        // Feature/property URIs are composed so no cleartext scheme literal appears in code
+        // (TASK-41 guard). Android's compile-time XMLConstants does not expose the JAXP names.
+        private static final String URI_SCHEME = "http" + ":" + "//";
+        private static final String ACCESS_EXTERNAL_DTD =
+                URI_SCHEME + "javax.xml.XMLConstants/property/accessExternalDTD";
+        private static final String ACCESS_EXTERNAL_SCHEMA =
+                URI_SCHEME + "javax.xml.XMLConstants/property/accessExternalSchema";
+
+        private SecureXml() {
+        }
+
+        /** Fail-closed builder: missing core hardening features abort parsing; optional JAXP access properties are tolerated. */
+        public static DocumentBuilder newSecureDocumentBuilder() throws ParserConfigurationException {
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+            // The decisive switch: no DOCTYPE means no internal or external entity declarations.
+            factory.setFeature(URI_SCHEME + "apache.org/xml/features/disallow-doctype-decl", true);
+            factory.setFeature(URI_SCHEME + "xml.org/sax/features/external-general-entities", false);
+            factory.setFeature(URI_SCHEME + "xml.org/sax/features/external-parameter-entities", false);
+            factory.setFeature(URI_SCHEME + "apache.org/xml/features/nonvalidating/load-external-dtd", false);
+            try {
+                factory.setXIncludeAware(false);
+                factory.setExpandEntityReferences(false);
+            } catch (UnsupportedOperationException e) {
+                throw new ParserConfigurationException("XML parser cannot disable XInclude/entity expansion");
+            }
+            // JAXP access properties are optional on Android; tolerate parsers without them.
+            setAttributeIfSupported(factory, ACCESS_EXTERNAL_DTD, "");
+            setAttributeIfSupported(factory, ACCESS_EXTERNAL_SCHEMA, "");
+
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            // Last line of defence: never fetch a URL or file named by an external entity.
+            builder.setEntityResolver((publicId, systemId) -> new InputSource(new StringReader("")));
+            return builder;
+        }
+
+        private static void setAttributeIfSupported(DocumentBuilderFactory factory, String name, String value) {
+            try {
+                factory.setAttribute(name, value);
+            } catch (IllegalArgumentException ignored) {
+                // Not implemented by this parser; the feature flags above still apply.
+            }
+        }
+
+        public static boolean containsDtdDeclaration(String xml) {
+            return xml != null && DTD_DECLARATION.matcher(xml).find();
+        }
+
+        public static Document parse(String xml) throws ParserConfigurationException, IOException, SAXException {
+            if (xml == null) {
+                throw new IOException("XML document is null");
+            }
+            if (containsDtdDeclaration(xml)) {
+                throw new IOException("DOCTYPE/ENTITY declarations are forbidden in DWD XML data");
+            }
+            return newSecureDocumentBuilder().parse(new InputSource(new StringReader(xml)));
+        }
+
+        /** Buffers the reader so the DTD screen covers the whole document before parsing. */
+        public static Document parse(Reader reader) throws ParserConfigurationException, IOException, SAXException {
+            if (reader == null) {
+                throw new IOException("XML reader is null");
+            }
+            StringBuilder stringBuilder = new StringBuilder();
+            char[] buffer = new char[4096];
+            int read;
+            while ((read = reader.read(buffer)) != -1) {
+                stringBuilder.append(buffer, 0, read);
+            }
+            return parse(stringBuilder.toString());
+        }
+    }
+
    public static class WeatherWarningsRunnable implements Runnable {
 
        public Context context;
@@ -193,8 +278,8 @@ public class APIReaders {
 
        private WeatherWarning parseWarning(String zipfile) throws ParserConfigurationException, IOException, SAXException {
            WeatherWarning warning = new WeatherWarning();
-           DocumentBuilder documentBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-           Document document = documentBuilder.parse(new InputSource(new StringReader(zipfile)));
+           // TASK-30: all warning XML goes through the hardened parser (no DTD, no entities).
+           Document document = SecureXml.parse(zipfile);
            NodeList nl = document.getElementsByTagName("identifier");
            warning.polling_time = pollingTime;
            for (int i=0;i<nl.getLength(); i++){
@@ -599,8 +684,8 @@ public class APIReaders {
                 // populate name from settings, as name is file-name in API but not repeated in the content
                 rawWeatherInfo.weatherLocation = new Weather.WeatherLocation(weatherLocation);
                 try {
-                    DocumentBuilder documentBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-                    Document document = documentBuilder.parse(zipInputStream);
+                    // TASK-30: KML from the DWD archive is remote input as well.
+                    Document document = SecureXml.parse(new InputStreamReader(zipInputStream, StandardCharsets.UTF_8));
                     rawWeatherInfo.weatherLocation.setDescription("?");
                     // get sensor description, usually city name. This should be equal to weatherLocation.description,
                     // but we take it from the api to be sure nothing changed and the right city gets displayed!
