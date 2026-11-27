@@ -778,7 +778,7 @@ public class WeatherSettings {
     public static boolean isRadarDataOutdated(Context context){
         // SharedPreferences sharedPreferences = getSharedPreferences(context);
         long l = getPrefRadarLastdatapoll(context);
-        return Calendar.getInstance().getTimeInMillis() > l + RadarMN.RADAR_DATAINTERVAL;
+        return Calendar.getInstance().getTimeInMillis() > l + Radarmap.RADAR_DATAINTERVAL;
     }
 
     public static boolean showRadarByDefault(Context context){

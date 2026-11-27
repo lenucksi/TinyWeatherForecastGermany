@@ -20,10 +20,6 @@
 package de.kaffeemitkoffein.tinyweatherforecastgermany;
 
 import android.graphics.*;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.TimeZone;
 
 public class Radarmap {
 
@@ -140,85 +136,6 @@ public class Radarmap {
             color = Color.TRANSPARENT;
         }
         return color;
-    }
-
-    public Radarmap(RawRadarmap rawRadarmap){
-        this.timestampStr0 = new String(rawRadarmap.timestamp);
-        this.timestampStr1 = new String(rawRadarmap.timestampStr);
-        try {
-            Calendar calendar = Calendar.getInstance();
-            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("ddHHmmMMyy");
-            simpleDateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-            String s = this.timestampStr0+this.timestampStr1;
-            Date date = simpleDateFormat.parse(this.timestampStr0+this.timestampStr1);
-            calendar.setTime(date);
-            this.timestamp=calendar.getTimeInMillis();
-        } catch (Exception e){
-            this.timestamp=0;
-        }
-
-        try {
-            this.filesize = Integer.parseInt(new String(rawRadarmap.filesize));
-        } catch (NumberFormatException e){
-            this.filesize = 0;
-        }
-        try {
-            this.formatVersion = Integer.parseInt(new String(rawRadarmap.formatVersion));
-        } catch (NumberFormatException e){
-            this.formatVersion = 0;
-        }
-        this.radolanVersion = new String(rawRadarmap.radolanVersion);
-        String sAcc = new String(rawRadarmap.accuracy);
-        this.accuracy=1;
-        if (sAcc.equals("E-01")){
-            accuracy=0.1;
-        }
-        if (sAcc.equals("E-02")){
-            accuracy=0.01;
-        }
-        try {
-            this.interval = Integer.parseInt(new String(rawRadarmap.interval));
-        } catch (NumberFormatException e){
-            this.interval = 0;
-        }
-        // define default value
-        this.resolution = Resolution.RES_1100X900;
-        String s = new String(rawRadarmap.resolution);
-        if (s.equals("900x 900")){
-            this.resolution = Resolution.RES_900X900;
-        }
-        if (s.equals(" 1100x 900")){
-            this.resolution = Resolution.RES_1100X900;
-        }
-        if (s.equals("1500x1400")){
-            this.resolution = Resolution.RES_1500X1400;
-        }
-        if (rawRadarmap.stationString!=null){
-            this.stations = new String(rawRadarmap.stationString);
-        }
-        if (resolution==Resolution.RES_900X900){
-            map = new byte[900][900];
-            width = 900;
-            height = 900;
-        } else
-        if (resolution==Resolution.RES_1500X1400){
-            map = new byte[1500][1400];
-            width = 1500;
-            height = 1400;
-        } else {
-            // default
-            map = new byte[900][1100];
-            width = 900;
-            height = 1100;
-        }
-        int i = 0;
-        for (int y=0; y<height; y++){
-            for (int x=0; x<width; x++){
-                map[x][y] = rawRadarmap.radarData[i];
-                i++;
-            }
-        }
-
     }
 
 }
