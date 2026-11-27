@@ -109,6 +109,9 @@ public class MainActivity extends Activity {
 
     private boolean performingFirstAppLaunch = false;
 
+    /** True only between registerForBroadcast() and unRegisterForBroadcast(). */
+    private boolean receiverRegistered = false;
+
     private Activity thisActivity;
 
     APIReaders.WeatherForecastRunnable weatherForecastRunnable;
@@ -321,7 +324,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onPause(){
         cancelAnyOpenDialogs();
-        unregisterReceiver(receiver);
+        unRegisterForBroadcast();
         weatherLocationManager.stopGPSLocationSearch();
         PrivateLog.log(getApplicationContext(),PrivateLog.MAIN, PrivateLog.INFO,"app paused.");
         super.onPause();
@@ -1684,10 +1687,34 @@ public class MainActivity extends Activity {
         filter.addAction(WeatherWarningActivity.WEATHER_WARNINGS_UPDATE);
         filter.addAction(MAINAPP_AREADB_READY);
         filter.addAction(MAINAPP_AREADB_PROGRESS);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            registerReceiver(receiver,filter,RECEIVER_EXPORTED);
+        registerForInternalBroadcasts(this,receiver,filter);
+        receiverRegistered = true;
+    }
+
+    private void unRegisterForBroadcast(){
+        // The receiver is registered in onResume(), but the first-launch branch finishes the
+        // activity in onCreate() before onResume() runs. Guard the unregister so that path does
+        // not throw IllegalArgumentException for a receiver that was never registered.
+        if (receiverRegistered){
+            unregisterReceiver(receiver);
+            receiverRegistered = false;
+        }
+    }
+
+    /**
+     * Registers a receiver for app-internal broadcasts.
+     *
+     * The flag-aware overload was introduced in API 33 (TIRAMISU). Calling it on API 26-32
+     * throws NoSuchMethodError, so the legacy two-argument overload is required there.
+     * App-internal custom-action broadcasts are registered as NOT EXPORTED so other apps
+     * cannot inject them; system broadcasts (e.g. ACTION_BOOT_COMPLETED) are still delivered
+     * to non-exported receivers.
+     */
+    static void registerForInternalBroadcasts(Context context, BroadcastReceiver receiver, IntentFilter filter){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU){
+            context.registerReceiver(receiver,filter,Context.RECEIVER_NOT_EXPORTED);
         } else {
-            registerReceiver(receiver,filter);
+            context.registerReceiver(receiver,filter);
         }
     }
 

@@ -25,7 +25,6 @@ import android.app.Activity;
 import android.content.*;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -979,11 +978,7 @@ public class WeatherDetailsActivity extends Activity {
         filter.addAction(Pollen.ACTION_UPDATE_POLLEN);
         filter.addAction(WeatherWarningActivity.WEATHER_WARNINGS_UPDATE);
         filter.addAction(MainActivity.MAINAPP_CUSTOM_REFRESH_ACTION);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            registerReceiver(receiver,filter,RECEIVER_EXPORTED);
-        } else {
-            registerReceiver(receiver,filter);
-        }
+        MainActivity.registerForInternalBroadcasts(this,receiver,filter);
     }
 
     private void unRegisterForBroadcast(){
