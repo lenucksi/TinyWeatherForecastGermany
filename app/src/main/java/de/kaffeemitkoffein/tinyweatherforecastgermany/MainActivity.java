@@ -69,6 +69,17 @@ public class MainActivity extends Activity {
     public final static String MAINAPP_AREADB_PROGRESS = "AREADB_PROGRESS";
     public final static String MAINAPP_AREADB_READY = "AREADB_READY";
 
+    // TASK-59 (CodeQL java/polynomial-redos, alert #4): the previous geo parser
+    // used -?[\d]*\.?[\d]* (nested/overlapping `*` quantifiers), which can
+    // backtrack polynomially on hostile input from an external geo intent.
+    // The replacement below is anchored, uses non-overlapping bounded
+    // quantifiers (\d+(?:\.\d+)?) and caps the input length, keeping parsing
+    // linear-time even for malformed or adversarial URIs.
+    private static final int MAX_GEO_URI_LENGTH = 256;
+    private static final Pattern GEO_URI_PATTERN = Pattern.compile(
+            "^geo:(?<latitude>-?\\d+(?:\\.\\d+)?),(?<longitude>-?\\d+(?:\\.\\d+)?)",
+            Pattern.CASE_INSENSITIVE);
+
     public final static String EXTRA_AREADB_PROGRESS_VALUE = "AREADB_PRGS_VALUE";
     public final static String EXTRA_AREADB_PROGRESS_TEXT = "AREADB_PRGS_TEXT";
 
@@ -822,31 +833,63 @@ public class MainActivity extends Activity {
             return null;
         }
 
-        String received_geolocation = intent.getData().toString();
+        Uri data = intent.getData();
+        if (data==null)
+        {
+            return null;
+        }
+        String received_geolocation = data.toString();
         if (received_geolocation!=null) {
             try {
-                Pattern pattern_lat_long = Pattern.compile("geo:(?<latitude>-?[\\d]*\\.?[\\d]*),(?<longitude>-?[\\d]*\\.?[\\d]*)", Pattern.CASE_INSENSITIVE);
-                Matcher m = pattern_lat_long.matcher(received_geolocation);
-                m.find();
-                String received_latitude = m.group(1); //Can be replaced with 'm.group("latitude")' for better readability as soon as min API level is 26
-                String received_longitude = m.group(2); //Can be replaced with 'm.group("longitude")' for better readability as soon as min API level is 26
-
-                Location own_location = new Location("manual");
-                own_location.setTime(Calendar.getInstance().getTimeInMillis());
-                double latitude = Location.convert(standardizeGeo(received_latitude));
-                double longitude = Location.convert(standardizeGeo(received_longitude));
-                own_location.setLatitude(latitude);
-                own_location.setLongitude(longitude);
-                return own_location;
+                Location own_location = locationFromGeoUri(received_geolocation);
+                if (own_location!=null) {
+                    return own_location;
                 }
+            }
             catch (Exception e) {
                 // invalid geo-string (uri)
                 PrivateLog.log(getApplicationContext(), PrivateLog.MAIN, PrivateLog.ERR, "received geo intent, but unable to read it: " + e.getMessage());
-                PrivateLog.log(getApplicationContext(), PrivateLog.MAIN, PrivateLog.ERR, "geo content was: " + received_geolocation);
-                Toast.makeText(getApplicationContext(), getApplicationContext().getResources().getString(R.string.georeceive_error), Toast.LENGTH_LONG).show();
             }
+            // malformed, oversized or hostile geo URI: inform the user.
+            PrivateLog.log(getApplicationContext(), PrivateLog.MAIN, PrivateLog.ERR, "geo content was: " + received_geolocation);
+            Toast.makeText(getApplicationContext(), getApplicationContext().getResources().getString(R.string.georeceive_error), Toast.LENGTH_LONG).show();
         }
         return null;
+    }
+
+    /**
+     * Parses a geo URI into a Location, or returns null for malformed/oversized input.
+     *
+     * <p>Linear-time and length-capped so that externally supplied geo intents
+     * cannot trigger polynomial regex backtracking (TASK-59 / CodeQL alert #4).
+     * Does not touch any Context, so it is safe to call from JVM unit tests.
+     *
+     * @param geoUri the full data URI of a geo intent (e.g. "geo:52.52,13.405?z=10")
+     * @return a Location with the parsed coordinates, or null if the URI is not valid
+     */
+    static Location locationFromGeoUri(String geoUri) {
+        if (geoUri==null || geoUri.length()>MAX_GEO_URI_LENGTH)
+        {
+            return null;
+        }
+        Matcher m = GEO_URI_PATTERN.matcher(geoUri);
+        // Anchored via '^' in the pattern: only a leading "geo:lat,long" is accepted.
+        // Trailing, non-numeric intent parameters (e.g. "?z=10") remain allowed,
+        // preserving the behaviour of the previous find()-based implementation.
+        if (!m.find())
+        {
+            return null;
+        }
+        String received_latitude = m.group("latitude");
+        String received_longitude = m.group("longitude");
+
+        Location own_location = new Location("manual");
+        own_location.setTime(Calendar.getInstance().getTimeInMillis());
+        double latitude = Location.convert(standardizeGeo(received_latitude));
+        double longitude = Location.convert(standardizeGeo(received_longitude));
+        own_location.setLatitude(latitude);
+        own_location.setLongitude(longitude);
+        return own_location;
     }
 
     private void newWeatherRegionSelected(final Weather.WeatherLocation weatherLocation){
@@ -2275,7 +2318,7 @@ public class MainActivity extends Activity {
         ThemePicker.tintAlertDialogButtons(context,alertDialog);
     }
 
-    public String standardizeGeo(final String s){
+    public static String standardizeGeo(final String s){
         return s.replace(",",".");
     }
 
