@@ -189,6 +189,13 @@
                     android:title="@string/preference_screen_map_title"
                     android:summary="@string/preference_screen_map_summary">
 
+                <!-- TASK-52: switch between the MapLibre vector basemap and the static fallback. -->
+                <CheckBoxPreference
+                        android:key="PREF_map_vector"
+                        android:title="@string/preference_map_vector_title"
+                        android:summary="@string/preference_map_vector_summary"
+                        android:defaultValue="true"/>
+
                 <CheckBoxPreference
                         android:key="PREF_radar_show"
                         android:title="@string/preference_display_show_radar_by_default_title"
