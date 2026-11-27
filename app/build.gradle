@@ -22,15 +22,13 @@
 apply plugin: 'com.android.application'
 
 android {
-    // compileSdkVersion 33
     compileSdkVersion 36
-    // buildToolsVersion '33.0.1'
     buildToolsVersion '36.0.0'
     namespace 'de.kaffeemitkoffein.tinyweatherforecastgermany'
 
     defaultConfig {
         applicationId "de.kaffeemitkoffein.tinyweatherforecastgermany"
-        minSdkVersion 19
+        minSdkVersion 33
         targetSdkVersion 36
         versionCode 63
         versionName "0.63.4"
@@ -122,17 +120,6 @@ dependencies {
     testImplementation 'org.robolectric:robolectric:4.16'
 }
 
-// Robolectric 4.16 resolves AndroidX Test 3.7.0/1.8.0, whose manifests raise
-// minSdk to 21. This app still supports API 19 (TASK-14 is not merged), so the
-// unit-test manifest merge fails unless we pin the last minSdk-19 releases.
-// Scoped to test configurations; production dependencies are unaffected.
-configurations.matching { it.name.toLowerCase().contains('test') }.all {
-    resolutionStrategy {
-        force 'androidx.test:monitor:1.7.2'
-        force 'androidx.test.espresso:espresso-idling-resource:3.6.1'
-    }
-}
-
 // Robolectric normally downloads android-all-instrumented jars from Maven
 // Central at *test runtime*, which is outside Gradle's dependency verification
 // and was hitting HTTP 429 in CI. Resolve them as normal Gradle artifacts
@@ -187,4 +174,8 @@ tasks.register('prepareRobolectricAndroidAll', Copy) {
 tasks.withType(Test).configureEach {
     dependsOn tasks.named('prepareRobolectricAndroidAll')
     systemProperty 'robolectric.dependency.dir', robolectricSdkDir.get().asFile.absolutePath
+    // With minSdk 33, Robolectric cannot load the app manifest under SDK 26/28
+    // ("Requires newer sdk version #33"). Those variants are obsolete for this
+    // fork; only run the API 33+ variants. Test sources are owned by TASK-16.
+    systemProperty 'robolectric.enabledSdks', '33,36'
 }
