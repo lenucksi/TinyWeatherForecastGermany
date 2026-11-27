@@ -163,10 +163,8 @@
     <string name="sunrise">Éirí na gréine</string>
     <string name="sunset">Luí na gréine</string>
     <string name="twilight">Twilightname</string>
-    <string name="preference_feedback_title">Aiseolas</string>
     <string name="preference_clearnotifications_title">Athshocraigh fógairt</string>
     <string name="preference_clearnotifications_message">Fógairt cuimhne glanta.</string>
-    <string name="feedback_mail_subject">Aiseolas: TinyWeatherForecastGermany</string>
     <string name="direction_north">N</string>
     <string name="direction_south">S</string>
     <string name="direction_west">W</string>
@@ -281,13 +279,11 @@
     <string name="preference_log_to_logcat_summary">Cuir isteach na logaí isteach i logáil isteach an chórais ar an bhfeiste. Rabhadh: d \' fhéadfadh sé seo a bheith ina sceitheadh príobháideachta, is féidir le apps eile rochtain a fháil ar logáil isteach an chórais.</string>
     <string name="alertdialog_2_text">Logálann an aip seo chuig logcat faoi láthair. Beidh logáil isteach logcat a bheith faoi mhíchumas, ós rud é nach bhfuil an ghné seo beartaithe le haghaidh scaoileadh oifigiúil.</string>
     <string name="logging_comment_hint">Is féidir leat a chur a comment leis an logs chun cabhrú le teacht ar an earráid-le do thoil a mhíniú, cad a tharla:</string>
-    <string name="feedback_mail_text">Nuair a sheoltar tuairisc faoi fhabht, cóipeáil agus greamaigh logaí, le do thoil, más féidir.</string>
     <string name="geoinput_rationale">Is féidir leis an aip seirbhísí suímh do ghléis a úsáid chun an stáisiún aimsire is gaire duit a aimsiú. Nó is féidir leat stáisiún aimsire a chuardach tú féin, comhordanáidí a chur isteach de láimh, nó suíomh a roinnt ó aip léarscáileanna. Más mian leat don aip seo do shuíomh a chuardach, tá an cead suímh ag teastáil.</string>
     <string name="geoinput_wrongformat">Níl formáid bhailí ag an gcomhordú. Is féidir leat nótaí cosúil le +53.12345 a úsáid le haghaidh céimeanna, nó -44.22: 12.12345 chun céimeanna agus miontuairiscí nó 33.12.12345 a chur isteach chun céimeanna, nóiméad agus soicind a chur isteach. Bain triail eile as.</string>
     <string name="logging_button_copy">Cóipeáil Logchomhaid go Dtí an Ghearrthaisce</string>
     <string name="service_notification_text1">Rabhaidh aimsire a fháil…</string>
     <string name="logging_copy_fail">Níorbh fhéidir logchomhaid a chóipeáil go dtí an ghearrthaisce!</string>
-    <string name="preference_feedback_summary">Tabhair roinnt aiseolais don fhorbróir trí ríomhphost.</string>
     <string name="welcome_s3_text1">Cliceáil / Déan Teagmháil leis an deilbhín sa chúinne uachtarach ar chlé chun titim ar an léarscáil.</string>
     <string name="welcome_s3_text5">Brúigh réamhaisnéis fada chun dearcadh níos mionsonraithe a oscailt.</string>
     <string name="welcome_s2_text5">báisteach reo</string>
@@ -528,4 +524,5 @@
     <string name="preference_screen_uvhi_mainType_title">Spéir shoiléir</string>
     <string name="preference_screen_uvhi_mainType_summary">Ná cuir fachtóirí modhnúcháin scamall i bhfeidhm ar réamhaisnéis innéacs guaise UV a thaispeántar i bpríomhradharc an aip.</string>
     <string name="error_no_data" translatable="true">Níl aon sonraí aimsire ar fáil.</string>
+    <string name="invalid_weather_host_message">Óstach neamhbhailí ar shonraí aimsire. Ní cheadaítear ach freastalaithe DWD; úsáidtear an freastalaí réamhshocraithe.</string>
 </resources>

@@ -5,16 +5,16 @@
  Copyright (c) 2020, 2021, 2022, 2023 Pawel Dube
 
  This program is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
+ it under the terms of the GNU Affero General Public License as published by
  the Free Software Foundation, either version 3 of the License, or
  (at your option) any later version.
 
  This program is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
+ GNU Affero General Public License for more details.
 
- You should have received a copy of the GNU General Public License
+ You should have received a copy of the GNU Affero General Public License
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --><resources>
     <string name="app_name">Tiny Weather Forecast Germany</string>
@@ -368,13 +368,9 @@
     <string name="moonset">Moonset</string>
     <string name="moonrise">Moonrise</string>
     <string name="twilight">Twilight</string>
-    <string name="preference_feedback_title">Feedback</string>
-    <string name="preference_feedback_summary">Give the developer some feedback by e-mail.</string>
     <string name="preference_clearnotifications_title">Reset notifications</string>
     <string name="preference_clearnotifications_summary">Reset notifications for weather alerts. All valid notifications will be displayed again.</string>
     <string name="preference_clearnotifications_message">Notification memory cleared.</string>
-    <string name="feedback_mail_subject">Feedback: TinyWeatherForecastGermany</string>
-    <string name="feedback_mail_text">When sending a bug report, please also copy &amp; paste logs, if possible.</string>
     <string name="warnings_until">until</string>
     <string name="warnings_update">Warnings updated.</string>
     <string name="warnings">Warnings</string>
@@ -578,4 +574,5 @@
     <string name="switch_to_next_station">Switch to closest station</string>
     <string name="error_no_data" translatable="true">No weather data available.</string>
 
+    <string name="invalid_weather_host_message">Invalid weather data host. Only DWD servers are allowed; using the default server.</string>
 </resources>

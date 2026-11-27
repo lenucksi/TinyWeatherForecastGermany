@@ -144,16 +144,6 @@
             message="First usage here"/>
     </issue>
 
-    <issue
-        id="DefaultLocale"
-        message="Implicitly using the default locale is a common source of bugs: Use `toUpperCase(Locale)` instead. For strings meant to be internal use `Locale.ROOT`, otherwise `Locale.getDefault()`."
-        errorLine1="        return log(context,tag.toUpperCase()+&quot; [&quot;+severity+&quot;] &quot;+s);"
-        errorLine2="                               ~~~~~~~~~~~">
-        <location
-            file="src/main/java/de/kaffeemitkoffein/tinyweatherforecastgermany/PrivateLog.java"
-            line="152"
-            column="32"/>
-    </issue>
 
     <issue
         id="DefaultLocale"
@@ -328,27 +318,7 @@
             message="Occurrence in layout"/>
     </issue>
 
-    <issue
-        id="InlinedApi"
-        message="Field requires API level 24 (current min is 19): `android.content.Intent#EXTRA_PACKAGE_NAME`"
-        errorLine1="                                        intent.putExtra(Intent.EXTRA_PACKAGE_NAME,uri);"
-        errorLine2="                                                        ~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/de/kaffeemitkoffein/tinyweatherforecastgermany/Settings.java"
-            line="654"
-            column="57"/>
-    </issue>
 
-    <issue
-        id="InlinedApi"
-        message="Field requires API level 24 (current min is 19): `android.content.Intent#EXTRA_PACKAGE_NAME`"
-        errorLine1="                                        intent.putExtra(Intent.EXTRA_PACKAGE_NAME,uri);"
-        errorLine2="                                                        ~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/de/kaffeemitkoffein/tinyweatherforecastgermany/Settings.java"
-            line="682"
-            column="57"/>
-    </issue>
 
     <issue
         id="OldTargetApi"
@@ -416,27 +386,7 @@
             column="55"/>
     </issue>
 
-    <issue
-        id="SimpleDateFormat"
-        message="To get local formatting use `getDateInstance()`, `getDateTimeInstance()`, or `getTimeInstance()`, or use `new SimpleDateFormat(String template, Locale locale)` with for example `Locale.US` for ASCII dates."
-        errorLine1="                SimpleDateFormat sdf = new SimpleDateFormat(&quot;yyyy-MM-dd kk:mm:ss.SSS &quot;);"
-        errorLine2="                                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/de/kaffeemitkoffein/tinyweatherforecastgermany/PrivateLog.java"
-            line="135"
-            column="40"/>
-    </issue>
 
-    <issue
-        id="SimpleDateFormat"
-        message="To get local formatting use `getDateInstance()`, `getDateTimeInstance()`, or `getTimeInstance()`, or use `new SimpleDateFormat(String template, Locale locale)` with for example `Locale.US` for ASCII dates."
-        errorLine1="            SimpleDateFormat simpleDateFormat = new SimpleDateFormat(&quot;ddHHmmMMyy&quot;);"
-        errorLine2="                                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/de/kaffeemitkoffein/tinyweatherforecastgermany/Radarmap.java"
-            line="150"
-            column="49"/>
-    </issue>
 
     <issue
         id="SimpleDateFormat"
@@ -537,115 +487,15 @@
             column="48"/>
     </issue>
 
-    <issue
-        id="UnusedAttribute"
-        message="Attribute `localeConfig` is only used in API level 33 and higher (current min is 19)"
-        errorLine1="            android:localeConfig=&quot;@xml/locales_config&quot;"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/AndroidManifest.xml"
-            line="47"
-            column="13"/>
-    </issue>
 
-    <issue
-        id="UnusedAttribute"
-        message="Attribute `networkSecurityConfig` is only used in API level 24 and higher (current min is 19)"
-        errorLine1="            android:networkSecurityConfig=&quot;@xml/network_security_config&quot;>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/AndroidManifest.xml"
-            line="48"
-            column="13"/>
-    </issue>
 
-    <issue
-        id="UnusedAttribute"
-        message="Attribute `splitTrack` is only used in API level 21 and higher (current min is 19)"
-        errorLine1="                            android:splitTrack=&quot;false&quot;"
-        errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout-w600dp-land/activity_weatherwarning.xml"
-            line="149"
-            column="29"/>
-    </issue>
 
-    <issue
-        id="UnusedAttribute"
-        message="Attribute `min` is only used in API level 26 and higher (current min is 19)"
-        errorLine1="                            android:min=&quot;0&quot;"
-        errorLine2="                            ~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout-w600dp-land/activity_weatherwarning.xml"
-            line="153"
-            column="29"/>
-    </issue>
 
-    <issue
-        id="UnusedAttribute"
-        message="Attribute `thumbTint` is only used in API level 21 and higher (current min is 19)"
-        errorLine1="                            android:thumbTint=&quot;@color/seekbar_thumb&quot;"
-        errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout-w600dp-land/activity_weatherwarning.xml"
-            line="155"
-            column="29"/>
-    </issue>
 
-    <issue
-        id="UnusedAttribute"
-        message="Attribute `progressTint` is only used in API level 21 and higher (current min is 19)"
-        errorLine1="                            android:progressTint=&quot;@color/seekbar_progress&quot;"
-        errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout-w600dp-land/activity_weatherwarning.xml"
-            line="156"
-            column="29"/>
-    </issue>
 
-    <issue
-        id="UnusedAttribute"
-        message="Attribute `splitTrack` is only used in API level 21 and higher (current min is 19)"
-        errorLine1="                        android:splitTrack=&quot;false&quot;"
-        errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/activity_weatherwarning.xml"
-            line="195"
-            column="25"/>
-    </issue>
 
-    <issue
-        id="UnusedAttribute"
-        message="Attribute `min` is only used in API level 26 and higher (current min is 19)"
-        errorLine1="                        android:min=&quot;0&quot;"
-        errorLine2="                        ~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/activity_weatherwarning.xml"
-            line="199"
-            column="25"/>
-    </issue>
 
-    <issue
-        id="UnusedAttribute"
-        message="Attribute `thumbTint` is only used in API level 21 and higher (current min is 19)"
-        errorLine1="                        android:thumbTint=&quot;@color/seekbar_thumb&quot;"
-        errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/activity_weatherwarning.xml"
-            line="201"
-            column="25"/>
-    </issue>
 
-    <issue
-        id="UnusedAttribute"
-        message="Attribute `progressTint` is only used in API level 21 and higher (current min is 19)"
-        errorLine1="                        android:progressTint=&quot;@color/seekbar_progress&quot;"
-        errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/activity_weatherwarning.xml"
-            line="202"
-            column="25"/>
-    </issue>
 
     <issue
         id="WrongConstant"
@@ -669,38 +519,8 @@
             column="70"/>
     </issue>
 
-    <issue
-        id="InflateParams"
-        message="Avoid passing `null` as the view root (needed to resolve layout parameters on the inflated layout&apos;s root element)"
-        errorLine1="                                final View popupView = layoutInflater.inflate(R.layout.popup_hint1,null);"
-        errorLine2="                                                                                                   ~~~~">
-        <location
-            file="src/main/java/de/kaffeemitkoffein/tinyweatherforecastgermany/MainActivity.java"
-            line="1752"
-            column="100"/>
-    </issue>
 
-    <issue
-        id="InflateParams"
-        message="Avoid passing `null` as the view root (needed to resolve layout parameters on the inflated layout&apos;s root element)"
-        errorLine1="        View view = layoutInflater.inflate(R.layout.pollenlegend_horizontal,null);"
-        errorLine2="                                                                            ~~~~">
-        <location
-            file="src/main/java/de/kaffeemitkoffein/tinyweatherforecastgermany/WeatherDetailsActivity.java"
-            line="634"
-            column="77"/>
-    </issue>
 
-    <issue
-        id="InflateParams"
-        message="Avoid passing `null` as the view root (needed to resolve layout parameters on the inflated layout&apos;s root element)"
-        errorLine1="                                final View popupView = layoutInflater.inflate(R.layout.popup_hint1,null);"
-        errorLine2="                                                                                                   ~~~~">
-        <location
-            file="src/main/java/de/kaffeemitkoffein/tinyweatherforecastgermany/WeatherWarningActivity.java"
-            line="1538"
-            column="100"/>
-    </issue>
 
     <issue
         id="MissingInflatedId"
@@ -1833,104 +1653,14 @@
             column="9"/>
     </issue>
 
-    <issue
-        id="DiscouragedApi"
-        message="Fixed screen orientations will be ignored in most cases, starting from Android 16. Android is moving toward a model where apps are expected to adapt to various orientations, display sizes, and aspect ratios."
-        errorLine1="                  android:screenOrientation=&quot;locked&quot;"
-        errorLine2="                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/AndroidManifest.xml"
-            line="51"
-            column="19"/>
-    </issue>
 
-    <issue
-        id="DiscouragedApi"
-        message="Fixed screen orientations will be ignored in most cases, starting from Android 16. Android is moving toward a model where apps are expected to adapt to various orientations, display sizes, and aspect ratios."
-        errorLine1="                  android:screenOrientation=&quot;locked&quot;"
-        errorLine2="                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/AndroidManifest.xml"
-            line="74"
-            column="19"/>
-    </issue>
 
-    <issue
-        id="DiscouragedApi"
-        message="Fixed screen orientations will be ignored in most cases, starting from Android 16. Android is moving toward a model where apps are expected to adapt to various orientations, display sizes, and aspect ratios."
-        errorLine1="                android:screenOrientation=&quot;locked&quot;"
-        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/AndroidManifest.xml"
-            line="80"
-            column="17"/>
-    </issue>
 
-    <issue
-        id="DiscouragedApi"
-        message="Fixed screen orientations will be ignored in most cases, starting from Android 16. Android is moving toward a model where apps are expected to adapt to various orientations, display sizes, and aspect ratios."
-        errorLine1="                android:screenOrientation=&quot;locked&quot;>"
-        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/AndroidManifest.xml"
-            line="85"
-            column="17"/>
-    </issue>
 
-    <issue
-        id="DiscouragedApi"
-        message="Fixed screen orientations will be ignored in most cases, starting from Android 16. Android is moving toward a model where apps are expected to adapt to various orientations, display sizes, and aspect ratios."
-        errorLine1="                  android:screenOrientation=&quot;locked&quot;"
-        errorLine2="                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/AndroidManifest.xml"
-            line="89"
-            column="19"/>
-    </issue>
 
-    <issue
-        id="DiscouragedApi"
-        message="Fixed screen orientations will be ignored in most cases, starting from Android 16. Android is moving toward a model where apps are expected to adapt to various orientations, display sizes, and aspect ratios."
-        errorLine1="                  android:screenOrientation=&quot;locked&quot;"
-        errorLine2="                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/AndroidManifest.xml"
-            line="94"
-            column="19"/>
-    </issue>
 
-    <issue
-        id="DiscouragedApi"
-        message="Fixed screen orientations will be ignored in most cases, starting from Android 16. Android is moving toward a model where apps are expected to adapt to various orientations, display sizes, and aspect ratios."
-        errorLine1="                  android:screenOrientation=&quot;locked&quot;"
-        errorLine2="                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/AndroidManifest.xml"
-            line="99"
-            column="19"/>
-    </issue>
 
-    <issue
-        id="DiscouragedApi"
-        message="Fixed screen orientations will be ignored in most cases, starting from Android 16. Android is moving toward a model where apps are expected to adapt to various orientations, display sizes, and aspect ratios."
-        errorLine1="                  android:screenOrientation=&quot;locked&quot;"
-        errorLine2="                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/AndroidManifest.xml"
-            line="104"
-            column="19"/>
-    </issue>
 
-    <issue
-        id="DiscouragedApi"
-        message="Fixed screen orientations will be ignored in most cases, starting from Android 16. Android is moving toward a model where apps are expected to adapt to various orientations, display sizes, and aspect ratios."
-        errorLine1="                  android:screenOrientation=&quot;locked&quot;"
-        errorLine2="                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/AndroidManifest.xml"
-            line="109"
-            column="19"/>
-    </issue>
 
     <issue
         id="DiscouragedApi"
@@ -2231,7 +1961,7 @@
 
     <issue
         id="MissingTranslation"
-        message="&quot;favorites_delete_title&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;in&quot; (Indonesian), &quot;it&quot; (Italian), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;pl&quot; (Polish), &quot;da&quot; (Danish)"
+        message="&quot;favorites_delete_title&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;it&quot; (Italian), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;id&quot; (Indonesian), &quot;pl&quot; (Polish), &quot;da&quot; (Danish)"
         errorLine1="    &lt;string name=&quot;favorites_delete_title&quot;>Delete favorites&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -2242,7 +1972,7 @@
 
     <issue
         id="MissingTranslation"
-        message="&quot;favorites_delete_summary&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;in&quot; (Indonesian), &quot;it&quot; (Italian), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
+        message="&quot;favorites_delete_summary&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;it&quot; (Italian), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;id&quot; (Indonesian), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
         errorLine1="    &lt;string name=&quot;favorites_delete_summary&quot;>Remove all favorites except the current weather location?&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -2682,7 +2412,7 @@
 
     <issue
         id="MissingTranslation"
-        message="&quot;preference_sync_warnings_title&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;in&quot; (Indonesian), &quot;it&quot; (Italian), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
+        message="&quot;preference_sync_warnings_title&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;it&quot; (Italian), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;id&quot; (Indonesian), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
         errorLine1="    &lt;string name=&quot;preference_sync_warnings_title&quot;>Sync warnings&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -2693,7 +2423,7 @@
 
     <issue
         id="MissingTranslation"
-        message="&quot;preference_sync_warnings_summary&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;in&quot; (Indonesian), &quot;it&quot; (Italian), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
+        message="&quot;preference_sync_warnings_summary&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;it&quot; (Italian), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;id&quot; (Indonesian), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
         errorLine1="    &lt;string name=&quot;preference_sync_warnings_summary&quot;>Regularly update the weather warnings.&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -2704,7 +2434,7 @@
 
     <issue
         id="MissingTranslation"
-        message="&quot;preference_sync_textforecasts_title&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;in&quot; (Indonesian), &quot;it&quot; (Italian), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
+        message="&quot;preference_sync_textforecasts_title&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;it&quot; (Italian), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;id&quot; (Indonesian), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
         errorLine1="    &lt;string name=&quot;preference_sync_textforecasts_title&quot;>Sync texts&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -2715,7 +2445,7 @@
 
     <issue
         id="MissingTranslation"
-        message="&quot;preference_sync_textforecasts_summary&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;in&quot; (Indonesian), &quot;it&quot; (Italian), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
+        message="&quot;preference_sync_textforecasts_summary&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;it&quot; (Italian), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;id&quot; (Indonesian), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
         errorLine1="    &lt;string name=&quot;preference_sync_textforecasts_summary&quot;>Regularly update the weather texts.&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -2726,7 +2456,7 @@
 
     <issue
         id="MissingTranslation"
-        message="&quot;preference_sync_maps_title&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;in&quot; (Indonesian), &quot;it&quot; (Italian), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
+        message="&quot;preference_sync_maps_title&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;it&quot; (Italian), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;id&quot; (Indonesian), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
         errorLine1="    &lt;string name=&quot;preference_sync_maps_title&quot;>Sync maps&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -2737,7 +2467,7 @@
 
     <issue
         id="MissingTranslation"
-        message="&quot;preference_sync_maps_summary&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;in&quot; (Indonesian), &quot;it&quot; (Italian), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
+        message="&quot;preference_sync_maps_summary&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;it&quot; (Italian), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;id&quot; (Indonesian), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
         errorLine1="    &lt;string name=&quot;preference_sync_maps_summary&quot;>Regularly update the weather maps.&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -2748,7 +2478,7 @@
 
     <issue
         id="MissingTranslation"
-        message="&quot;preference_sync_pollen_title&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;in&quot; (Indonesian), &quot;it&quot; (Italian), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
+        message="&quot;preference_sync_pollen_title&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;it&quot; (Italian), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;id&quot; (Indonesian), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
         errorLine1="    &lt;string name=&quot;preference_sync_pollen_title&quot;>Sync pollen count&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -2759,7 +2489,7 @@
 
     <issue
         id="MissingTranslation"
-        message="&quot;preference_sync_pollen_summary&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;in&quot; (Indonesian), &quot;it&quot; (Italian), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
+        message="&quot;preference_sync_pollen_summary&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;it&quot; (Italian), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;id&quot; (Indonesian), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
         errorLine1="    &lt;string name=&quot;preference_sync_pollen_summary&quot;>Regularly update the pollen count forecast.&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -2770,7 +2500,7 @@
 
     <issue
         id="MissingTranslation"
-        message="&quot;preference_sync_notice&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;in&quot; (Indonesian), &quot;it&quot; (Italian), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
+        message="&quot;preference_sync_notice&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;it&quot; (Italian), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;id&quot; (Indonesian), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
         errorLine1="    &lt;string name=&quot;preference_sync_notice&quot;>You can customize the sync settings inside the app.&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -2781,7 +2511,7 @@
 
     <issue
         id="MissingTranslation"
-        message="&quot;preference_category_sync&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;in&quot; (Indonesian), &quot;it&quot; (Italian), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
+        message="&quot;preference_category_sync&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;it&quot; (Italian), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;id&quot; (Indonesian), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
         errorLine1="    &lt;string name=&quot;preference_category_sync&quot;>Sync settings&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -3749,7 +3479,7 @@
 
     <issue
         id="MissingTranslation"
-        message="&quot;preference_display_overviewchart_filter_warnings_title&quot; is not translated in &quot;in&quot; (Indonesian)"
+        message="&quot;preference_display_overviewchart_filter_warnings_title&quot; is not translated in &quot;id&quot; (Indonesian)"
         errorLine1="    &lt;string name=&quot;preference_display_overviewchart_filter_warnings_title&quot;>Filter warnings&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -4354,7 +4084,7 @@
 
     <issue
         id="MissingTranslation"
-        message="&quot;preference_datasaver_title&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;in&quot; (Indonesian), &quot;it&quot; (Italian), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
+        message="&quot;preference_datasaver_title&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;it&quot; (Italian), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;id&quot; (Indonesian), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
         errorLine1="    &lt;string name=&quot;preference_datasaver_title&quot;>Data saver enabled&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -4365,7 +4095,7 @@
 
     <issue
         id="MissingTranslation"
-        message="&quot;preference_datasaver_summary&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;in&quot; (Indonesian), &quot;it&quot; (Italian), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
+        message="&quot;preference_datasaver_summary&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;it&quot; (Italian), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;id&quot; (Indonesian), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
         errorLine1="    &lt;string name=&quot;preference_datasaver_summary&quot;>Currently, no data can be synced when using metered networks. Consider adding Tiny Weather Forecast Germany to the list of apps with unrestricted data.&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -4420,7 +4150,7 @@
 
     <issue
         id="MissingTranslation"
-        message="&quot;preference_overviewchart_inappsize_title&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;in&quot; (Indonesian), &quot;it&quot; (Italian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
+        message="&quot;preference_overviewchart_inappsize_title&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;it&quot; (Italian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;id&quot; (Indonesian), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
         errorLine1="    &lt;string name=&quot;preference_overviewchart_inappsize_title&quot;>Size&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -4431,7 +4161,7 @@
 
     <issue
         id="MissingTranslation"
-        message="&quot;preference_overviewchart_inappsize_summary&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;in&quot; (Indonesian), &quot;it&quot; (Italian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
+        message="&quot;preference_overviewchart_inappsize_summary&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;it&quot; (Italian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;id&quot; (Indonesian), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
         errorLine1="    &lt;string name=&quot;preference_overviewchart_inappsize_summary&quot;>Size of the overview chart in portrait mode.&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -4726,16 +4456,6 @@
             column="13"/>
     </issue>
 
-    <issue
-        id="MissingTranslation"
-        message="&quot;preference_feedback_summary&quot; is not translated in &quot;zh&quot; (Chinese)"
-        errorLine1="    &lt;string name=&quot;preference_feedback_summary&quot;>Give the developer some feedback by e-mail.&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="372"
-            column="13"/>
-    </issue>
 
     <issue
         id="MissingTranslation"
@@ -4770,27 +4490,7 @@
             column="13"/>
     </issue>
 
-    <issue
-        id="MissingTranslation"
-        message="&quot;feedback_mail_subject&quot; is not translated in &quot;zh&quot; (Chinese)"
-        errorLine1="    &lt;string name=&quot;feedback_mail_subject&quot;>Feedback: TinyWeatherForecastGermany&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="376"
-            column="13"/>
-    </issue>
 
-    <issue
-        id="MissingTranslation"
-        message="&quot;feedback_mail_text&quot; is not translated in &quot;zh&quot; (Chinese)"
-        errorLine1="    &lt;string name=&quot;feedback_mail_text&quot;>When sending a bug report, please also copy &amp;amp; paste logs, if possible.&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="377"
-            column="13"/>
-    </issue>
 
     <issue
         id="MissingTranslation"
@@ -5080,7 +4780,7 @@
 
     <issue
         id="MissingTranslation"
-        message="&quot;legend_title&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;sv&quot; (Swedish), &quot;in&quot; (Indonesian), &quot;it&quot; (Italian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;uk&quot; (Ukrainian), &quot;ga&quot; (Irish), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
+        message="&quot;legend_title&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;sv&quot; (Swedish), &quot;it&quot; (Italian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;uk&quot; (Ukrainian), &quot;ga&quot; (Irish), &quot;id&quot; (Indonesian), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
         errorLine1="    &lt;string name=&quot;legend_title&quot;>Overview chart legend&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~">
         <location
@@ -5091,7 +4791,7 @@
 
     <issue
         id="MissingTranslation"
-        message="&quot;legend_pref_summary&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;sv&quot; (Swedish), &quot;in&quot; (Indonesian), &quot;it&quot; (Italian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;uk&quot; (Ukrainian), &quot;ga&quot; (Irish), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
+        message="&quot;legend_pref_summary&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;sv&quot; (Swedish), &quot;it&quot; (Italian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;uk&quot; (Ukrainian), &quot;ga&quot; (Irish), &quot;id&quot; (Indonesian), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
         errorLine1="    &lt;string name=&quot;legend_pref_summary&quot;>Explain the colours and layers of the overview chart.&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -5102,7 +4802,7 @@
 
     <issue
         id="MissingTranslation"
-        message="&quot;legend_sample_caption&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;sv&quot; (Swedish), &quot;in&quot; (Indonesian), &quot;it&quot; (Italian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;uk&quot; (Ukrainian), &quot;ga&quot; (Irish), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
+        message="&quot;legend_sample_caption&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;sv&quot; (Swedish), &quot;it&quot; (Italian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;uk&quot; (Ukrainian), &quot;ga&quot; (Irish), &quot;id&quot; (Indonesian), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
         errorLine1="    &lt;string name=&quot;legend_sample_caption&quot;>Currently displayed overview chart&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -5113,7 +4813,7 @@
 
     <issue
         id="MissingTranslation"
-        message="&quot;legend_open&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;sv&quot; (Swedish), &quot;in&quot; (Indonesian), &quot;it&quot; (Italian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;uk&quot; (Ukrainian), &quot;ga&quot; (Irish), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
+        message="&quot;legend_open&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;sv&quot; (Swedish), &quot;it&quot; (Italian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;uk&quot; (Ukrainian), &quot;ga&quot; (Irish), &quot;id&quot; (Indonesian), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
         errorLine1="    &lt;string name=&quot;legend_open&quot;>Open overview chart legend&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~">
         <location
@@ -5124,7 +4824,7 @@
 
     <issue
         id="MissingTranslation"
-        message="&quot;legend_temp_above&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;sv&quot; (Swedish), &quot;in&quot; (Indonesian), &quot;it&quot; (Italian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;uk&quot; (Ukrainian), &quot;ga&quot; (Irish), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
+        message="&quot;legend_temp_above&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;sv&quot; (Swedish), &quot;it&quot; (Italian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;uk&quot; (Ukrainian), &quot;ga&quot; (Irish), &quot;id&quot; (Indonesian), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
         errorLine1="    &lt;string name=&quot;legend_temp_above&quot;>Orange line: temperature above 0 °C&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -5135,7 +4835,7 @@
 
     <issue
         id="MissingTranslation"
-        message="&quot;legend_temp_below&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;sv&quot; (Swedish), &quot;in&quot; (Indonesian), &quot;it&quot; (Italian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;uk&quot; (Ukrainian), &quot;ga&quot; (Irish), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
+        message="&quot;legend_temp_below&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;sv&quot; (Swedish), &quot;it&quot; (Italian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;uk&quot; (Ukrainian), &quot;ga&quot; (Irish), &quot;id&quot; (Indonesian), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
         errorLine1="    &lt;string name=&quot;legend_temp_below&quot;>Blue line: temperature below 0 °C&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -5146,7 +4846,7 @@
 
     <issue
         id="MissingTranslation"
-        message="&quot;legend_clouds&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;sv&quot; (Swedish), &quot;in&quot; (Indonesian), &quot;it&quot; (Italian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;uk&quot; (Ukrainian), &quot;ga&quot; (Irish), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
+        message="&quot;legend_clouds&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;sv&quot; (Swedish), &quot;it&quot; (Italian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;uk&quot; (Ukrainian), &quot;ga&quot; (Irish), &quot;id&quot; (Indonesian), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
         errorLine1="    &lt;string name=&quot;legend_clouds&quot;>Grey area: cloud cover (percent)&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -5157,7 +4857,7 @@
 
     <issue
         id="MissingTranslation"
-        message="&quot;legend_rain_prob&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;sv&quot; (Swedish), &quot;in&quot; (Indonesian), &quot;it&quot; (Italian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;uk&quot; (Ukrainian), &quot;ga&quot; (Irish), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
+        message="&quot;legend_rain_prob&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;sv&quot; (Swedish), &quot;it&quot; (Italian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;uk&quot; (Ukrainian), &quot;ga&quot; (Irish), &quot;id&quot; (Indonesian), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
         errorLine1="    &lt;string name=&quot;legend_rain_prob&quot;>Blue area: probability of precipitation (percent)&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -5168,7 +4868,7 @@
 
     <issue
         id="MissingTranslation"
-        message="&quot;legend_rain_amount&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;sv&quot; (Swedish), &quot;in&quot; (Indonesian), &quot;it&quot; (Italian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;uk&quot; (Ukrainian), &quot;ga&quot; (Irish), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
+        message="&quot;legend_rain_amount&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;sv&quot; (Swedish), &quot;it&quot; (Italian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;uk&quot; (Ukrainian), &quot;ga&quot; (Irish), &quot;id&quot; (Indonesian), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
         errorLine1="    &lt;string name=&quot;legend_rain_amount&quot;>Cyan bars: amount of precipitation (mm)&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -5179,7 +4879,7 @@
 
     <issue
         id="MissingTranslation"
-        message="&quot;legend_humidity&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;sv&quot; (Swedish), &quot;in&quot; (Indonesian), &quot;it&quot; (Italian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;uk&quot; (Ukrainian), &quot;ga&quot; (Irish), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
+        message="&quot;legend_humidity&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;sv&quot; (Swedish), &quot;it&quot; (Italian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;uk&quot; (Ukrainian), &quot;ga&quot; (Irish), &quot;id&quot; (Indonesian), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
         errorLine1="    &lt;string name=&quot;legend_humidity&quot;>Blue line: relative humidity (percent)&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -5190,7 +4890,7 @@
 
     <issue
         id="MissingTranslation"
-        message="&quot;legend_dewpoint&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;sv&quot; (Swedish), &quot;in&quot; (Indonesian), &quot;it&quot; (Italian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;uk&quot; (Ukrainian), &quot;ga&quot; (Irish), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
+        message="&quot;legend_dewpoint&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;sv&quot; (Swedish), &quot;it&quot; (Italian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;uk&quot; (Ukrainian), &quot;ga&quot; (Irish), &quot;id&quot; (Indonesian), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
         errorLine1="    &lt;string name=&quot;legend_dewpoint&quot;>Blue line: dew point (°C)&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -5201,7 +4901,7 @@
 
     <issue
         id="MissingTranslation"
-        message="&quot;legend_wind&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;sv&quot; (Swedish), &quot;in&quot; (Indonesian), &quot;it&quot; (Italian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;uk&quot; (Ukrainian), &quot;ga&quot; (Irish), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
+        message="&quot;legend_wind&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;sv&quot; (Swedish), &quot;it&quot; (Italian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;uk&quot; (Ukrainian), &quot;ga&quot; (Irish), &quot;id&quot; (Indonesian), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
         errorLine1="    &lt;string name=&quot;legend_wind&quot;>Dark line: wind speed&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~">
         <location
@@ -5212,7 +4912,7 @@
 
     <issue
         id="MissingTranslation"
-        message="&quot;legend_wind_high&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;sv&quot; (Swedish), &quot;in&quot; (Indonesian), &quot;it&quot; (Italian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;uk&quot; (Ukrainian), &quot;ga&quot; (Irish), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
+        message="&quot;legend_wind_high&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;sv&quot; (Swedish), &quot;it&quot; (Italian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;uk&quot; (Ukrainian), &quot;ga&quot; (Irish), &quot;id&quot; (Indonesian), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
         errorLine1="    &lt;string name=&quot;legend_wind_high&quot;>Yellow: wind above the set scale&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -5223,7 +4923,7 @@
 
     <issue
         id="MissingTranslation"
-        message="&quot;legend_warnings&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;sv&quot; (Swedish), &quot;in&quot; (Indonesian), &quot;it&quot; (Italian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;uk&quot; (Ukrainian), &quot;ga&quot; (Irish), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
+        message="&quot;legend_warnings&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;sv&quot; (Swedish), &quot;it&quot; (Italian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;uk&quot; (Ukrainian), &quot;ga&quot; (Irish), &quot;id&quot; (Indonesian), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
         errorLine1="    &lt;string name=&quot;legend_warnings&quot;>Coloured bands: weather warnings (severity)&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -5234,7 +4934,7 @@
 
     <issue
         id="MissingTranslation"
-        message="&quot;legend_daytime&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;sv&quot; (Swedish), &quot;in&quot; (Indonesian), &quot;it&quot; (Italian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;uk&quot; (Ukrainian), &quot;ga&quot; (Irish), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
+        message="&quot;legend_daytime&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;sv&quot; (Swedish), &quot;it&quot; (Italian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;uk&quot; (Ukrainian), &quot;ga&quot; (Irish), &quot;id&quot; (Indonesian), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
         errorLine1="    &lt;string name=&quot;legend_daytime&quot;>Tinted background: day and night&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -5245,7 +4945,7 @@
 
     <issue
         id="MissingTranslation"
-        message="&quot;legend_midnight&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;sv&quot; (Swedish), &quot;in&quot; (Indonesian), &quot;it&quot; (Italian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;uk&quot; (Ukrainian), &quot;ga&quot; (Irish), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
+        message="&quot;legend_midnight&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;sv&quot; (Swedish), &quot;it&quot; (Italian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;uk&quot; (Ukrainian), &quot;ga&quot; (Irish), &quot;id&quot; (Indonesian), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
         errorLine1="    &lt;string name=&quot;legend_midnight&quot;>Dashed lines: midnight and noon; weekday names&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -5256,7 +4956,7 @@
 
     <issue
         id="MissingTranslation"
-        message="&quot;legend_axis&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;sv&quot; (Swedish), &quot;in&quot; (Indonesian), &quot;it&quot; (Italian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;uk&quot; (Ukrainian), &quot;ga&quot; (Irish), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
+        message="&quot;legend_axis&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;sv&quot; (Swedish), &quot;it&quot; (Italian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;uk&quot; (Ukrainian), &quot;ga&quot; (Irish), &quot;id&quot; (Indonesian), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
         errorLine1="    &lt;string name=&quot;legend_axis&quot;>Left scale: temperature (°C)&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~">
         <location
@@ -5267,7 +4967,7 @@
 
     <issue
         id="MissingTranslation"
-        message="&quot;legend_hint&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;sv&quot; (Swedish), &quot;in&quot; (Indonesian), &quot;it&quot; (Italian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;uk&quot; (Ukrainian), &quot;ga&quot; (Irish), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
+        message="&quot;legend_hint&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;sv&quot; (Swedish), &quot;it&quot; (Italian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;uk&quot; (Ukrainian), &quot;ga&quot; (Irish), &quot;id&quot; (Indonesian), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
         errorLine1="    &lt;string name=&quot;legend_hint&quot;>Tip: long-press the chart to open this legend at any time. Only elements enabled in the settings are shown.&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~">
         <location
@@ -6554,7 +6254,7 @@
 
     <issue
         id="MissingTranslation"
-        message="&quot;sync_off_title&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;in&quot; (Indonesian), &quot;it&quot; (Italian), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
+        message="&quot;sync_off_title&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;it&quot; (Italian), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;id&quot; (Indonesian), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
         errorLine1="    &lt;string name=&quot;sync_off_title&quot;>Sync disabled&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -6675,7 +6375,7 @@
 
     <issue
         id="MissingTranslation"
-        message="&quot;datasaver_enable_unrestricted_title&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;in&quot; (Indonesian), &quot;it&quot; (Italian), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
+        message="&quot;datasaver_enable_unrestricted_title&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;it&quot; (Italian), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;id&quot; (Indonesian), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
         errorLine1="    &lt;string name=&quot;datasaver_enable_unrestricted_title&quot;>Enable unrestricted data usage&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -6686,7 +6386,7 @@
 
     <issue
         id="MissingTranslation"
-        message="&quot;datasaver_enable_unrestricted_text&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;in&quot; (Indonesian), &quot;it&quot; (Italian), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
+        message="&quot;datasaver_enable_unrestricted_text&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;it&quot; (Italian), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;id&quot; (Indonesian), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
         errorLine1="    &lt;string name=&quot;datasaver_enable_unrestricted_text&quot;>In the app info, select mobile data &amp;amp; Wi-Fi and enable unrestricted data usage.&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -6697,7 +6397,7 @@
 
     <issue
         id="MissingTranslation"
-        message="&quot;error_no_data&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;in&quot; (Indonesian), &quot;it&quot; (Italian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
+        message="&quot;error_no_data&quot; is not translated in &quot;fi&quot; (Finnish), &quot;ru&quot; (Russian), &quot;it&quot; (Italian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;nb&quot; (Norwegian Bokmål), &quot;id&quot; (Indonesian), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;nl&quot; (Dutch)"
         errorLine1="    &lt;string name=&quot;error_no_data&quot; translatable=&quot;true&quot;>No weather data available.&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -7146,27 +6846,7 @@
             column="17"/>
     </issue>
 
-    <issue
-        id="StaticFieldLeak"
-        message="Do not place Android context classes in static fields; this is a memory leak"
-        errorLine1="        private static Context context;"
-        errorLine2="                ~~~~~~">
-        <location
-            file="src/main/java/de/kaffeemitkoffein/tinyweatherforecastgermany/APIReaders.java"
-            line="1465"
-            column="17"/>
-    </issue>
 
-    <issue
-        id="StaticFieldLeak"
-        message="Do not place Android context classes in static fields; this is a memory leak"
-        errorLine1="        private static Context context;"
-        errorLine2="                ~~~~~~">
-        <location
-            file="src/main/java/de/kaffeemitkoffein/tinyweatherforecastgermany/APIReaders.java"
-            line="1609"
-            column="17"/>
-    </issue>
 
     <issue
         id="UseCompoundDrawables"
@@ -18854,4 +18534,323 @@
             column="6"/>
     </issue>
 
+    <issue
+        id="RtlCompat"
+        message="Inconsistent alignment specification between `textAlignment` and `gravity` attributes: was `left`, expected `start`"
+        errorLine1="                                  android:textAlignment=&quot;textStart&quot;"
+        errorLine2="                                                         ~~~~~~~~~">
+        <location
+            file="src/main/res/layout-w600dp-land/activity_weatherdetails.xml"
+            line="136"
+            column="58"/>
+        <location
+            file="src/main/res/layout-w600dp-land/activity_weatherdetails.xml"
+            line="137"
+            column="59"
+            message="Incompatible direction here"/>
+    </issue>
+
+    <issue
+        id="RtlCompat"
+        message="Inconsistent alignment specification between `textAlignment` and `gravity` attributes: was `left`, expected `start`"
+        errorLine1="                                  android:textAlignment=&quot;textStart&quot;"
+        errorLine2="                                                         ~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_weatherdetails.xml"
+            line="140"
+            column="58"/>
+        <location
+            file="src/main/res/layout/activity_weatherdetails.xml"
+            line="141"
+            column="59"
+            message="Incompatible direction here"/>
+    </issue>
+
+    <issue
+        id="RtlCompat"
+        message="Inconsistent alignment specification between `textAlignment` and `gravity` attributes: was `right`, expected `end`"
+        errorLine1="                                android:textAlignment=&quot;textEnd&quot;"
+        errorLine2="                                                       ~~~~~~~">
+        <location
+            file="src/main/res/layout-w600dp-land/activity_weatherdetails.xml"
+            line="148"
+            column="56"/>
+        <location
+            file="src/main/res/layout-w600dp-land/activity_weatherdetails.xml"
+            line="149"
+            column="50"
+            message="Incompatible direction here"/>
+    </issue>
+
+    <issue
+        id="RtlCompat"
+        message="Inconsistent alignment specification between `textAlignment` and `gravity` attributes: was `right`, expected `end`"
+        errorLine1="                                android:textAlignment=&quot;textEnd&quot;"
+        errorLine2="                                                       ~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_weatherdetails.xml"
+            line="152"
+            column="56"/>
+        <location
+            file="src/main/res/layout/activity_weatherdetails.xml"
+            line="153"
+            column="50"
+            message="Incompatible direction here"/>
+    </issue>
+
+    <issue
+        id="RtlCompat"
+        message="Inconsistent alignment specification between `textAlignment` and `gravity` attributes: was `bottom`, expected `start`"
+        errorLine1="                      android:textAlignment=&quot;textStart&quot;"
+        errorLine2="                                             ~~~~~~~~~">
+        <location
+            file="src/main/res/layout/clockwidget_layout.xml"
+            line="431"
+            column="46"/>
+        <location
+            file="src/main/res/layout/clockwidget_layout.xml"
+            line="432"
+            column="47"
+            message="Incompatible direction here"/>
+    </issue>
+
+    <issue
+        id="RtlCompat"
+        message="Inconsistent alignment specification between `textAlignment` and `gravity` attributes: was `bottom`, expected `end`"
+        errorLine1="                    android:textAlignment=&quot;textEnd&quot;"
+        errorLine2="                                           ~~~~~~~">
+        <location
+            file="src/main/res/layout/clockwidget_layout.xml"
+            line="443"
+            column="44"/>
+        <location
+            file="src/main/res/layout/clockwidget_layout.xml"
+            line="444"
+            column="45"
+            message="Incompatible direction here"/>
+    </issue>
+
+    <issue
+        id="RtlCompat"
+        message="Inconsistent alignment specification between `textAlignment` and `gravity` attributes: was `left`, expected `start`"
+        errorLine1="                            android:textAlignment=&quot;textStart&quot;/&gt;"
+        errorLine2="                                                   ~~~~~~~~~">
+        <location
+            file="src/main/res/layout-sw320dp/detailslistitem3.xml"
+            line="268"
+            column="52"/>
+        <location
+            file="src/main/res/layout-sw320dp/detailslistitem3.xml"
+            line="265"
+            column="46"
+            message="Incompatible direction here"/>
+    </issue>
+
+    <issue
+        id="RtlCompat"
+        message="Inconsistent alignment specification between `textAlignment` and `gravity` attributes: was `left`, expected `start`"
+        errorLine1="                            android:textAlignment=&quot;textStart&quot;/&gt;"
+        errorLine2="                                                   ~~~~~~~~~">
+        <location
+            file="src/main/res/layout-sw400dp/detailslistitem3.xml"
+            line="268"
+            column="52"/>
+        <location
+            file="src/main/res/layout-sw400dp/detailslistitem3.xml"
+            line="265"
+            column="46"
+            message="Incompatible direction here"/>
+    </issue>
+
+    <issue
+        id="RtlCompat"
+        message="Inconsistent alignment specification between `textAlignment` and `gravity` attributes: was `left`, expected `start`"
+        errorLine1="                            android:textAlignment=&quot;textStart&quot;/&gt;"
+        errorLine2="                                                   ~~~~~~~~~">
+        <location
+            file="src/main/res/layout/detailslistitem3.xml"
+            line="268"
+            column="52"/>
+        <location
+            file="src/main/res/layout/detailslistitem3.xml"
+            line="265"
+            column="46"
+            message="Incompatible direction here"/>
+    </issue>
+
+    <issue
+        id="RtlCompat"
+        message="Inconsistent alignment specification between `textAlignment` and `gravity` attributes: was `left`, expected `start`"
+        errorLine1="                            android:textAlignment=&quot;textStart&quot;/&gt;"
+        errorLine2="                                                   ~~~~~~~~~">
+        <location
+            file="src/main/res/layout-sw320dp/detailslistitem3.xml"
+            line="280"
+            column="52"/>
+        <location
+            file="src/main/res/layout-sw320dp/detailslistitem3.xml"
+            line="278"
+            column="46"
+            message="Incompatible direction here"/>
+    </issue>
+
+    <issue
+        id="RtlCompat"
+        message="Inconsistent alignment specification between `textAlignment` and `gravity` attributes: was `left`, expected `start`"
+        errorLine1="                            android:textAlignment=&quot;textStart&quot;/&gt;"
+        errorLine2="                                                   ~~~~~~~~~">
+        <location
+            file="src/main/res/layout-sw400dp/detailslistitem3.xml"
+            line="280"
+            column="52"/>
+        <location
+            file="src/main/res/layout-sw400dp/detailslistitem3.xml"
+            line="278"
+            column="46"
+            message="Incompatible direction here"/>
+    </issue>
+
+    <issue
+        id="RtlCompat"
+        message="Inconsistent alignment specification between `textAlignment` and `gravity` attributes: was `left`, expected `start`"
+        errorLine1="                            android:textAlignment=&quot;textStart&quot;/&gt;"
+        errorLine2="                                                   ~~~~~~~~~">
+        <location
+            file="src/main/res/layout/detailslistitem3.xml"
+            line="280"
+            column="52"/>
+        <location
+            file="src/main/res/layout/detailslistitem3.xml"
+            line="278"
+            column="46"
+            message="Incompatible direction here"/>
+    </issue>
+
+    <issue
+        id="RtlCompat"
+        message="Inconsistent alignment specification between `textAlignment` and `gravity` attributes: was `left`, expected `start`"
+        errorLine1="                            android:textAlignment=&quot;textStart&quot;/&gt;"
+        errorLine2="                                                   ~~~~~~~~~">
+        <location
+            file="src/main/res/layout-sw320dp/detailslistitem3.xml"
+            line="319"
+            column="52"/>
+        <location
+            file="src/main/res/layout-sw320dp/detailslistitem3.xml"
+            line="316"
+            column="46"
+            message="Incompatible direction here"/>
+    </issue>
+
+    <issue
+        id="RtlCompat"
+        message="Inconsistent alignment specification between `textAlignment` and `gravity` attributes: was `left`, expected `start`"
+        errorLine1="                            android:textAlignment=&quot;textStart&quot;/&gt;"
+        errorLine2="                                                   ~~~~~~~~~">
+        <location
+            file="src/main/res/layout-sw400dp/detailslistitem3.xml"
+            line="319"
+            column="52"/>
+        <location
+            file="src/main/res/layout-sw400dp/detailslistitem3.xml"
+            line="316"
+            column="46"
+            message="Incompatible direction here"/>
+    </issue>
+
+    <issue
+        id="RtlCompat"
+        message="Inconsistent alignment specification between `textAlignment` and `gravity` attributes: was `left`, expected `start`"
+        errorLine1="                            android:textAlignment=&quot;textStart&quot;/&gt;"
+        errorLine2="                                                   ~~~~~~~~~">
+        <location
+            file="src/main/res/layout/detailslistitem3.xml"
+            line="319"
+            column="52"/>
+        <location
+            file="src/main/res/layout/detailslistitem3.xml"
+            line="316"
+            column="46"
+            message="Incompatible direction here"/>
+    </issue>
+
+    <issue
+        id="RtlCompat"
+        message="Inconsistent alignment specification between `textAlignment` and `gravity` attributes: was `left`, expected `start`"
+        errorLine1="                            android:textAlignment=&quot;textStart&quot;/&gt;"
+        errorLine2="                                                   ~~~~~~~~~">
+        <location
+            file="src/main/res/layout-sw320dp/detailslistitem3.xml"
+            line="331"
+            column="52"/>
+        <location
+            file="src/main/res/layout-sw320dp/detailslistitem3.xml"
+            line="329"
+            column="46"
+            message="Incompatible direction here"/>
+    </issue>
+
+    <issue
+        id="RtlCompat"
+        message="Inconsistent alignment specification between `textAlignment` and `gravity` attributes: was `left`, expected `start`"
+        errorLine1="                            android:textAlignment=&quot;textStart&quot;/&gt;"
+        errorLine2="                                                   ~~~~~~~~~">
+        <location
+            file="src/main/res/layout-sw400dp/detailslistitem3.xml"
+            line="331"
+            column="52"/>
+        <location
+            file="src/main/res/layout-sw400dp/detailslistitem3.xml"
+            line="329"
+            column="46"
+            message="Incompatible direction here"/>
+    </issue>
+
+    <issue
+        id="RtlCompat"
+        message="Inconsistent alignment specification between `textAlignment` and `gravity` attributes: was `left`, expected `start`"
+        errorLine1="                            android:textAlignment=&quot;textStart&quot;/&gt;"
+        errorLine2="                                                   ~~~~~~~~~">
+        <location
+            file="src/main/res/layout/detailslistitem3.xml"
+            line="331"
+            column="52"/>
+        <location
+            file="src/main/res/layout/detailslistitem3.xml"
+            line="329"
+            column="46"
+            message="Incompatible direction here"/>
+    </issue>
+
+    <issue
+        id="RtlCompat"
+        message="Inconsistent alignment specification between `textAlignment` and `gravity` attributes: was `bottom`, expected `start`"
+        errorLine1="                      android:textAlignment=&quot;textStart&quot;"
+        errorLine2="                                             ~~~~~~~~~">
+        <location
+            file="src/main/res/layout/preview_clock_widget.xml"
+            line="433"
+            column="46"/>
+        <location
+            file="src/main/res/layout/preview_clock_widget.xml"
+            line="434"
+            column="47"
+            message="Incompatible direction here"/>
+    </issue>
+
+    <issue
+        id="RtlCompat"
+        message="Inconsistent alignment specification between `textAlignment` and `gravity` attributes: was `bottom`, expected `end`"
+        errorLine1="                    android:textAlignment=&quot;textEnd&quot;"
+        errorLine2="                                           ~~~~~~~">
+        <location
+            file="src/main/res/layout/preview_clock_widget.xml"
+            line="445"
+            column="44"/>
+        <location
+            file="src/main/res/layout/preview_clock_widget.xml"
+            line="446"
+            column="45"
+            message="Incompatible direction here"/>
+    </issue>
 </issues>

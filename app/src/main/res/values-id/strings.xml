@@ -167,11 +167,9 @@
     <string name="sunset">Matahari terbenam</string>
     <string name="sunrise">Matahari terbit</string>
     <string name="twilight">Senja</string>
-    <string name="preference_feedback_title">Masukan</string>
     <string name="preference_clearnotifications_title">Atur ulang notifikasi</string>
     <string name="preference_clearnotifications_summary">Atur ulang notifikasi untuk peringatan cuaca. Semua notifikasi absah akan ditampilkan lagi.</string>
     <string name="preference_clearnotifications_message">Memori notifikasi dihapus.</string>
-    <string name="feedback_mail_subject">Masukan: TinyWeatherForecastGermany</string>
     <string name="warnings_until">sampai</string>
     <string name="warnings">Peringatan</string>
     <string name="warnings_updatetime">diperbarui:</string>
@@ -281,8 +279,6 @@
     <string name="logging_comment_hint">Anda dapat menambahkan komentar pada catatan untuk menemukan kesalahan — mohon jelaskan apa yang terjadi:</string>
     <string name="logging_copy_success">Catatan telah disalin ke papan klip Anda.</string>
     <string name="service_notification_channelname">Memperbarui data cuaca</string>
-    <string name="preference_feedback_summary">Berikan pengembang sedikit masukan melalui surel.</string>
-    <string name="feedback_mail_text">Ketika mengirim sebuah laporan kutu, mohon juga untuk menyalin dan menempelkan catatan jika dimungkinkan.</string>
     <string name="ends">berakhir</string>
     <string name="welcome_s1_text3">prakiraan sampai 10 hari</string>
     <string name="welcome_s2_text8">arah angin</string>
@@ -506,4 +502,5 @@
     <string name="preference_screen_uvhi_mainType_title">Langit cerah</string>
     <string name="preference_screen_overviewchart_zbase_title">Garis dasar nol</string>
     <string name="preference_widget_clock_title">Ukuran jam</string>
+    <string name="invalid_weather_host_message">Host data cuaca tidak valid. Hanya server DWD yang diizinkan; menggunakan server bawaan.</string>
 </resources>

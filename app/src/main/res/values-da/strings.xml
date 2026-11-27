@@ -162,10 +162,7 @@
     <string name="sunset">Solnedgang</string>
     <string name="sunrise">Solopgang</string>
     <string name="twilight">Tusindfryd</string>
-    <string name="feedback_mail_subject">Kommentarer: TinyWeatherForecastGermany</string>
     <string name="direction_calm">-</string>
-    <string name="preference_feedback_title">Kommentarer</string>
-    <string name="preference_feedback_summary">Giv udvikleren noget feedback via e-mail.</string>
     <string name="warnings_none">Der er i øjeblikket ingen vejrvarsler for Tyskland.</string>
     <string name="welcome_s1_text1">gratis, libre, open source</string>
     <string name="welcome_ready">KLAR!</string>
@@ -250,7 +247,6 @@
     <string name="preference_display_gradient_summary">Vis farvegradient for at angive tidspunktet for prognosen.</string>
     <string name="preference_log_to_logcat_summary">Indsæt logfilerne i systemloggen på enheden. Advarsel: Dette kan være en lækage af privatlivets fred, da andre apps kan få adgang til systemloggen.</string>
     <string name="alertdialog_2_title">logcat</string>
-    <string name="feedback_mail_text">Når du sender en fejlrapport, bedes du også kopiere og indsætte logfiler, hvis det er muligt.</string>
     <string name="alertdialog_2_text">Denne app logger i øjeblikket til logcat. Logning til logcat vil blive deaktiveret, da denne funktion ikke er beregnet til officielle udgivelser.</string>
     <string name="geoinput_intro">Indtast længde- og breddegrad manuelt for at finde de næste vejrstationer, eller brug din enheds placeringstjenester til at finde dem.</string>
     <string name="preference_displaysunrise_summary">Vis tidspunkter for solopgang, solnedgang og tusmørke.</string>
@@ -507,4 +503,5 @@
     <string name="preference_screen_uvhi_mainType_summary">Anvend ikke skymodifikationsfaktorer på prognosen for UV-fareindekset, der vises i appens hovedvisning.</string>
     <string name="preference_widget_clock_summary">Juster urets størrelse i vejr- og tidswidgeten.</string>
     <string name="preference_widget_clock_title">Urets størrelse</string>
+    <string name="invalid_weather_host_message">Ugyldig server til vejrdata. Kun DWD-servere er tilladt; standardserveren bruges.</string>
 </resources>

@@ -58,7 +58,6 @@
     <string name="moonset">月落</string>
     <string name="moonrise">月出</string>
     <string name="twilight">暮</string>
-    <string name="preference_feedback_title">意見反映</string>
     <string name="warnings_until">直至</string>
     <string name="warnings">警告</string>
     <string name="welcome_skip">略過</string>
@@ -123,4 +122,5 @@
     <string name="dwd_notice_app">資料來源：德國氣象局，自有元素加，部分資料為個別數值的平均值。警告訊息已簡化。</string>
     <string name="dayaftertomorrow">後天</string>
     <string name="station">車站</string>
+    <string name="invalid_weather_host_message">無效的天氣資料主機。僅允許 DWD 伺服器；將使用預設伺服器。</string>
 </resources>

@@ -130,8 +130,6 @@
     <string name="alertdialog_no">Nie</string>
     <string name="alertdialog_ok">OK</string>
     <string name="alertdialog_1_title">Ostrzeżenie</string>
-    <string name="preference_feedback_summary">Przekaż deweloperowi kilka uwag przez e-mail.</string>
-    <string name="feedback_mail_subject">Opinie: TinyWeatherForecastGermany</string>
     <string name="alertdialog_2_toast">Rejestrowanie do Logcat jest wyłączone.</string>
     <string name="alertdialog_2_title">logcat</string>
     <string name="logging_button_back">Powrót</string>
@@ -148,7 +146,6 @@
     <string name="sunset">Zachód słońca</string>
     <string name="sunrise">Wschód słońca</string>
     <string name="twilight">Zmierzch</string>
-    <string name="preference_feedback_title">Informacje zwrotne</string>
     <string name="logging_title">Logi</string>
     <string name="logging_copy_success">Logi zostały skopiowane do schowka.</string>
     <string name="logging_copy_fail">Kopiowanie logów do schowka nie powiodło się!</string>
@@ -246,7 +243,6 @@
     <string name="preference_log_to_logcat_summary">Włóż logi do dziennika systemowego na urządzeniu. Uwaga: może to być wyciek prywatności, inne aplikacje mogą uzyskać dostęp do dziennika systemowego.</string>
     <string name="alertdialog_1_text">Logowanie do logcat może spowodować wyciek prywatnych informacji do innych aplikacji. Czy jesteś pewien i czy wiesz co robisz\?</string>
     <string name="alertdialog_2_text">Ta aplikacja obecnie loguje się do logcat. Logowanie do logcat będzie wyłączone, ponieważ ta funkcja nie jest przeznaczona dla oficjalnych wydań.</string>
-    <string name="feedback_mail_text">Wysyłając zgłoszenie błędu, proszę również skopiować i wkleić logi, jeśli to możliwe.</string>
     <string name="warnings_none">Obecnie nie ma żadnych ostrzeżeń pogodowych dla Niemiec.</string>
     <string name="logging_button_copy">Kopiuj logi do schowka</string>
     <string name="welcome_s2_text5">marznący deszcz</string>
@@ -507,4 +503,5 @@
     <string name="preference_uvi_notice_summary">Więcej szczegółów na temat obliczania wskaźnika zagrożenia UV można znaleźć na stronie głównej DWD. Zmiana preferencji dotyczących bezchmurnego nieba wymaga aktualizacji danych prognostycznych z DWD.</string>
     <string name="preference_screen_uvhi_mainType_title">Czyste niebo</string>
     <string name="preference_screen_uvhi_mainType_summary">Nie należy stosować współczynników modyfikacji zachmurzenia do prognozy indeksu zagrożenia UV wyświetlanej w widoku głównym aplikacji.</string>
+    <string name="invalid_weather_host_message">Nieprawidłowy host danych pogodowych. Dozwolone są tylko serwery DWD; używany jest serwer domyślny.</string>
 </resources>

@@ -21,7 +21,7 @@ checked verbatim and are not rewritten:
 | --- | --- | --- | --- |
 | Gadgetbridge `WeatherSpec` v4 | `app/src/main/java/nodomain/freeyourgadget/gadgetbridge/model/WeatherSpec.java` | AGPL-3.0-or-later | Copyright (C) 2016-2024 Andreas Shimokawa, Arjan Schrijver, beardhatcode, Carsten Pfeiffer, Daniele Gobbetti, Enrico Brambilla, José Rebelo, Taavi Eomäe; full AGPLv3 notice |
 | Gadgetbridge model package note | `app/src/main/java/nodomain/freeyourgadget/gadgetbridge/model/package-info.java` | (package doc for the above) | Names Gadgetbridge as origin of `WeatherSpec` |
-| PNPOLY point-in-polygon | `app/src/main/java/de/kaffeemitkoffein/tinyweatherforecastgermany/Polygon.java` | original author's terms, referenced from upstream | `isInPolygon()` javadoc credits Wm. Randolph Franklin (1970-2003) and links the original source |
+| PNPOLY point-in-polygon | `app/src/main/java/de/kaffeemitkoffein/tinyweatherforecastgermany/Polygon.java` | original author's terms, referenced from upstream | `isInPolygon()` javadoc credits Wm. Randolph Franklin (1970-2003), links the original source and points at the notice in `res/raw/license.txt` |
 | Astronomy class | `app/src/main/java/org/astronomie/info/Astronomy.java` | GPL-3.0-or-later | Copyright (C) 2010-2012 Helmut Lehmeyer; full GPLv3 notice |
 
 The Android `androidx.annotation` types used by the unmodified `WeatherSpec` are supplied
@@ -71,18 +71,18 @@ Use the same value for IzzyOnDroid and for the planned fork repository at
 single-value field: do **not** enter `GPL-3.0-or-later`, even though older resources
 still carry that wording (see follow-ups below).
 
-## Known inconsistencies outside this task's scope
+## Resolved in TASK-36
 
-The following still say "GNU General Public License" and should be aligned by a change
-that owns Java sources / Android resources / root build config:
+The in-app license and the remaining GPLv3 wording were aligned with the fork license:
 
-- `app/src/main/res/raw/license.txt` ships the GPLv3 text and is what the in-app
-  "License" screen (`LicenseInfo.java`) displays.
-- Java file headers in the app package and the root `build.gradle` use the GPLv3
-  wording.
-- The PNPOLY note in `Polygon.java` points at a `COPYING.txt` that is not present in
-  this tree; the upstream license reference should be supplied or corrected.
+- `app/src/main/res/raw/license.txt` now starts with the canonical AGPLv3 text from
+  `COPYING` (what the in-app "License" screen `LicenseInfo.java` displays) and keeps
+  the preserved third-party notices below it.
+- The 73 TWFG-owned Java file headers and the root `build.gradle` header now use
+  AGPLv3-or-later wording. Vendored files (`Astronomy.java`, `WeatherSpec.java`) keep
+  their upstream headers verbatim.
+- The PNPOLY note in `Polygon.java` now points at the PNPOLY notice shipped in
+  `res/raw/license.txt` instead of a nonexistent `COPYING.txt`.
 
-This documentation task intentionally does not touch those files; the repository-level
-license (`COPYING`), `README.md`, `NOTICE` and the `app/build.gradle` header already
-state AGPL-3.0-or-later.
+The repository-level license (`COPYING`), `README.md`, `NOTICE` and the
+`app/build.gradle` header already stated AGPL-3.0-or-later.

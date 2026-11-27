@@ -247,11 +247,8 @@
     <string name="direction_southwest">DNY</string>
     <string name="sunrise">Napkelte</string>
     <string name="twilight">Alkonyat</string>
-    <string name="preference_feedback_summary">Adjon visszajelzést a fejlesztőnek e-mailben.</string>
     <string name="preference_clearnotifications_title">Értesítések visszaállítása</string>
     <string name="preference_clearnotifications_message">Értesítési memória törölve.</string>
-    <string name="feedback_mail_subject">Feedback: TinyWeatherForecastGermany</string>
-    <string name="feedback_mail_text">Ha hibajelentést küld, ha lehetséges, másolja be a naplófájlokat is.</string>
     <string name="warnings_until">eddig:</string>
     <string name="warnings_update">Figyelmeztetések frissítve.</string>
     <string name="warnings">Figyelmeztetések</string>
@@ -281,7 +278,6 @@
     <string name="geoinput_title">A legközelebbi meteorológiai állomás keresése</string>
     <string name="preference_led_notice_summary">Csak néhány készülék rendelkezik értesítési LED-del. Más eszközökön ezeknek a beállításoknak nincs hatása. Más készülékbeállítások megakadályozhatják, hogy az értesítési LED villogjon.</string>
     <string name="direction_east">K</string>
-    <string name="preference_feedback_title">Visszajelzés</string>
     <string name="preference_clearnotifications_summary">Az időjárási riasztások értesítéseinek visszaállítása. Minden érvényes értesítés újra megjelenik.</string>
     <string name="warnings_outdated">Az időjárási figyelmeztetések elavultak.</string>
     <string name="welcome_s1_text1">szabad és nyílt forráskódú</string>
@@ -524,4 +520,5 @@
     <string name="preference_screen_uvhi_mainType_title">Tiszta égbolt</string>
     <string name="preference_screen_uvhi_mainType_summary">Ne alkalmazzon felhőmódosító tényezőket az alkalmazás fő nézetében megjelenő UV-veszélyességi index-előrejelzésre.</string>
     <string name="preference_widget_clock_summary">Állítsa be az óra méretét az időjárás és az idő widgetben.</string>
+    <string name="invalid_weather_host_message">Érvénytelen időjárási adatkiszolgáló. Csak DWD-kiszolgálók engedélyezettek; az alapértelmezett kiszolgáló használata.</string>
 </resources>

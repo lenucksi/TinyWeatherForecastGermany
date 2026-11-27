@@ -3,14 +3,14 @@
  This file is part of TinyWeatherForecastGermany.
  Copyright (c) 2020, 2021 Pawel Dube
  This program is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
+ it under the terms of the GNU Affero General Public License as published by
  the Free Software Foundation, either version 3 of the License, or
  (at your option) any later version.
  This program is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
- You should have received a copy of the GNU General Public License
+ GNU Affero General Public License for more details.
+ You should have received a copy of the GNU Affero General Public License
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --><resources>
     <string name="app_name">Petite prévision météo Allemagne</string>
@@ -183,10 +183,6 @@
     <string name="sunset">Coucher du soleil</string>
     <string name="sunrise">Lever du soleil</string>
     <string name="twilight">Crépuscule</string>
-    <string name="preference_feedback_title">Remarques</string>
-    <string name="preference_feedback_summary">Faites part de vos réactions au développeur par courrier électronique.</string>
-    <string name="feedback_mail_subject">Remarques : TinyWeatherForecastGermany</string>
-    <string name="feedback_mail_text">Quand vous envoyez un rapport d\'erreur, veuillez également copier-coller les journaux, si possible.</string>
     <string name="warnings_until">jusqu\'au</string>
     <string name="warnings_update">Avertissements mis à jour.</string>
     <string name="warnings">Avertissements</string>
@@ -539,4 +535,5 @@
     <string name="preference_uvi_notice_summary">De plus amples détails sur le calcul de l\'indice de danger UV sont disponibles sur la page d\'accueil du DWD. La modification de la préférence pour le ciel dégagé nécessite la mise à jour des données de prévision de la DWD.</string>
     <string name="preference_screen_uvhi_mainType_title">Ciel dégagé</string>
     <string name="preference_screen_uvhi_mainType_summary">Älä sovella pilvimuutoskertoimia sovelluksen päänäkymässä näkyvään UV-vaaraindeksiennusteeseen.</string>
+    <string name="invalid_weather_host_message">Serveur de données météo invalide. Seuls les serveurs DWD sont autorisés ; le serveur par défaut est utilisé.</string>
 </resources>

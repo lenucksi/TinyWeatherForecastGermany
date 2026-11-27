@@ -181,10 +181,6 @@
     <string name="sunset">Puesta de sol</string>
     <string name="sunrise">Salida del sol</string>
     <string name="twilight">Crepúsculo</string>
-    <string name="preference_feedback_title">Retroalimentación</string>
-    <string name="preference_feedback_summary">Dar retroalimentación al desarrollador por correo electrónico.</string>
-    <string name="feedback_mail_subject">Feedback: TinyWeatherForecastGermany</string>
-    <string name="feedback_mail_text">Cuando envíe un informe de error, por favor, copie &amp; pegue también los registros, si es posible.</string>
     <string name="warnings_until">hasta</string>
     <string name="warnings_update">Advertencias actualizadas.</string>
     <string name="warnings">Advertencias</string>
@@ -530,4 +526,5 @@
     <string name="preference_overviewchart_inappsize_title">Tamaño</string>
     <string name="preference_overviewchart_inappsize_summary">Tamaño del gráfico en modo vertical.</string>
     <string name="error_no_data" translatable="true">Sin datos meteorológicos disponibles.</string>
+    <string name="invalid_weather_host_message">Servidor de datos meteorológicos no válido. Solo se permiten servidores DWD; se usa el servidor predeterminado.</string>
 </resources>

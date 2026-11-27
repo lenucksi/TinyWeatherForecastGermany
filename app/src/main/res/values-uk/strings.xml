@@ -130,7 +130,6 @@
     <string name="preference_displaysunrise_title">Схід і захід</string>
     <string name="preference_display_distance_unit_title">Відстань</string>
     <string name="logging_button_back">Назад</string>
-    <string name="preference_feedback_title">Відгук</string>
     <string name="welcome_ready">ГОТОВО!</string>
     <string name="welcome_s1_text1">вільне, безкоштовне, з відкритим кодом</string>
     <string name="welcome_s1_text3">прогноз на 10 днів</string>
@@ -219,10 +218,7 @@
     <string name="service_notification_text3">Очищення…</string>
     <string name="direction_calm">-</string>
     <string name="twilight">Сутінки</string>
-    <string name="preference_feedback_summary">Надішліть розробнику якийсь відгук на ел. пошту.</string>
     <string name="preference_clearnotifications_message">Пам’ять сповіщень очищено.</string>
-    <string name="feedback_mail_subject">Відгук: TinyWeatherForecastGermany</string>
-    <string name="feedback_mail_text">Під час надсилання звітів про вади, будь ласка, за можливості скопіюйте і вставте журнали.</string>
     <string name="warnings_until">до</string>
     <string name="warnings_update">Попередження оновлено.</string>
     <string name="warnings">Попередження</string>
@@ -529,4 +525,5 @@
     <string name="preference_overviewchart_inappsize_title">Розмір</string>
     <string name="preference_overviewchart_inappsize_summary">Розмір оглядової діаграми в портретній орієнтації.</string>
     <string name="error_no_data" translatable="true">Дані про погоду недоступні.</string>
+    <string name="invalid_weather_host_message">Недопустимий сервер даних про погоду. Дозволені лише сервери DWD; використовується сервер за замовчуванням.</string>
 </resources>
