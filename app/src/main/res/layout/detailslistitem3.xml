@@ -57,7 +57,7 @@
                         android:layout_height="wrap_content"
                         android:weightSum="5">
 
-                    <ImageView
+                    <ImageView android:contentDescription="@null"
                             android:id="@+id/dl_sun"
                             android:layout_width="0dp"
                             android:layout_weight="1"
@@ -68,7 +68,7 @@
                             android:layout_marginBottom="@dimen/fcmain_textsize_small"
                             android:gravity="center"/>
 
-                    <ImageView
+                    <ImageView android:contentDescription="@null"
                             android:id="@+id/dl_sun_up"
                             android:layout_width="0dp"
                             android:layout_weight="1"
@@ -145,7 +145,7 @@
                         android:layout_height="wrap_content"
                         android:weightSum="5">
 
-                    <ImageView
+                    <ImageView android:contentDescription="@null"
                             android:layout_width="0dp"
                             android:layout_weight="1"
                             android:layout_height="@dimen/fcmain_textsize_large"
@@ -156,7 +156,7 @@
                             android:visibility="invisible"
                             android:gravity="center"/>
 
-                    <ImageView
+                    <ImageView android:contentDescription="@null"
                             android:id="@+id/dl_sun_down"
                             android:layout_width="0dp"
                             android:layout_weight="1"
@@ -235,7 +235,7 @@
                         android:layout_marginTop="5dp"
                         android:weightSum="5">
 
-                    <ImageView
+                    <ImageView android:contentDescription="@null"
                             android:id="@+id/dl_moon"
                             android:layout_width="0dp"
                             android:layout_weight="1"
@@ -245,7 +245,7 @@
                             android:src="@mipmap/moonset"
                             android:gravity="center"/>
 
-                    <ImageView
+                    <ImageView android:contentDescription="@null"
                             android:id="@+id/dl_moon_up"
                             android:layout_width="0dp"
                             android:layout_weight="1"
@@ -286,7 +286,7 @@
                         android:layout_height="wrap_content"
                         android:weightSum="5">
 
-                    <ImageView
+                    <ImageView android:contentDescription="@null"
                             android:layout_width="0dp"
                             android:layout_weight="1"
                             android:layout_height="@dimen/fcmain_textsize_large"
@@ -296,7 +296,7 @@
                             android:visibility="invisible"
                             android:gravity="center"/>
 
-                    <ImageView
+                    <ImageView android:contentDescription="@null"
                             android:id="@+id/dl_moon_down"
                             android:layout_width="0dp"
                             android:layout_weight="1"
@@ -342,7 +342,7 @@
                 android:layout_gravity="center"
                 android:gravity="center">
 
-            <ImageView
+            <ImageView android:contentDescription="@string/a11y_chart_data"
                     android:id="@+id/dl_chart"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"

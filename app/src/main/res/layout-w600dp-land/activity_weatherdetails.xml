@@ -61,7 +61,7 @@
                     android:layout_height="wrap_content"
                     android:padding="3dp">
 
-                <ImageView android:id="@+id/weatherdetails_backgroundimage"
+                <ImageView android:contentDescription="@null" android:id="@+id/weatherdetails_backgroundimage"
                            android:layout_width="match_parent"
                            android:layout_height="wrap_content"/>
 
@@ -76,7 +76,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content">
 
-                    <ImageView android:id="@+id/weatherdetails_weatherconditionicon"
+                    <ImageView android:contentDescription="@null" android:id="@+id/weatherdetails_weatherconditionicon"
                                android:layout_width="@dimen/widget_weathericon_size"
                                android:layout_height="@dimen/widget_weathericon_size"
                                android:layout_alignParentLeft="true"
@@ -179,7 +179,7 @@
                         android:layout_centerInParent="true"
                         android:padding="3dp">
 
-                    <ImageView
+                    <ImageView android:contentDescription="@null"
                             android:id="@+id/weatherdetails_precipitationchart"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"

@@ -33,7 +33,7 @@
             android:layout_height="wrap_content"
             android:layout_margin="5dp"
             android:layout_alignParentRight="true"
-            android:textSize="24dp"
+            android:textSize="24sp"
             android:textColor="?attr/colorText"
             android:text="XXXX 21°"/>
 
