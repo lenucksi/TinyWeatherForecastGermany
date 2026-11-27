@@ -19,6 +19,10 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
 
+<!-- TASK-56: widget previews are static launcher assets and can depict only one
+     look. They intentionally show the default dark (SolarizedDark) theme. The
+     runtime widget never uses these colours: ThemePicker applies a matching
+     background and text colour for light, dark and both Solarized themes. -->
 <RelativeLayout
         xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools"
         android:id="@+id/chartwidget_maincontainer"

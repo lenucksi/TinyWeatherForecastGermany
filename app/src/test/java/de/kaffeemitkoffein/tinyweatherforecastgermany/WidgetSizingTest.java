@@ -23,6 +23,7 @@ import org.junit.Test;
 
 import static de.kaffeemitkoffein.tinyweatherforecastgermany.ClassicWidget.WidgetSizing.*;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 /** TASK-26: font-scale and resize arithmetic without a launcher. */
@@ -92,5 +93,30 @@ public class WidgetSizingTest {
         assertEquals(8f, boundedFontSize(2f, 8f, 40f), 0.01f);
         assertEquals(40f, boundedFontSize(70f, 8f, 40f), 0.01f);
         assertEquals(14f, boundedFontSize(14f, 8f, 40f), 0.01f);
+    }
+
+    @Test
+    public void largeWidgetLayoutStartsAbove120Dp() {
+        assertFalse(useLargeWidgetLayout(LARGE_WIDGET_HEIGHT_DP));
+        assertTrue(useLargeWidgetLayout(LARGE_WIDGET_HEIGHT_DP + 1));
+        assertTrue(useLargeWidgetLayout(240));
+    }
+
+    @Test
+    public void everyLargeWidgetShowsDailyMinAndMax() {
+        // TASK-56: the old 240 dp threshold hid the temperatures in the common
+        // two-row widget. The large bar has room for four rows, so it must
+        // always render weekday / icon / max / min.
+        assertFalse(showDailyTemperatures(120));
+        assertTrue(showDailyTemperatures(121));
+        assertTrue(showDailyTemperatures(160));
+        assertTrue(showDailyTemperatures(240));
+        assertTrue(showDailyTemperatures(400));
+        int previous = 0;
+        for (int height = 0; height <= 600; height += 10) {
+            int shown = showDailyTemperatures(height) ? 1 : 0;
+            assertTrue("daily values must not disappear as the widget grows", shown >= previous);
+            previous = shown;
+        }
     }
 }

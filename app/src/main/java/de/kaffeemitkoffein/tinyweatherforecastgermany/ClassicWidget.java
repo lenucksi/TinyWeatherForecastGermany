@@ -58,8 +58,28 @@ public class ClassicWidget extends AppWidgetProvider {
         public static final float MIN_FONT_SP = 8f;
         /** Above this the user setting is clamped by the frame, not by the scale factor. */
         public static final float MAX_SUPPORTED_FONT_SCALE = 1.5f;
+        /** Height in dp from which the ClassicWidget uses the two-row large layout. */
+        public static final int LARGE_WIDGET_HEIGHT_DP = 120;
 
         private WidgetSizing() {}
+
+        /**
+         * TASK-56: decide the layout from dp (the unit AppWidgetManager reports)
+         * instead of comparing pixel heights against a dpi-derived threshold.
+         * Pure so the policy can be verified on the JVM.
+         */
+        public static boolean useLargeWidgetLayout(int heightDp) {
+            return heightDp > LARGE_WIDGET_HEIGHT_DP;
+        }
+
+        /**
+         * Every large widget shows the daily min/max values. Previously they
+         * were only enabled above 240 dp, leaving the common two-row widget
+         * with icons only and half of every daily column empty.
+         */
+        public static boolean showDailyTemperatures(int heightDp) {
+            return useLargeWidgetLayout(heightDp);
+        }
 
         public static float clamp(float value, float min, float max) {
             if (value < min) {
@@ -404,6 +424,10 @@ public class ClassicWidget extends AppWidgetProvider {
                 long stopTime = startTime + 24*60*60*1000; // next 24h
                 SpannableStringBuilder spannableStringBuilder = WeatherWarnings.getMiniWarningsString(context, locationWarnings, startTime, stopTime, false,WeatherWarnings.WarningStringType.EVENT);
                 remoteViews.setTextViewText(textViewId,spannableStringBuilder);
+                // TASK-56: the XML default text color is the dark-theme color;
+                // on a light widget it would be invisible. Any visible text view
+                // must be recoloured for the active theme at runtime.
+                remoteViews.setTextColor(textViewId,ThemePicker.getWidgetTextColor(context));
                 int color = ThemePicker.adaptColorToTheme(context,locationWarnings.get(0).getWarningColor());
                 remoteViews.setInt(imageViewId,"setColorFilter",color);
                 if (locationWarnings.size()>1){
@@ -451,8 +475,9 @@ public class ClassicWidget extends AppWidgetProvider {
             remoteViews.setTextColor(R.id.classicwidget_temperature,ThemePicker.getTemperatureAccentColor(c,weatherCard.currentWeather));
         } else {
             remoteViews.setTextViewText(R.id.classicwidget_temperature,NOT_AVAILABLE);
+            // TASK-56: even a "-" must be legible on a light widget background.
+            remoteViews.setTextColor(R.id.classicwidget_temperature,ThemePicker.getWidgetTextColor(c));
         }
-        //remoteViews.setTextColor(R.id.classicwidget_temperature,ThemePicker.getWidgetTextColor(c));
         String lowhigh = NOT_AVAILABLE;
         if (weatherCard.currentWeather.hasMinTemperature()){
             lowhigh = String.valueOf(weatherCard.currentWeather.getMinTemperatureInCelsiusInt()+"°");
@@ -584,23 +609,20 @@ public class ClassicWidget extends AppWidgetProvider {
                     flags |= PendingIntent.FLAG_IMMUTABLE;
                 }
                 pendingIntent = PendingIntent.getActivity(c,0,intent,flags);
-                int widgetResource = R.layout.classicwidget_layout;
-                int lines = 1;
-                // if widget hight is > 120 dpi, expand to 2 lines
-                if (widgetHeight>widgetDimensionManager.getYPixelsFromDPIInt(120)){
-                    lines = 2;
-                    widgetResource = R.layout.largewidget_layout;
-                }
-                // if widget hight is > 240 dpi, expand to 3 lines
-                if (widgetHeight>widgetDimensionManager.getYPixelsFromDPIInt(240)){
-                    lines = 3;
-                }
+                // TASK-56: AppWidgetManager reports dp - decide in dp, not by
+                // comparing pixels against a dpi-derived threshold.
+                int heightDp = widgetDimensionManager.getWidgetHeightDp();
+                boolean largeLayout = WidgetSizing.useLargeWidgetLayout(heightDp);
+                int widgetResource = largeLayout ? R.layout.largewidget_layout : R.layout.classicwidget_layout;
                 RemoteViews remoteViews = new RemoteViews(c.getPackageName(),widgetResource);
-                if (lines==2){
-                    remoteViews.setImageViewBitmap(R.id.largewidget_10daysbitmap, get10DaysForecastBar(c,widgetWidth,widgetHeight,weatherCard,false,widgetDimensionManager.getFontScale()));
-                }
-                if (lines==3){
-                    remoteViews.setImageViewBitmap(R.id.largewidget_10daysbitmap, get10DaysForecastBar(c,widgetWidth,widgetHeight,weatherCard,true,widgetDimensionManager.getFontScale()));
+                if (largeLayout){
+                    // The daily bar draws weekday / icon / max / min in four
+                    // rows. Rendering icons only left a large empty band above
+                    // the icons and hid the min/max values the user expects.
+                    remoteViews.setImageViewBitmap(R.id.largewidget_10daysbitmap,
+                            get10DaysForecastBar(c,widgetWidth,widgetHeight,weatherCard,
+                                    WidgetSizing.showDailyTemperatures(heightDp),
+                                    widgetDimensionManager.getFontScale()));
                 }
                 remoteViews.setOnClickPendingIntent(R.id.widget_maincontainer,pendingIntent);
                 setClassicWidgetItems(remoteViews,weatherCard,c);
@@ -971,6 +993,14 @@ public class ClassicWidget extends AppWidgetProvider {
                 return widget_width_landscape_dp;
             }
             return widget_width_portrait_dp;
+        }
+
+        /** TASK-56: counterpart of {@link #getWidgetWidthDp()} for layout decisions. */
+        public int getWidgetHeightDp(){
+            if (orientation == Configuration.ORIENTATION_LANDSCAPE){
+                return widget_height_landscape_dp;
+            }
+            return widget_height_portrait_dp;
         }
 
         public float getFontScale(){
