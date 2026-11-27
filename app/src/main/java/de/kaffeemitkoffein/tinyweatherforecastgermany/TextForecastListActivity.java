@@ -24,7 +24,6 @@ import android.app.Activity;
 import android.content.*;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.GradientDrawable;
-import android.os.Build;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -229,11 +228,7 @@ public class TextForecastListActivity extends Activity {
         IntentFilter filter = new IntentFilter();
         filter.addAction(ACTION_UPDATE_TEXTS);
         filter.addAction(MainActivity.MAINAPP_HIDE_PROGRESS);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            registerReceiver(broadcastReceiver,filter,RECEIVER_EXPORTED);
-        } else {
-            registerReceiver(broadcastReceiver,filter);
-        }
+        MainActivity.registerForInternalBroadcasts(this,broadcastReceiver,filter);
     }
 
 }
