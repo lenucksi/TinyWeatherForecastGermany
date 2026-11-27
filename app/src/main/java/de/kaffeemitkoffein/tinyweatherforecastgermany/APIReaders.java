@@ -183,20 +183,45 @@ public class APIReaders {
         private SecureXml() {
         }
 
-        /** Fail-closed builder: missing core hardening features abort parsing; optional JAXP access properties are tolerated. */
+        private static final String DISALLOW_DOCTYPE =
+                URI_SCHEME + "apache.org/xml/features/disallow-doctype-decl";
+        private static final String EXTERNAL_GENERAL_ENTITIES =
+                URI_SCHEME + "xml.org/sax/features/external-general-entities";
+        private static final String EXTERNAL_PARAMETER_ENTITIES =
+                URI_SCHEME + "xml.org/sax/features/external-parameter-entities";
+        private static final String LOAD_EXTERNAL_DTD =
+                URI_SCHEME + "apache.org/xml/features/nonvalidating/load-external-dtd";
+
         public static DocumentBuilder newSecureDocumentBuilder() throws ParserConfigurationException {
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
-            // The decisive switch: no DOCTYPE means no internal or external entity declarations.
-            factory.setFeature(URI_SCHEME + "apache.org/xml/features/disallow-doctype-decl", true);
-            factory.setFeature(URI_SCHEME + "xml.org/sax/features/external-general-entities", false);
-            factory.setFeature(URI_SCHEME + "xml.org/sax/features/external-parameter-entities", false);
-            factory.setFeature(URI_SCHEME + "apache.org/xml/features/nonvalidating/load-external-dtd", false);
+            return newSecureDocumentBuilder(DocumentBuilderFactory.newInstance());
+        }
+
+        /**
+         * Configures the supplied factory. Package-visible so a unit test can emulate a parser
+         * with a reduced feature set (Android's parser rejects several JAXP feature URIs).
+         *
+         * Factory features are best-effort hardening only. The decisive protection is applied
+         * by {@link #parse(String)}/{@link #parse(Reader)}: a DTD pre-screen rejects every
+         * DOCTYPE/ENTITY declaration before the parser sees the document, and the entity
+         * resolver below refuses to fetch anything external. Unsupported features must not be
+         * fatal here, otherwise no DWD forecast, warning or text can ever be loaded on Android.
+         */
+        static DocumentBuilder newSecureDocumentBuilder(DocumentBuilderFactory factory)
+                throws ParserConfigurationException {
+            try {
+                factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+            } catch (ParserConfigurationException | IllegalArgumentException unsupported) {
+                // Not exposed by every parser; the DTD pre-screen remains decisive.
+            }
+            setFeatureIfSupported(factory, DISALLOW_DOCTYPE, true);
+            setFeatureIfSupported(factory, EXTERNAL_GENERAL_ENTITIES, false);
+            setFeatureIfSupported(factory, EXTERNAL_PARAMETER_ENTITIES, false);
+            setFeatureIfSupported(factory, LOAD_EXTERNAL_DTD, false);
             try {
                 factory.setXIncludeAware(false);
                 factory.setExpandEntityReferences(false);
-            } catch (UnsupportedOperationException e) {
-                throw new ParserConfigurationException("XML parser cannot disable XInclude/entity expansion");
+            } catch (UnsupportedOperationException ignored) {
+                // Optional on some parsers; DOCTYPE declarations are screened before parsing.
             }
             // JAXP access properties are optional on Android; tolerate parsers without them.
             setAttributeIfSupported(factory, ACCESS_EXTERNAL_DTD, "");
@@ -206,6 +231,16 @@ public class APIReaders {
             // Last line of defence: never fetch a URL or file named by an external entity.
             builder.setEntityResolver((publicId, systemId) -> new InputSource(new StringReader("")));
             return builder;
+        }
+
+        private static boolean setFeatureIfSupported(DocumentBuilderFactory factory,
+                                                     String name, boolean value) {
+            try {
+                factory.setFeature(name, value);
+                return true;
+            } catch (ParserConfigurationException | IllegalArgumentException unsupported) {
+                return false;
+            }
         }
 
         private static void setAttributeIfSupported(DocumentBuilderFactory factory, String name, String value) {
@@ -1068,10 +1103,12 @@ public class APIReaders {
                     PrivateLog.log(context, PrivateLog.DATA,PrivateLog.INFO,"Weather elements read: "+rawWeatherInfo.elements);
                     return rawWeatherInfo;
                 } catch (Exception e){
-                    // nothing to do
+                    PrivateLog.log(context, PrivateLog.DATA,PrivateLog.ERR,
+                            "Failed to parse forecast data: "+e.getClass().getSimpleName()+": "+e.getMessage());
                 }
             } catch (IOException e){
-                // nothing to do
+                PrivateLog.log(context, PrivateLog.DATA,PrivateLog.ERR,
+                        "Failed to download forecast data: "+e.getClass().getSimpleName()+": "+e.getMessage());
             }
             return null;
         }

@@ -31,6 +31,12 @@ import java.io.InputStream;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.HashSet;
+import java.util.Set;
+import javax.xml.XMLConstants;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -98,6 +104,107 @@ public class SecureXmlParserTest {
             fail("parser accepted a DOCTYPE declaration");
         } catch (SAXParseException expected) {
             // Expected: disallow-doctype-decl is active on the factory.
+        }
+    }
+
+    /**
+     * Android's DocumentBuilderFactory does not expose the JAXP secure-processing feature.
+     * This factory emulates that parser so the regression (every DWD download failing with
+     * ParserConfigurationException) is covered by a JVM test.
+     */
+    private static class ReducedFeatureFactory extends DocumentBuilderFactory {
+        private final DocumentBuilderFactory delegate = DocumentBuilderFactory.newInstance();
+        private final Set<String> unsupported = new HashSet<String>();
+
+        ReducedFeatureFactory reject(String... features) {
+            for (String feature : features) {
+                unsupported.add(feature);
+            }
+            return this;
+        }
+
+        @Override public DocumentBuilder newDocumentBuilder() throws ParserConfigurationException {
+            return delegate.newDocumentBuilder();
+        }
+        @Override public void setAttribute(String name, Object value) {
+            delegate.setAttribute(name, value);
+        }
+        @Override public Object getAttribute(String name) {
+            return delegate.getAttribute(name);
+        }
+        @Override public void setFeature(String name, boolean value) throws ParserConfigurationException {
+            if (unsupported.contains(name)) {
+                throw new ParserConfigurationException("feature not supported by this parser: " + name);
+            }
+            delegate.setFeature(name, value);
+        }
+        @Override public boolean getFeature(String name) throws ParserConfigurationException {
+            return delegate.getFeature(name);
+        }
+        @Override public void setNamespaceAware(boolean awareness) {
+            delegate.setNamespaceAware(awareness);
+        }
+        @Override public boolean isNamespaceAware() { return delegate.isNamespaceAware(); }
+        @Override public void setValidating(boolean validating) { delegate.setValidating(validating); }
+        @Override public boolean isValidating() { return delegate.isValidating(); }
+        @Override public void setIgnoringElementContentWhitespace(boolean whitespace) {
+            delegate.setIgnoringElementContentWhitespace(whitespace);
+        }
+        @Override public boolean isIgnoringElementContentWhitespace() {
+            return delegate.isIgnoringElementContentWhitespace();
+        }
+        @Override public void setExpandEntityReferences(boolean expand) {
+            delegate.setExpandEntityReferences(expand);
+        }
+        @Override public boolean isExpandEntityReferences() { return delegate.isExpandEntityReferences(); }
+        @Override public void setIgnoringComments(boolean ignore) { delegate.setIgnoringComments(ignore); }
+        @Override public boolean isIgnoringComments() { return delegate.isIgnoringComments(); }
+        @Override public void setCoalescing(boolean coalescing) { delegate.setCoalescing(coalescing); }
+        @Override public boolean isCoalescing() { return delegate.isCoalescing(); }
+    }
+
+    @Test
+    public void parserWithoutSecureProcessingFeatureStillParsesDwdData() throws Exception {
+        ReducedFeatureFactory factory = new ReducedFeatureFactory()
+                .reject(XMLConstants.FEATURE_SECURE_PROCESSING);
+        DocumentBuilder builder = APIReaders.SecureXml.newSecureDocumentBuilder(factory);
+        Document document = builder.parse(new InputSource(
+                new StringReader(fixture("valid-kml.xml"))));
+        assertEquals("Berlin-Dahlem",
+                document.getElementsByTagName("kml:description").item(0).getTextContent());
+    }
+
+    @Test
+    public void parserWithoutSecureProcessingStillRejectsDoctype() throws Exception {
+        ReducedFeatureFactory factory = new ReducedFeatureFactory()
+                .reject(XMLConstants.FEATURE_SECURE_PROCESSING);
+        DocumentBuilder builder = APIReaders.SecureXml.newSecureDocumentBuilder(factory);
+        try {
+            builder.parse(new InputSource(new StringReader(fixture("malicious-dtd.xml"))));
+            fail("parser accepted a DOCTYPE declaration");
+        } catch (SAXParseException expected) {
+            // Expected: the disallow-doctype-decl switch is still active.
+        }
+    }
+
+    @Test
+    public void dtdIsStillRejectedWhenNoFactoryFeatureIsSupported() throws Exception {
+        // Emulates the Android parser, which accepts none of the JAXP hardening features.
+        // Safety then rests on the DTD pre-screen in SecureXml.parse(), not on the factory.
+        ReducedFeatureFactory factory = new ReducedFeatureFactory().reject(
+                XMLConstants.FEATURE_SECURE_PROCESSING,
+                "http://apache.org/xml/features/disallow-doctype-decl",
+                "http://xml.org/sax/features/external-general-entities",
+                "http://xml.org/sax/features/external-parameter-entities",
+                "http://apache.org/xml/features/nonvalidating/load-external-dtd");
+        DocumentBuilder builder = APIReaders.SecureXml.newSecureDocumentBuilder(factory);
+        assertNotNull(builder.parse(new InputSource(
+                new StringReader(fixture("valid-kml.xml")))));
+        try {
+            APIReaders.SecureXml.parse(new StringReader(fixture("malicious-dtd.xml")));
+            fail("DTD reached the parser without factory support");
+        } catch (IOException expected) {
+            assertTrue(expected.getMessage().contains("DOCTYPE"));
         }
     }
 
