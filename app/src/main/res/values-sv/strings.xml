@@ -397,8 +397,6 @@
     <string name="preference_loggingactivity_title">Hantera loggar</string>
     <string name="preference_loggingactivity_summary">Skicka och/eller rensa loggarna.</string>
     <string name="preference_intro_summary">Starta introduktionen igen.</string>
-    <string name="preference_ssl_title">Inaktivera SSL</string>
-    <string name="preference_ssl_summary">Inaktivera kryptering över HTTPS vid hämtning av väderdata.</string>
     <string name="preference_reset_summary">Återställ alla inställningar till standardvärdena.</string>
     <string name="alertdialog_3_title">Återställ inställningar</string>
     <string name="alertdialog_3_text1">Alla inställningar återställs till standardvärdena. Därefter visas introduktionen igen för att ange de viktigaste inställningarna.</string>
@@ -484,8 +482,6 @@
     <string name="geoinput_noprovider">Ingen lämplig platstjänst hittades. Aktivera platstjänster och försök igen.</string>
     <string name="geoinput_reflocation_title">Referensplatsen är:</string>
     <string name="georeceive_error">Fel: kan inte läsa geografiska koordinater.</string>
-    <string name="connerror_title">TLS-problem</string>
-    <string name="connerror_message">Appen kunde inte upprätta en krypterad anslutning till DWD:s öppna dataserver över HTTPS. Inaktivera kryptering?</string>
     <string name="textforecasttype_maritime_german_north_and_baltic">Tyska Nordsjön och Östersjön för sjöfart</string>
     <string name="textforecasttype_maritime_north_and_baltic">Nordsjön och Östersjön för sjöfart</string>
     <string name="textforecasttype_maritime_mediterranian">Medelhavet för sjöfart</string>

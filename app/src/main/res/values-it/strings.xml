@@ -12,8 +12,6 @@
     <string name="geoinput_reflocation_latitude">Latitudine:</string>
     <string name="geoinput_reflocation_time">Tempo:</string>
     <string name="georeceive_error">Errore: impossibile leggere le coordinate geografiche.</string>
-    <string name="connerror_title">Problema TLS</string>
-    <string name="connerror_message">L\'applicazione non è riuscita a stabilire una connessione criptata con il server DWD open data su https. Disattivare la crittografia\?</string>
     <string name="textforecasttype_maritime_german_north_and_baltic">Marittimo tedesco del Nord e del Mar Baltico</string>
     <string name="textforecasttype_maritime_north_and_baltic">Marittimo del Nord e del Mar Baltico</string>
     <string name="textforecasttype_maritime_mediterranian">Mare Mediterraneo</string>
@@ -155,8 +153,6 @@
     <string name="preference_loggingactivity_summary">Invia e/o cancella i log.</string>
     <string name="preference_intro_title">Introduzione</string>
     <string name="preference_intro_summary">Riavvia l\'introduzione.</string>
-    <string name="preference_ssl_title">Disabilita SSL</string>
-    <string name="preference_ssl_summary">Disabilita la crittografia su https durante il polling dei dati meteo.</string>
     <string name="alertdialog_yes">Sì</string>
     <string name="alertdialog_no">No</string>
     <string name="alertdialog_ok">OK</string>

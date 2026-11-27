@@ -116,7 +116,6 @@
     <string name="preference_gadgetbridge_notice_summary">Wymagana jest co najmniej wersja Gadgetbridge 0.48.0, obsługa danych pogodowych nie działa na niższych wersjach Gadgetbridge.</string>
     <string name="preference_gadgetbridge_package_reset_toast">Nazwa pakietu Gadgetbridge została przywrócona do wartości domyślnej.</string>
     <string name="preference_logging_summary">Aktywuj rejestrowanie. Logi są zapisywane LOKALNIE w urządzeniu i NIE są wysyłane automatycznie.</string>
-    <string name="preference_ssl_summary">Wyłączenie szyfrowania przez https podczas pobierania danych pogodowych.</string>
     <string name="preference_gadgetbridge_faketimestamp_title">Wyślij aktualny czas</string>
     <string name="preference_gadgetbridge_notice_title">Ważna informacja</string>
     <string name="preference_loggingscreen_title">Debuguj</string>
@@ -127,7 +126,6 @@
     <string name="preference_loggingactivity_summary">Wyślij i/lub wyczyść logi.</string>
     <string name="preference_intro_summary">Zacznij intro od nowa.</string>
     <string name="preference_intro_title">Intro</string>
-    <string name="preference_ssl_title">Wyłącz SSL</string>
     <string name="alertdialog_yes">Tak</string>
     <string name="alertdialog_no">Nie</string>
     <string name="alertdialog_ok">OK</string>
@@ -209,8 +207,6 @@
     <string name="textforecasttype_maritime_mediterranian">Morskie Morze Śródziemne</string>
     <string name="textforecasttype_maritime_north_and_baltic">Morze Północne i Bałtyckie</string>
     <string name="textforecasttype_maritime_german_north_and_baltic">Morskie Niemcy Morze Północne i Bałtyckie</string>
-    <string name="connerror_message">Aplikacja nie była w stanie nawiązać szyfrowanego połączenia z serwerem otwartych danych DWD przez https. Wyłączyć szyfrowanie\?</string>
-    <string name="connerror_title">Kwestia TLS</string>
     <string name="geoinput_reflocation_time">Czas:</string>
     <string name="geoinput_reflocation_longitude">Długość:</string>
     <string name="geoinput_reflocation_latitude">Szerokość:</string>

@@ -127,38 +127,6 @@ public class MainActivity extends Activity {
                 displayWeatherForecast();
                 forceWeatherUpdateFlag = false;
             }
-            if (intent.getAction().equals(MAINAPP_SSL_ERROR)){
-                PrivateLog.log(getApplicationContext(),PrivateLog.MAIN, PrivateLog.WARN,"received broadcast => ssl error intent received by main app.");
-                if ((!WeatherSettings.isTLSdisabled(context)) && (Build.VERSION.SDK_INT < 28)){
-                    AlertDialog.Builder builder = new AlertDialog.Builder(thisActivity,0);
-                    builder.setTitle(context.getResources().getString(R.string.connerror_title));
-                    Drawable drawable = new BitmapDrawable(getResources(),WeatherIcons.getIconBitmap(context,WeatherIcons.IC_ANNOUNCEMENT,false));
-                    builder.setIcon(drawable);
-                    builder.setMessage(context.getResources().getString(R.string.connerror_message));
-                    builder.setNegativeButton(R.string.geoinput_cancel, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialogInterface, int i) {
-                            // do nothing
-                            dialogInterface.dismiss();
-                        }
-                    });
-                    builder.setPositiveButton(R.string.alertdialog_ok, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialogInterface, int i) {
-                            WeatherSettings.setDisableTLS(getApplicationContext(),true);
-                            // re-launch the weather update via http
-                            PrivateLog.log(getApplicationContext(),PrivateLog.MAIN, PrivateLog.WARN,"SSL disabled permanently due to errors.");
-                            PrivateLog.log(getApplicationContext(),PrivateLog.MAIN, PrivateLog.INFO,"re-launching weather update.");
-                            forcedOverallUpdate();
-                            dialogInterface.dismiss();
-                        }
-                    });
-                    final AlertDialog alertDialog = builder.create();
-                    alertDialog.getWindow().setBackgroundDrawable(ThemePicker.getWidgetBackgroundDrawable(context));
-                    alertDialog.show();
-                    ThemePicker.tintAlertDialogButtons(context,alertDialog);
-                }
-            }
             // action DEPRECATED, currently not used
             if (intent.getAction().equals(MainActivity.MAINAPP_SHOW_PROGRESS)){
                 showMainappProgress();
@@ -1680,7 +1648,6 @@ public class MainActivity extends Activity {
     private void registerForBroadcast(){
         IntentFilter filter = new IntentFilter();
         filter.addAction(MAINAPP_CUSTOM_REFRESH_ACTION);
-        filter.addAction(MAINAPP_SSL_ERROR);
         filter.addAction(MAINAPP_SHOW_PROGRESS);
         filter.addAction(MAINAPP_HIDE_PROGRESS);
         filter.addAction(Intent.ACTION_BOOT_COMPLETED);

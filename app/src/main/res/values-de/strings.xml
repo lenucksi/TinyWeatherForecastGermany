@@ -158,8 +158,6 @@
     <string name="preference_log_to_logcat_summary">Fügt die Protokolle in das Systemprotokoll auf dem Gerät ein. Vorsicht: Dies kann die Privatspähre gefährden, andere Apps können auf das Systemprotokoll zugreifen.</string>
     <string name="preference_loggingactivity_title">Protokoll verwalten</string>
     <string name="preference_loggingactivity_summary">Protokoll senden/löschen.</string>
-    <string name="preference_ssl_title">SSL deaktivieren</string>
-    <string name="preference_ssl_summary">Verschlüsselung über https bei der Abfrage von Wetterdaten deaktivieren.</string>
     <string name="alertdialog_yes">Ja</string>
     <string name="alertdialog_no">Nein</string>
     <string name="alertdialog_ok">Ok</string>
@@ -248,8 +246,6 @@
     <string name="geoinput_reflocation_latitude">Breitengrad:</string>
     <string name="geoinput_reflocation_time">Zeit:</string>
     <string name="georeceive_error">Fehler: Geokoordinaten konnten nicht gelesen werden.</string>
-    <string name="connerror_title">TLS-Probleme</string>
-    <string name="connerror_message">Die App konnte keine verschlüsselte https Verbindung zum Open Data Server des DWD aufbauen. Verschlüsselung deaktivieren\?</string>
     <string name="textforecasttype_maritime_german_north_and_baltic">Maritim deutsche Nord- &amp; Ostsee</string>
     <string name="textforecasttype_maritime_north_and_baltic">Maritim Nord- &amp; Ostsee</string>
     <string name="textforecasttype_maritime_mediterranian">Maritim Mittelmeer</string>

@@ -121,14 +121,12 @@
     <string name="preference_gadgetbridge_package_reset_toast">Gadgetbridge-pakkens navn er sat tilbage til standard.</string>
     <string name="preference_loggingscreen_title">Fejlfinding</string>
     <string name="preference_loggingscreen_summary">Opsætning af logningsindstillinger til fejlfinding.</string>
-    <string name="preference_ssl_summary">Deaktiver kryptering over https, når der hentes vejrdata.</string>
     <string name="preference_logging_title">Logning</string>
     <string name="preference_log_to_logcat_title">Log til Logcat</string>
     <string name="preference_loggingactivity_title">Administrer logs</string>
     <string name="preference_loggingactivity_summary">Send og/eller rydde logfilerne.</string>
     <string name="preference_intro_title">Indføring</string>
     <string name="preference_intro_summary">Start introen igen.</string>
-    <string name="preference_ssl_title">Deaktiver SSL</string>
     <string name="alertdialog_2_toast">Logning til Logcat er deaktiveret.</string>
     <string name="logging_button_back">Tilbage</string>
     <string name="logging_button_clear">Ryd logs</string>
@@ -237,7 +235,6 @@
     <string name="textforecasttype_maritime_mediterranian">Det maritime Middelhav</string>
     <string name="textforecasttype_maritime_north_and_baltic">Maritime Nord- og Østersøen</string>
     <string name="textforecasttype_maritime_german_north_and_baltic">Maritime tyske Nord- og Østersøen</string>
-    <string name="connerror_title">TLS-problem</string>
     <string name="texts_button">Tekster</string>
     <string name="preference_display_show_radar_by_default_title">Regnradar</string>
     <string name="station_does_not_exist">Den station, du har indtastet, findes ikke. Vælg venligst en af de foreslåede stationer på listen.</string>
@@ -263,7 +260,6 @@
     <string name="preference_display_wind_arc_summary">En lille bue viser vindændringer.</string>
     <string name="preference_display_wind_type_summary">Sådan vises vindretningen.</string>
     <string name="preference_display_wind_unit_title">Vindhastighed</string>
-    <string name="connerror_message">Appen kunne ikke etablere en krypteret forbindelse med DWD\'s åbne dataserver via https. Deaktiverer du kryptering\?</string>
     <string name="warning_stationreset_text">For at rette en fejl er din station og dine favoritstationer blevet nulstillet til standardværdien.</string>
     <string name="geoinput_hint_longitude">f.eks. 10.1, -10:01.22342, 10:01:12345</string>
     <string name="preference_display_overviewchart_title">Oversigtsdiagram</string>

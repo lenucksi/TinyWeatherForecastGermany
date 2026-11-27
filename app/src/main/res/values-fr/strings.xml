@@ -149,8 +149,6 @@
     <string name="preference_loggingactivity_summary">Envoyer et/ou effacer les journaux.</string>
     <string name="preference_intro_title">Intro</string>
     <string name="preference_intro_summary">Démarrer à nouveau l\'intro.</string>
-    <string name="preference_ssl_title">Désactiver SSL</string>
-    <string name="preference_ssl_summary">Désactiver le cryptage sur https lors de l\'interrogation des données météo.</string>
     <string name="alertdialog_yes">Oui</string>
     <string name="alertdialog_no">Non</string>
     <string name="alertdialog_ok">OK</string>
@@ -239,8 +237,6 @@
     <string name="geoinput_reflocation_latitude">Latitude :</string>
     <string name="geoinput_reflocation_time">Heure :</string>
     <string name="georeceive_error">Erreur : impossible de lire les coordonnées géographiques.</string>
-    <string name="connerror_title">Problème TLS</string>
-    <string name="connerror_message">L\'appli n\'a pas pu établir de connexion chiffrée avec le serveur de données ouvertes DWD sur https. Désactiver le chiffrement \?</string>
     <string name="textforecasttype_maritime_german_north_and_baltic">Maritime allemande mer du Nord et mer Baltique</string>
     <string name="textforecasttype_maritime_north_and_baltic">Maritime de la mer du Nord et de la mer Baltique</string>
     <string name="textforecasttype_maritime_mediterranian">Maritime mer Méditerranée</string>

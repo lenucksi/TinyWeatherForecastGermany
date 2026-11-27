@@ -300,8 +300,6 @@
     <string name="preference_loggingactivity_summary">Send and/or clear the logs.</string>
     <string name="preference_intro_title">Intro</string>
     <string name="preference_intro_summary">Start the intro again.</string>
-    <string name="preference_ssl_title">Disable SSL</string>
-    <string name="preference_ssl_summary">Disable encryption over https when polling weather data.</string>
     <string name="preference_reset_title">Reset</string>
     <string name="preference_reset_summary">Set all settings to the default values.</string>
     <string name="preference_datasaver_title">Data saver enabled</string>
@@ -457,8 +455,6 @@
     <string name="geoinput_reflocation_latitude">Latitude:</string>
     <string name="geoinput_reflocation_time">Time:</string>
     <string name="georeceive_error">Error: unable to read geo coordinates.</string>
-    <string name="connerror_title">TLS Issue</string>
-    <string name="connerror_message">The app was unable to establish an encrypted connection with the DWD open data server over https. Disable encryption?</string>
     <string name="textforecasttype_maritime_german_north_and_baltic">Maritime German North- &amp; Baltic Sea</string>
     <string name="textforecasttype_maritime_north_and_baltic">Maritime North- &amp; Baltic Sea</string>
     <string name="textforecasttype_maritime_mediterranian">Maritime Mediterranian Sea</string>
