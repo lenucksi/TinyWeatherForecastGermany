@@ -19,19 +19,23 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
 
-<LinearLayout
+<FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/main_layoutholder"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="?attr/colorPrimary"
-    android:orientation="vertical"
     android:fitsSystemWindows="true">
+
+    <!-- Progress holders are overlaid on top of the main content so that showing
+         them transiently never shifts the station selector/chart down. -->
 
     <RelativeLayout
         android:id="@+id/gps_progress_holder"
         android:layout_width="match_parent"
         android:layout_height="48dp"
+        android:layout_gravity="top|fill_horizontal"
+        android:elevation="1dp"
         android:visibility="gone"
         android:background="?attr/colorPrimaryLight"
         android:orientation="horizontal">
@@ -77,6 +81,8 @@
             android:id="@+id/main_area_progress_holder"
             android:layout_width="match_parent"
             android:layout_height="40dp"
+            android:layout_gravity="top|fill_horizontal"
+            android:elevation="1dp"
             android:visibility="gone"
             android:background="?attr/colorPrimaryLight"
             android:orientation="horizontal">
@@ -237,7 +243,7 @@
                     android:nextFocusUp="@id/main_reset_favorites"
                     android:nextFocusForward="@id/main_listview"
                     android:nextFocusDown="@id/main_listview"
-                    android:background="?attr/colorWidgetBackground"
+                    android:background="@null"
                     android:tint="?attr/colorText"
                     android:src="?attr/ic_info_outline"
                     android:contentDescription="@string/legend_open"/>
@@ -363,4 +369,4 @@
 
     </RelativeLayout>
 
-</LinearLayout>
+</FrameLayout>

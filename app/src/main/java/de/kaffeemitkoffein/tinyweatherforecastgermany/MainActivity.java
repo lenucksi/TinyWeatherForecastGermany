@@ -1060,7 +1060,7 @@ public class MainActivity extends Activity {
 
     private void displayOverviewChart(final CurrentWeatherInfo currentWeatherInfo){
         final ImageView overviewChartImageView = (ImageView) findViewById(R.id.main_overview_chart);
-        final LinearLayout main_leftcontainer = (LinearLayout) findViewById(R.id.main_leftcontainer);
+        final View main_leftcontainer = findViewById(R.id.main_leftcontainer);
         final boolean isLandscape = (main_leftcontainer!=null);
         if (overviewChartImageView!=null){
             // Issue #304: long-press (or the info icon) opens the illustrated legend.

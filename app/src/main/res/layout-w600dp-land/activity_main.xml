@@ -29,19 +29,23 @@
         android:weightSum="10"
         android:fitsSystemWindows="true">
 
-    <LinearLayout
+    <FrameLayout
             android:id="@+id/main_leftcontainer"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:background="?attr/colorPrimary"
             android:layout_weight="4"
-            android:layout_marginLeft="@dimen/slider_marginDouble"
-            android:orientation="vertical">
+            android:layout_marginLeft="@dimen/slider_marginDouble">
+
+        <!-- Progress holders are overlaid on top of the left pane so that showing
+             them transiently never shifts the chart down. -->
 
         <RelativeLayout
                 android:id="@+id/gps_progress_holder"
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
+                android:layout_gravity="top|fill_horizontal"
+                android:elevation="1dp"
                 android:visibility="gone"
                 android:background="?attr/colorPrimaryLight"
                 android:orientation="horizontal">
@@ -87,6 +91,8 @@
                 android:id="@+id/main_area_progress_holder"
                 android:layout_width="match_parent"
                 android:layout_height="40dp"
+                android:layout_gravity="top|fill_horizontal"
+                android:elevation="1dp"
                 android:visibility="gone"
                 android:background="?attr/colorPrimaryLight"
                 android:orientation="horizontal">
@@ -250,14 +256,14 @@
                     android:nextFocusLeft="@id/main_overview_chart"
                     android:nextFocusForward="@id/main_listview"
                     android:nextFocusRight="@id/main_listview"
-                    android:background="?attr/colorWidgetBackground"
+                    android:background="@null"
                     android:tint="?attr/colorText"
                     android:src="?attr/ic_info_outline"
                     android:contentDescription="@string/legend_open"/>
 
     </RelativeLayout>
 
-    </LinearLayout>
+    </FrameLayout>
 
 
     <RelativeLayout
