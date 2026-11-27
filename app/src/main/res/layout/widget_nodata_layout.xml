@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+ This file is part of TinyWeatherForecastGermany.
+
+ Copyright (c) 2026 Pawel Dube
+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program. If not, see <http://www.gnu.org/licenses/>.
+-->
+
+<!--
+ TASK-48: a neutral, complete widget view for an empty weather database.
+ It deliberately carries none of the raw demo values that the regular widget
+ layouts use as XML defaults, so inflating it can never show placeholder data
+ while there is no weather card to render.
+-->
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_nodata_maincontainer"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <ImageView android:id="@android:id/background"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <TextView android:id="@+id/widget_nodata_text"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:textAlignment="center"
+        android:ellipsize="end"
+        android:maxLines="4"
+        android:paddingLeft="8dp"
+        android:paddingRight="8dp"
+        android:textColor="@color/colorTextWidget"
+        android:textSize="@dimen/widget_textsize_medium"
+        android:text="@string/error_no_data" />
+
+</RelativeLayout>

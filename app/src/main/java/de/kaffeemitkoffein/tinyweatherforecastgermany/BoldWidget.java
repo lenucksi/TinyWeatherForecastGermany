@@ -99,11 +99,17 @@ public class BoldWidget extends ClassicWidget {
                 remoteViews.setOnClickPendingIntent(R.id.boldwidget_maincontainer, pendingIntent);
                 awm.updateAppWidget(widget_instances[i], remoteViews);
             }
-        } else
-        // sync weather if no information is present, however do not loop syncs if widget update was already
-        // triggered by the sync adapter.
-        if (source!=WidgetRefresher.FROM_SYNCADAPTER){
-            ContentResolver.requestSync(MainActivity.getManualSyncRequest(c,WeatherSyncAdapter.UpdateFlags.FLAG_UPDATE_WEATHER));
+        } else {
+            // TASK-48: still publish a fully rendered widget so the launcher never
+            // shows the raw XML placeholders while the database is empty.
+            for (int i = 0; i < widget_instances.length; i++) {
+                awm.updateAppWidget(widget_instances[i], getNoDataWidgetViews(c));
+            }
+            // sync weather if no information is present, however do not loop syncs if widget update was already
+            // triggered by the sync adapter.
+            if (source!=WidgetRefresher.FROM_SYNCADAPTER){
+                ContentResolver.requestSync(MainActivity.getManualSyncRequest(c,WeatherSyncAdapter.UpdateFlags.FLAG_UPDATE_WEATHER));
+            }
         }
 
     }
