@@ -51,6 +51,8 @@
         <Button android:id="@+id/legend_button_back"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:nextFocusUp="@id/legend_scrollview"
                 android:textSize="@dimen/fcmain_textsize_medium"
                 android:textColor="?attr/colorText"
                 android:text="@string/alertdialog_ok"/>
@@ -59,6 +61,8 @@
     <ScrollView android:id="@+id/legend_scrollview"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:nextFocusDown="@id/legend_button_back"
+                android:nextFocusForward="@id/legend_button_back"
                 android:fillViewport="true"
                 android:layout_below="@id/legend_solid_bar"
                 android:layout_above="@id/legend_button_line">

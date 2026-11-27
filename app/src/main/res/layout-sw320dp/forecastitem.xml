@@ -73,7 +73,7 @@
         />
 
         <TextView android:id="@+id/fcitem_heading"
-                  android:textSize="@dimen/fcmain_mediumdevice_textsize_large_fixed"
+                  android:textSize="@dimen/fcmain_mediumdevice_textsize_large"
                   android:textColor="?attr/colorText"
                   android:layout_gravity="center_horizontal"
                   android:textAlignment="center"
@@ -81,7 +81,7 @@
                   android:layout_width="wrap_content"
                   android:layout_height="wrap_content"/>
 
-        <ImageView
+        <ImageView android:contentDescription="@string/a11y_warning_symbol"
                 android:id="@+id/fcitem_warningsymbol"
                 android:layout_width="@dimen/fcmain_mediumdevice_textsize_xl"
                 android:layout_height="@dimen/fcmain_mediumdevice_textsize_xl"
@@ -124,7 +124,7 @@
                       android:layout_height="wrap_content"/>
         </LinearLayout>
 
-        <ImageView android:id="@+id/fcitem_sunet1"
+        <ImageView android:contentDescription="@null" android:id="@+id/fcitem_sunet1"
                    android:layout_width="24dp"
                    android:layout_height="12dp"
                    android:layout_toLeftOf="@id/fcitem_rise_textcontainer"
@@ -132,7 +132,7 @@
                    android:layout_marginTop="2dp"
                    android:src="@mipmap/sunset"/>
 
-        <ImageView android:id="@+id/fcitem_sunet2"
+        <ImageView android:contentDescription="@null" android:id="@+id/fcitem_sunet2"
                    android:layout_width="24dp"
                    android:layout_height="12dp"
                    android:layout_toLeftOf="@id/fcitem_rise_textcontainer"
@@ -174,9 +174,10 @@
                 android:shadowColor="?attr/colorTextLight"
                 android:textColor="?attr/colorText"/>
 
-        <ImageView android:id="@+id/fcitem_forecastbar"
+        <ImageView android:contentDescription="@string/a11y_forecast_bar" android:id="@+id/fcitem_forecastbar"
                    android:layout_width="match_parent"
                    android:layout_height="wrap_content"
+                   android:focusable="true"
                    android:minHeight="21dp"
                    android:layout_toRightOf="@id/fcitem_uvHazardIndex"
                    android:layout_alignWithParentIfMissing="true"
@@ -212,7 +213,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content">
 
-                    <ImageView android:id="@+id/fcitem_precipitation_symbol"
+                    <ImageView android:contentDescription="@null" android:id="@+id/fcitem_precipitation_symbol"
                                android:layout_width="@dimen/fcmain_mediumdevice_textsize_medium"
                                android:layout_height="@dimen/fcmain_mediumdevice_textsize_medium"
                                android:layout_alignParentLeft="true"
@@ -249,7 +250,7 @@
                               android:layout_height="wrap_content"
                               android:text="m²"/>
 
-                    <ImageView android:id="@+id/fcitem_sunduration_symbol"
+                    <ImageView android:contentDescription="@null" android:id="@+id/fcitem_sunduration_symbol"
                                android:layout_width="@dimen/fcmain_mediumdevice_textsize_medium"
                                android:layout_height="@dimen/fcmain_mediumdevice_textsize_medium"
                                android:layout_gravity="left"
@@ -290,7 +291,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content">
 
-                    <ImageView android:id="@+id/fcitem_var1_symbol"
+                    <ImageView android:contentDescription="@null" android:id="@+id/fcitem_var1_symbol"
                                android:layout_width="0dp"
                                android:layout_height="@dimen/fcmain_mediumdevice_textsize_medium"
                                android:layout_weight="1"
@@ -307,7 +308,7 @@
                               android:layout_height="wrap_content"
                               android:text="12%"/>
 
-                    <ImageView android:id="@+id/fcitem_var2_symbol"
+                    <ImageView android:contentDescription="@null" android:id="@+id/fcitem_var2_symbol"
                                android:layout_width="0dp"
                                android:layout_height="@dimen/fcmain_mediumdevice_textsize_medium"
                                android:layout_weight="1"
@@ -324,7 +325,7 @@
                               android:layout_height="wrap_content"
                               android:text="0%"/>
 
-                    <ImageView android:id="@+id/fcitem_var3_symbol"
+                    <ImageView android:contentDescription="@null" android:id="@+id/fcitem_var3_symbol"
                                android:layout_width="0dp"
                                android:layout_height="@dimen/fcmain_mediumdevice_textsize_medium"
                                android:layout_weight="1"
@@ -351,7 +352,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content">
 
-                    <ImageView android:id="@+id/fcitem_var4_symbol"
+                    <ImageView android:contentDescription="@null" android:id="@+id/fcitem_var4_symbol"
                                android:layout_width="0dp"
                                android:layout_height="@dimen/fcmain_mediumdevice_textsize_medium"
                                android:layout_weight="1"
@@ -368,7 +369,7 @@
                               android:layout_height="wrap_content"
                               android:text="12%"/>
 
-                    <ImageView android:id="@+id/fcitem_var5_symbol"
+                    <ImageView android:contentDescription="@null" android:id="@+id/fcitem_var5_symbol"
                                android:layout_width="0dp"
                                android:layout_height="@dimen/fcmain_mediumdevice_textsize_medium"
                                android:layout_weight="1"
@@ -385,7 +386,7 @@
                               android:layout_height="wrap_content"
                               android:text="0%"/>
 
-                    <ImageView android:id="@+id/fcitem_var6_symbol"
+                    <ImageView android:contentDescription="@null" android:id="@+id/fcitem_var6_symbol"
                                android:layout_width="0dp"
                                android:layout_height="@dimen/fcmain_mediumdevice_textsize_medium"
                                android:layout_weight="1"
@@ -413,7 +414,7 @@
                           android:gravity="center"
                           android:orientation="vertical">
 
-                <ImageView android:id="@+id/fcitem_weatherconditionicon"
+                <ImageView android:contentDescription="@null" android:id="@+id/fcitem_weatherconditionicon"
                            android:layout_width="match_parent"
                            android:layout_height="wrap_content"
                            android:layout_gravity="center"/>
@@ -497,7 +498,7 @@
                               android:layout_width="wrap_content"
                               android:layout_height="wrap_content"/>
 
-                    <ImageView
+                    <ImageView android:contentDescription="@null"
                             android:id="@+id/fcitem_rh_label"
                             android:layout_width="@dimen/fcmain_mediumdevice_textsize_medium"
                             android:layout_height="@dimen/fcmain_mediumdevice_textsize_medium"
@@ -525,7 +526,7 @@
                         android:gravity="center"
                         android:orientation="horizontal">
 
-                    <ImageView
+                    <ImageView android:contentDescription="@null"
                             android:id="@+id/fcitem_windarrow"
                             android:layout_width="@dimen/fcmain_mediumdevice_textsize_large"
                             android:layout_height="@dimen/fcmain_mediumdevice_textsize_large"
@@ -548,7 +549,7 @@
                         android:gravity="center"
                         android:orientation="horizontal">
 
-                    <ImageView
+                    <ImageView android:contentDescription="@null"
                             android:id="@+id/fcitem_binocular"
                             android:layout_width="@dimen/fcmain_mediumdevice_textsize_medium"
                             android:layout_height="@dimen/fcmain_mediumdevice_textsize_medium"

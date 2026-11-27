@@ -44,7 +44,7 @@
                 android:layout_below="@id/hzi_heading"
                 android:weightSum="2">
 
-                <ImageView
+                <ImageView android:contentDescription="@null"
                         android:id="@+id/hzi_weathericon"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
@@ -89,7 +89,7 @@
                                         android:text="1000 hPa"/>
 
 
-                                <ImageView
+                                <ImageView android:contentDescription="@null"
                                         android:id="@+id/hzi_humidityicon"
                                         android:layout_height="@dimen/fcmain_textsize_medium"
                                         android:layout_width="@dimen/fcmain_textsize_medium"
@@ -112,7 +112,7 @@
 
                         </RelativeLayout>
 
-                        <ImageView
+                        <ImageView android:contentDescription="@null"
                                 android:id="@+id/hzi_groundicon"
                                 android:layout_height="@dimen/fcmain_textsize_medium"
                                 android:layout_width="@dimen/fcmain_textsize_medium"
@@ -134,7 +134,7 @@
                                 android:layout_marginLeft="@dimen/slider_margin"
                                 android:text="100°"/>
 
-                        <ImageView
+                        <ImageView android:contentDescription="@null"
                                 android:id="@+id/hzi_cloudsicon"
                                 android:layout_height="@dimen/fcmain_textsize_medium"
                                 android:layout_width="@dimen/fcmain_textsize_medium"
@@ -156,7 +156,7 @@
                                 android:textColor="?attr/colorText"
                                 android:text="33%"/>
 
-                        <ImageView
+                        <ImageView android:contentDescription="@null"
                                 android:id="@+id/hzi_precipitationicon"
                                 android:layout_height="@dimen/fcmain_textsize_medium"
                                 android:layout_width="@dimen/fcmain_textsize_medium"
@@ -199,7 +199,7 @@
                                   android:layout_alignBottom="@id/hzi_precipitation"
                                   android:text=" m²/h"/>
 
-                        <ImageView
+                        <ImageView android:contentDescription="@null"
                                 android:id="@+id/hzi_windarrow"
                                 android:layout_width="@dimen/widget_textsize_large"
                                 android:layout_height="@dimen/widget_textsize_large"
@@ -234,7 +234,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"/>
 
-                        <ImageView
+                        <ImageView android:contentDescription="@null"
                                 android:id="@+id/hzi_visibilityicon"
                                 android:layout_width="@dimen/widget_textsize_large"
                                 android:layout_height="@dimen/widget_textsize_large"
@@ -304,7 +304,7 @@
                 android:layout_marginTop="@dimen/slider_margin"
                 android:layout_marginBottom="@dimen/slider_margin">
 
-                <ImageView android:id="@+id/hzitem_var1_symbol"
+                <ImageView android:contentDescription="@null" android:id="@+id/hzitem_var1_symbol"
                            android:layout_width="@dimen/fcmain_textsize_medium"
                            android:layout_height="@dimen/fcmain_textsize_medium"
                            android:layout_centerVertical="true"
@@ -322,7 +322,7 @@
                           android:lines="1"
                           android:text="--%"/>
 
-                <ImageView android:id="@+id/hzitem_var2_symbol"
+                <ImageView android:contentDescription="@null" android:id="@+id/hzitem_var2_symbol"
                            android:layout_width="@dimen/fcmain_textsize_medium"
                            android:layout_height="@dimen/fcmain_textsize_medium"
                            android:layout_toRightOf="@id/hzitem_var1_text"
@@ -341,7 +341,7 @@
                           android:lines="1"
                           android:text="--%"/>
 
-                <ImageView android:id="@+id/hzitem_var3_symbol"
+                <ImageView android:contentDescription="@null" android:id="@+id/hzitem_var3_symbol"
                            android:layout_width="@dimen/fcmain_textsize_medium"
                            android:layout_height="@dimen/fcmain_textsize_medium"
                            android:layout_toRightOf="@id/hzitem_var2_text"
@@ -360,7 +360,7 @@
                           android:lines="1"
                           android:text="--%"/>
 
-                <ImageView android:id="@+id/hzitem_var4_symbol"
+                <ImageView android:contentDescription="@null" android:id="@+id/hzitem_var4_symbol"
                            android:layout_width="@dimen/fcmain_textsize_medium"
                            android:layout_height="@dimen/fcmain_textsize_medium"
                            android:layout_toRightOf="@id/hzitem_var3_text"
@@ -379,7 +379,7 @@
                           android:lines="1"
                           android:text="--%"/>
 
-                <ImageView android:id="@+id/hzitem_var5_symbol"
+                <ImageView android:contentDescription="@null" android:id="@+id/hzitem_var5_symbol"
                            android:layout_width="@dimen/fcmain_textsize_medium"
                            android:layout_height="@dimen/fcmain_textsize_medium"
                            android:layout_toRightOf="@id/hzitem_var4_text"
@@ -398,7 +398,7 @@
                           android:lines="1"
                           android:text="--%"/>
 
-                <ImageView android:id="@+id/hzitem_var6_symbol"
+                <ImageView android:contentDescription="@null" android:id="@+id/hzitem_var6_symbol"
                            android:layout_width="@dimen/fcmain_textsize_medium"
                            android:layout_height="@dimen/fcmain_textsize_medium"
                            android:layout_toRightOf="@id/hzitem_var5_text"
@@ -446,7 +446,7 @@
                                 android:layout_alignParentLeft="true"
                                 android:text="Rain"/>
 
-                        <ImageView
+                        <ImageView android:contentDescription="@null"
                                 android:id="@+id/hzi_precipitationdetails"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
@@ -473,7 +473,7 @@
                                 android:layout_alignParentLeft="true"
                                 android:text="Clouds"/>
 
-                        <ImageView
+                        <ImageView android:contentDescription="@null"
                                 android:id="@+id/hzi_clouddetails"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"

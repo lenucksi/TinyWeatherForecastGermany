@@ -560,4 +560,15 @@
     <string name="preference_overviewchart_inappsize_summary">Größe der Übersichtstabelle im Portrait-Modus.</string>
     <string name="error_no_data" translatable="true">Keine Wetterdaten verfügbar.</string>
     <string name="invalid_weather_host_message">Ungültiger Wetterdaten-Server. Es sind nur DWD-Server erlaubt; der Standardserver wird verwendet.</string>
+
+    <!-- Barrierefreiheit: Beschreibungen für Symbolsteuerungen auf den Hauptansichten (TASK-34). -->
+    <string name="a11y_search">Station suchen</string>
+    <string name="a11y_reset_favorites">Favoriten löschen</string>
+    <string name="a11y_forecast_bar">Vorhersagediagramm: Bewölkung und Niederschlag; lange drücken für die Legende</string>
+    <string name="a11y_warning_symbol">Details zur Wetterwarnung anzeigen</string>
+    <string name="a11y_share_warning">Wetterwarnung teilen</string>
+    <string name="a11y_close_map">Karte schließen</string>
+    <string name="a11y_warning_map">Karte mit Wetterwarnungen</string>
+    <string name="a11y_text_forecast_filter">Textvorhersagen-Filter umschalten</string>
+    <string name="a11y_chart_data">Diagrammdaten</string>
 </resources>
