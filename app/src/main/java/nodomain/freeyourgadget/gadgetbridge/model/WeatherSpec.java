@@ -1,5 +1,6 @@
-/*  Copyright (C) 2016-2020 Andreas Shimokawa, Carsten Pfeiffer, Daniele
-    Gobbetti
+/*  Copyright (C) 2016-2024 Andreas Shimokawa, Arjan Schrijver, beardhatcode,
+    Carsten Pfeiffer, Daniele Gobbetti, Enrico Brambilla, José Rebelo, Taavi
+    Eomäe
 
     This file is part of Gadgetbridge.
 
@@ -14,17 +15,15 @@
     GNU Affero General Public License for more details.
 
     You should have received a copy of the GNU Affero General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>. */
-
-/*
- Modification notice: removed androidx dependency
- */
+    along with this program.  If not, see <https://www.gnu.org/licenses/>. */
 
 package nodomain.freeyourgadget.gadgetbridge.model;
 
 import android.location.Location;
 import android.os.Parcel;
 import android.os.Parcelable;
+
+import androidx.annotation.Nullable;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -55,7 +54,7 @@ public class WeatherSpec implements Parcelable, Serializable {
     public int todayMinTemp; // kelvin
     public float windSpeed; // km per hour
     public int windDirection; // deg
-    public float uvIndex;
+    public float uvIndex; // 0.0 to 15.0
     public int precipProbability; // %
     public int dewPoint; // kelvin
     public float pressure; // mb
@@ -65,7 +64,7 @@ public class WeatherSpec implements Parcelable, Serializable {
     public int sunSet; // unix epoch timestamp, in seconds
     public int moonRise; // unix epoch timestamp, in seconds
     public int moonSet; // unix epoch timestamp, in seconds
-    public int moonPhase; // deg
+    public int moonPhase; // deg [0, 360[
     public float latitude;
     public float longitude;
     public int feelsLikeTemp; // kelvin
@@ -100,13 +99,14 @@ public class WeatherSpec implements Parcelable, Serializable {
         return toBeaufort(this.windSpeed);
     }
 
+    @Nullable
     public Location getLocation() {
         if (latitude == 0 && longitude == 0) {
             return null;
         }
         final Location location = new Location("weatherSpec");
         location.setLatitude(latitude);
-        location.setLatitude(longitude);
+        location.setLongitude(longitude);
         return location;
     }
 
@@ -198,6 +198,30 @@ public class WeatherSpec implements Parcelable, Serializable {
         dest.writeInt(isCurrentLocation);
         dest.writeParcelable(airQuality, 0);
         dest.writeList(hourly);
+    }
+
+    /**
+     * Convert the current day's forecast to a {@link Daily} object.
+     */
+    public Daily todayAsDaily() {
+        final Daily daily = new Daily();
+
+        daily.minTemp = this.todayMinTemp;
+        daily.maxTemp = this.todayMaxTemp;
+        daily.conditionCode = this.currentConditionCode;
+        daily.humidity = this.currentHumidity;
+        daily.windSpeed = this.windSpeed;
+        daily.windDirection = this.windDirection;
+        daily.uvIndex = this.uvIndex;
+        daily.precipProbability = this.precipProbability;
+        daily.sunRise = this.sunRise;
+        daily.sunSet = this.sunSet;
+        daily.moonRise = this.moonRise;
+        daily.moonSet = this.moonSet;
+        daily.moonPhase = this.moonPhase;
+        daily.airQuality = this.airQuality;
+
+        return daily;
     }
 
     @Deprecated // kept for backwards compatibility with old weather apps
@@ -357,7 +381,7 @@ public class WeatherSpec implements Parcelable, Serializable {
         public int humidity;
         public float windSpeed; // km per hour
         public int windDirection; // deg
-        public float uvIndex;
+        public float uvIndex; // 0.0 to 15.0
         public int precipProbability; // %
         public int sunRise;
         public int sunSet;
@@ -438,7 +462,7 @@ public class WeatherSpec implements Parcelable, Serializable {
         public int humidity;
         public float windSpeed; // km per hour
         public int windDirection; // deg
-        public float uvIndex;
+        public float uvIndex; // 0.0 to 15.0
         public int precipProbability; // %
 
         public Hourly() {
