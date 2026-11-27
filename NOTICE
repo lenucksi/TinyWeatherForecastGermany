@@ -22,6 +22,21 @@ Vendored components and attribution:
 * Solarized Precision colors theme, Ethan Schoonover.
 * Material Design icons, Google Inc. (Apache-2.0).
 * Gradle wrapper, Gradle Inc. (Apache-2.0).
+* MapLibre Native Android 13.8.0 (`org.maplibre.gl:android-sdk-opengl:13.8.0`):
+  Copyright (c) MapLibre contributors, BSD-2-Clause.
+  <https://github.com/maplibre/maplibre-native>
+  <https://opensource.org/licenses/BSD-2-Clause>
+  POM: <https://repo1.maven.org/maven2/org/maplibre/gl/android-sdk-opengl/13.8.0/android-sdk-opengl-13.8.0.pom>
 
 Original notices for the components above are also kept in README.md.
-Weather data: Deutscher Wetterdienst (DWD). Map data: OpenStreetMap contributors.
+Weather data: Deutscher Wetterdienst (DWD).
+
+Map attribution (rendering with MapLibre Native, OpenGL ES build):
+
+* Map data © OpenStreetMap contributors, available under the Open Database
+  License (ODbL, <https://opendatacommons.org/licenses/odbl/>):
+  <https://www.openstreetmap.org/copyright>.
+* Vector tiles / map style by OpenMapTiles (<https://openmaptiles.org/>),
+  derived from OpenStreetMap data, ODbL.
+* Tile hosting by OpenFreeMap (<https://openfreemap.org/>).
+  These attributions must stay visible wherever the map is shown.
