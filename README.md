@@ -349,6 +349,10 @@ To force-update GadgetBridge with weather data, e.g. for debugging, you can disa
 ### Why is precipitation displayed in kg/m² instead of mm?
   
 This unit is more precise regarding solid precipitation (e.g. snow). Assuming rain, after some converting of units you will notice that the value is the same like "mm".
+
+**Probability vs. amount (UI wording):** in the forecast rows a single rain icon is followed by two different numbers. The percentage is the *probability of precipitation* (how likely rain is); the value with `kg/m²` (plus its time interval, e.g. `kg/m²/24h`) is the *amount of precipitation* (how much is expected). The detail view and the overview-chart legend label these explicitly (`percent` / `%` for probability; `kg/m²` in the rows and `mm` in the chart for amount, with `1 kg/m²` = `1 mm` for rain). No forecast values are changed by this wording clarification.
+
+**Localisation:** the clarified strings are maintained in English (`app/src/main/res/values/`) and German (`app/src/main/res/values-de/`). All other locales fall back to the English text in `values/` where they do not define the string themselves — this applies to the legend strings, which are defined only in English, German and Arabic (with English text). Locales that already translate the detail labels or welcome text keep their existing wording.
   
 ### Why does the app sometimes not display sunrise und sunset?
   

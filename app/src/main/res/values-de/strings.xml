@@ -274,7 +274,7 @@
     <string name="logging_comment_title">Protokolle teilen?</string>
     <string name="logging_comment_inputhint">Die App ist abgestürzt…</string>
     <string name="logging_comment_hint">Sie können einen Kommentar zu den Protokollen hinzufügen, um den Fehler auffindbar zu machen – bitte erklären Sie, was passiert ist:</string>
-    <string name="welcome_s3_text4">Die Vorhersageleiste zeigt Wolken in grau und Regen in blau. Lange gedrückt halten für die vollständige Legende.</string>
+    <string name="welcome_s3_text4">Vorhersage: grau Wolken, blau Regen. Prozent = Wahrscheinlichkeit, kg/m² = Menge. Lang drücken: Legende.</string>
     <string name="legend_title">Legende zur Übersichtskarte</string>
     <string name="legend_pref_summary">Erklärt Farben und Ebenen der Übersichtskarte.</string>
     <string name="legend_sample_caption">Aktuell angezeigte Übersichtskarte</string>
@@ -283,7 +283,7 @@
     <string name="legend_temp_below">Cyan-Linie: Temperatur unter 0 °C</string>
     <string name="legend_clouds">Graue Fläche: Bewölkung (in Prozent)</string>
     <string name="legend_rain_prob">Blaue Fläche: Niederschlagswahrscheinlichkeit (in Prozent)</string>
-    <string name="legend_rain_amount">Cyan Balken: Niederschlagsmenge (in mm)</string>
+    <string name="legend_rain_amount">Cyan Balken: Niederschlagsmenge (in mm; 1 mm entspricht 1 kg/m²)</string>
     <string name="legend_humidity">Blaue Linie: relative Luftfeuchtigkeit (in Prozent)</string>
     <string name="legend_dewpoint">Blaue Linie: Taupunkt (in °C)</string>
     <string name="legend_wind">Dunkle Linie: Windgeschwindigkeit</string>
@@ -386,8 +386,8 @@
     <string name="wd_hcc">Hohe Bewölkung (höher als 7 km)</string>
     <string name="wd_bcc">Basishöhe der konvektiven Wolken</string>
     <string name="wd_t5">Temperatur 5 cm über Grund</string>
-    <string name="wd_pp">Wahrscheinlichkeit von Niederschlag</string>
-    <string name="wd_pa">Niederschlagsmenge</string>
+    <string name="wd_pp">Niederschlagswahrscheinlichkeit (in Prozent)</string>
+    <string name="wd_pa">Niederschlagsmenge (in kg/m²)</string>
     <string name="wd_wevents">Wetterereignisse</string>
     <string name="wd_pv1">Wahrscheinlichkeit einer Sichtweite von weniger als einem Kilometer</string>
     <string name="wd_pt">Wahrscheinlichkeit von Gewitter</string>
