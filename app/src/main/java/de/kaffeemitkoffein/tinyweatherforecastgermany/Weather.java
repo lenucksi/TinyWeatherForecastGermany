@@ -792,23 +792,27 @@ public final class Weather {
             return false;
         }
 
-        private static float getSweepAngleFromAbsoluteDegrees(float source, float target) {
-            /*
-                Examples:
-                a   b
-                350 20 => 30	20 - 350 = -330	b - a + 360
-                280 90 => 170   90 - 280 = -190 	b - a + 360
-                10  350 => -20   350 - 10 = 340	b - a - 360
-                10  40 => 30 	40-10   		b - a
-                40  30 => -10 	30-40 			b - a
-                180 120 => -60 			b - a
-             */
-            float sweepangle = target - source;
-            if (sweepangle<-180){
-                sweepangle = sweepangle + 360;
+        /**
+         * Returns the signed rotation from {@code source} to {@code target} in
+         * degrees, always taking the shorter way around the compass.
+         *
+         * Examples: 350 -> 20 = +30, 280 -> 90 = +170, 10 -> 350 = -20,
+         * 0 -> 359 = -1, 359 -> 0 = +1, 0 -> 180 = +180.
+         *
+         * The remainder operation first folds arbitrary absolute angles (e.g.
+         * 720 or -10 degrees) into one revolution; without it a single +/-360
+         * correction is not enough and the arc can still sweep the long way
+         * around (issue #63). For angles already in [0,360) the result is
+         * identical to the previous implementation, so existing rows do not
+         * change visually.
+         */
+        static float getSweepAngleFromAbsoluteDegrees(float source, float target) {
+            float sweepangle = (target - source) % 360f;
+            if (sweepangle<-180f){
+                sweepangle = sweepangle + 360f;
             } else
-            if (sweepangle>180){
-                sweepangle = sweepangle - 360;
+            if (sweepangle>180f){
+                sweepangle = sweepangle - 360f;
             }
             return sweepangle;
         }
