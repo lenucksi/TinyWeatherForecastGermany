@@ -1678,12 +1678,25 @@ public final class Weather {
                 null,WeatherContentProvider.WeatherDatabaseHelper.KEY_FORECASTS_name+" = ?",selectionArg,orderBy);
         // read only fist element. Database should not hold more than one data set for one station.
         // Should there be more, take the most recent by polling time. The most recent entry is at position 1.
-        if (cursor.moveToFirst()){
-            CurrentWeatherInfo currentWeatherInfo = WeatherContentManager.getWeatherInfo(context,cursor);
-            return currentWeatherInfo;
+        // TASK-63: close the cursor on *every* path. The former early return in
+        // the with-data branch skipped close() and leaked a database row on
+        // each widget refresh.
+        CurrentWeatherInfo currentWeatherInfo = null;
+        if (cursor!=null){
+            if (cursor.moveToFirst()){
+                currentWeatherInfo = WeatherContentManager.getWeatherInfo(context,cursor);
+            }
+            cursor.close();
         }
-        cursor.close();
-        return null;
+        if (currentWeatherInfo==null){
+            // TASK-63: make the no-data state diagnosable: there is no cached
+            // row for the currently selected station (e.g. after a station
+            // change), so widgets cannot render weather until a sync stores it.
+            PrivateLog.log(context,PrivateLog.DATA,PrivateLog.INFO,
+                    "No cached weather data for station "+station_name+
+                    "; widgets may request a throttled sync.");
+        }
+        return currentWeatherInfo;
     }
 
     public static boolean hasUVHIData(Context context){
