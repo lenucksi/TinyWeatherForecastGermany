@@ -25,7 +25,6 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
-import android.graphics.Paint;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.TypedValue;
@@ -63,11 +62,6 @@ public class BoldWidget extends ClassicWidget {
         if (weatherCard!=null){
             for (int i = 0; i < widget_instances.length; i++) {
                 WidgetDimensionManager widgetDimensionManager = new WidgetDimensionManager(c,awm,widget_instances[i],"Bold Widget #"+i);
-                int width = widgetDimensionManager.getWidgetWidthInt();
-                int height = widgetDimensionManager.getWidgetHeightInt();
-                // check if reported widget size is plausible and fall back to defaults if necessary
-                int[] widgetSize = DeviceTweaks.confirmPlausibleWidgetSize(c,DeviceTweaks.Widget.BOLD,width,height);
-                width = widgetSize[0]; height = widgetSize[1];
                 // sets up a pending intent to launch main activity when the widget is touched.
                 Intent intent = new Intent(c, MainActivity.class);
                 PendingIntent pendingIntent;
@@ -78,28 +72,25 @@ public class BoldWidget extends ClassicWidget {
                 }
                 pendingIntent = PendingIntent.getActivity(c, 0, intent, flags);
                 int widgetResource = R.layout.boldwidget_layout;
-                int forecastDays = 2; // default
-                // calculate threshold values for number of forecast days to display in widget
-                int pixelsOneDayWidth      = getOneDaySizeInPixels(c);
-                int pixelsVerticalBarWidth = 0;
-                if (WeatherSettings.displayBoldwidgetVerticalBar(c)){
-                    pixelsVerticalBarWidth = 5; // this is the maximum width from mipmap size
+                // TASK-26: AppWidgetManager reports dp; compare against dp
+                // thresholds instead of pixel widths measured with Paint. The
+                // old pixel thresholds dropped the 4th/5th forecast day on
+                // high-density and large-font devices.
+                int widthDp = widgetDimensionManager.getWidgetWidthDp();
+                if (widthDp<=0){
+                    // Some launchers omit size options; keep the ordinary
+                    // four-cell day count instead of falling back to two.
+                    widthDp = 250;
                 }
-                int pixelsCurrentTempWidth = getTodayCurrentTempSizeInPixels(c);
-                int[] widthThresholdsPix = new int[]{pixelsCurrentTempWidth + pixelsVerticalBarWidth + pixelsOneDayWidth*4,
-                        pixelsCurrentTempWidth + pixelsVerticalBarWidth + pixelsOneDayWidth*5,
-                        pixelsCurrentTempWidth + pixelsVerticalBarWidth + pixelsOneDayWidth*6};
-                PrivateLog.log(c,PrivateLog.WIDGET,PrivateLog.INFO,"+-> calculated thresholds (in pixels) for item number in BoldWidget: "+widthThresholdsPix[0]+"|"+widthThresholdsPix[1]+"|"+widthThresholdsPix[2]);
-                if (width>=widthThresholdsPix[0]){
-                    forecastDays = 3;
+                int forecastDays = WidgetSizing.boldForecastDays(widthDp, widgetDimensionManager.getFontScale());
+                PrivateLog.log(c,PrivateLog.WIDGET,PrivateLog.INFO,"+-> forecast days in BoldWidget: "+forecastDays+" (width "+widthDp+" dp, scale "+widgetDimensionManager.getFontScale()+")");
+                if (forecastDays==3){
                     widgetResource = R.layout.boldwidget_layout3;
                 }
-                if (width>=widthThresholdsPix[1]){
-                    forecastDays = 4;
+                if (forecastDays==4){
                     widgetResource = R.layout.boldwidget_layout4;
                 }
-                if (width>=widthThresholdsPix[2]){
-                    forecastDays = 5;
+                if (forecastDays==5){
                     widgetResource = R.layout.boldwidget_layout5;
                 }
                 RemoteViews remoteViews = new RemoteViews(c.getPackageName(), widgetResource);
@@ -308,22 +299,6 @@ public class BoldWidget extends ClassicWidget {
         }
         setLocationText(c,remoteViews,weatherCard,shorten_text);
         setConditionText(c,remoteViews,weatherCard);
-    }
-
-    private final static String TemperatureMaxWidthTemplate = "-00°";
-
-    private int getOneDaySizeInPixels(Context context){
-        Paint calcPaint = new Paint();
-        calcPaint.setTextSize(context.getResources().getDimensionPixelSize(R.dimen.widget_textsize_large));
-        int pixelWidthTextMinMax  = Math.round(calcPaint.measureText(TemperatureMaxWidthTemplate));
-        int pixelWidthIcon        = context.getResources().getDimensionPixelSize(R.dimen.widget_weathericon_medium);
-        return pixelWidthTextMinMax+pixelWidthIcon;
-    }
-
-    private int getTodayCurrentTempSizeInPixels(Context context){
-        Paint calcPaint = new Paint();
-        calcPaint.setTextSize(context.getResources().getDimensionPixelSize(R.dimen.widget_textsize_verylarge));
-        return Math.round(calcPaint.measureText(TemperatureMaxWidthTemplate));
     }
 
 }

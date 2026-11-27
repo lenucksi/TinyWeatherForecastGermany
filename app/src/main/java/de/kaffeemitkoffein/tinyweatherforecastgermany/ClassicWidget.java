@@ -49,6 +49,80 @@ public class ClassicWidget extends AppWidgetProvider {
     public static final String NOT_AVAILABLE = "-";
 
     /**
+     * TASK-26: pure arithmetic shared by the four widget providers. Keeping this
+     * free of Android calls makes the font-scale and resize policy testable on
+     * the JVM (the providers themselves need a launcher / AppWidgetManager).
+     */
+    public static final class WidgetSizing {
+        /** Never let a calculated text size become unreadable or negative. */
+        public static final float MIN_FONT_SP = 8f;
+        /** Above this the user setting is clamped by the frame, not by the scale factor. */
+        public static final float MAX_SUPPORTED_FONT_SCALE = 1.5f;
+
+        private WidgetSizing() {}
+
+        public static float clamp(float value, float min, float max) {
+            if (value < min) {
+                return min;
+            }
+            if (value > max) {
+                return max;
+            }
+            return value;
+        }
+
+        /**
+         * Size text requested in sp for a frame measured in pixels. The system
+         * font scale is honoured until the text would leave the frame; the cap
+         * uses the scaled density so the text can never grow beyond it.
+         */
+        public static float textSizeSpForFrame(float baseSp, int framePx, float density, float fontScale) {
+            if (framePx <= 0 || density <= 0 || fontScale <= 0) {
+                return Math.max(MIN_FONT_SP, baseSp);
+            }
+            float maxSp = framePx / (density * fontScale);
+            return clamp(baseSp, MIN_FONT_SP, Math.max(MIN_FONT_SP, maxSp));
+        }
+
+        /**
+         * Number of forecast days in the BoldWidget. Thresholds are in dp (the
+         * unit AppWidgetManager reports), with a damped font-scale factor so a
+         * larger system font does not silently "lose" forecast days.
+         */
+        public static int boldForecastDays(int widthDp, float fontScale) {
+            float scale = clamp(fontScale, 1f, MAX_SUPPORTED_FONT_SCALE);
+            // Only very large system fonts raise the bar; a normal 1.3x scale
+            // must not make a four-cell widget lose a forecast day again.
+            float requiredWidthFactor = 1f + Math.max(0f, scale - 1.4f) * 0.25f;
+            if (widthDp >= Math.round(400 * requiredWidthFactor)) {
+                return 5;
+            }
+            if (widthDp >= Math.round(320 * requiredWidthFactor)) {
+                return 4;
+            }
+            if (widthDp >= Math.round(250 * requiredWidthFactor)) {
+                return 3;
+            }
+            return 2;
+        }
+
+        /** Lines needed by a note of the given pixel width inside the frame. */
+        public static int noteLines(float textWidthPx, int availableWidthPx) {
+            if (textWidthPx <= 0 || availableWidthPx <= 0) {
+                return 1;
+            }
+            double lines = Math.ceil((double) textWidthPx / (double) availableWidthPx);
+            return (int) clamp((float) lines, 1f, 3f);
+        }
+
+        public static float boundedFontSize(float requestedPx, float minPx, float maxPx) {
+            float min = Math.max(1f, minPx);
+            float max = Math.max(min, maxPx);
+            return clamp(requestedPx, min, max);
+        }
+    }
+
+    /**
      * This is called when the widget gets enabled.
      */
 
@@ -498,10 +572,10 @@ public class ClassicWidget extends AppWidgetProvider {
                 }
                 RemoteViews remoteViews = new RemoteViews(c.getPackageName(),widgetResource);
                 if (lines==2){
-                    remoteViews.setImageViewBitmap(R.id.largewidget_10daysbitmap, get10DaysForecastBar(c,widgetWidth,widgetHeight,weatherCard,false));
+                    remoteViews.setImageViewBitmap(R.id.largewidget_10daysbitmap, get10DaysForecastBar(c,widgetWidth,widgetHeight,weatherCard,false,widgetDimensionManager.getFontScale()));
                 }
                 if (lines==3){
-                    remoteViews.setImageViewBitmap(R.id.largewidget_10daysbitmap, get10DaysForecastBar(c,widgetWidth,widgetHeight,weatherCard,true));
+                    remoteViews.setImageViewBitmap(R.id.largewidget_10daysbitmap, get10DaysForecastBar(c,widgetWidth,widgetHeight,weatherCard,true,widgetDimensionManager.getFontScale()));
                 }
                 remoteViews.setOnClickPendingIntent(R.id.widget_maincontainer,pendingIntent);
                 setClassicWidgetItems(remoteViews,weatherCard,c);
@@ -544,17 +618,28 @@ public class ClassicWidget extends AppWidgetProvider {
         return item_count;
     }
 
+    /** Backwards-compatible overload for non-widget canvas callers. */
     public static float GetFontSize(float maxReferenceWidth, float maxReferenceHeight, final String STRING_TEMPLATE){
-        float fontSize = maxReferenceHeight;
-        // paint
+        return GetFontSize(maxReferenceWidth,maxReferenceHeight,STRING_TEMPLATE,1f,1f,maxReferenceHeight);
+    }
+
+    /**
+     * Font size for the canvas-rendered daily forecast bar. RemoteViews text
+     * scales with the system automatically; canvas text does not, so the
+     * requested sp size is converted with the scaled density. The loop is
+     * bounded (an empty / very narrow cell previously could loop forever).
+     */
+    public static float GetFontSize(float maxReferenceWidth, float maxReferenceHeight, final String STRING_TEMPLATE,
+                                    float density, float fontScale, float baseSp){
+        float minimumPx = WidgetSizing.MIN_FONT_SP * density * Math.max(fontScale, 1f);
+        float requestedPx = baseSp * density * WidgetSizing.clamp(fontScale,1f,WidgetSizing.MAX_SUPPORTED_FONT_SCALE);
+        float fontSize = WidgetSizing.boundedFontSize(requestedPx,minimumPx,maxReferenceHeight);
         Paint paint = new Paint();
-        // determine the maximum font size possible, determined by maxWidth
-        float textWidth;
-        do {
-            paint.setTextSize(fontSize);
-            textWidth = paint.measureText(STRING_TEMPLATE);
+        paint.setTextSize(fontSize);
+        while (paint.measureText(STRING_TEMPLATE)>maxReferenceWidth && fontSize>minimumPx){
             fontSize = fontSize - 0.5f;
-        } while (textWidth>maxReferenceWidth);
+            paint.setTextSize(fontSize);
+        }
         return fontSize;
     }
 
@@ -617,7 +702,7 @@ public class ClassicWidget extends AppWidgetProvider {
             paint_maxtemp.setColor(ThemePicker.getWidgetTextColor(context));
             paint_maxtemp.setAntiAlias(true);
             paint_maxtemp.setTextSize(fontSize);
-            float x_offset_maxtemp = (width_bar - paint_weekday.measureText(max_temperature_string))/2;
+            float x_offset_maxtemp = (width_bar - paint_maxtemp.measureText(max_temperature_string))/2;
             float y_offset_maxtemp = y_offset_counter - paint_maxtemp.getTextSize()/2;
             canvas.drawText(max_temperature_string,x_offset_maxtemp,y_offset_maxtemp+height_item,paint_maxtemp);
             // iterate offset
@@ -630,7 +715,7 @@ public class ClassicWidget extends AppWidgetProvider {
             paint_mintemp.setColor(ThemePicker.getWidgetTextColor(context));
             paint_mintemp.setAntiAlias(true);
             paint_mintemp.setTextSize(fontSize);
-            float x_offset_mintemp = (width_bar - paint_weekday.measureText(min_temperature_string))/2;
+            float x_offset_mintemp = (width_bar - paint_mintemp.measureText(min_temperature_string))/2;
             float y_offset_mintemp = y_offset_counter - paint_mintemp.getTextSize()/2;
             canvas.drawText(min_temperature_string,x_offset_mintemp,y_offset_mintemp+height_item,paint_mintemp);
             // iterate offset
@@ -639,7 +724,7 @@ public class ClassicWidget extends AppWidgetProvider {
         return bitmap;
     }
 
-    private Bitmap get10DaysForecastBar(Context context, int widgetWidth, int widgetHeight, CurrentWeatherInfo currentWeatherInfo, boolean showTemperatures){
+    private Bitmap get10DaysForecastBar(Context context, int widgetWidth, int widgetHeight, CurrentWeatherInfo currentWeatherInfo, boolean showTemperatures, float fontScale){
         /*
          * Determine the approximate diameters of the bitmap.
          *
@@ -662,12 +747,13 @@ public class ClassicWidget extends AppWidgetProvider {
             return bitmap;
         }
         int number_of_forecast_days = currentWeatherInfo.forecast24hourly.size();
-        if (number_of_forecast_days==0){
+        if (number_of_forecast_days<=1){
             return bitmap;
         }
         float width_oneday = width_bitmap / (number_of_forecast_days-1);
         float height_oneday = height_bitmap;
-        float fontSize = GetFontSize(width_oneday*0.95f,height_oneday,"Wed");
+        float density = context.getResources().getDisplayMetrics().density;
+        float fontSize = GetFontSize(width_oneday*0.95f,height_oneday,"Wed",density,fontScale,10f);
         for (int i=1; i<number_of_forecast_days; i++){
             Bitmap item = getDailyBar(context,width_oneday,height_oneday,fontSize,currentWeatherInfo.forecast24hourly.get(i),showTemperatures);
             canvas.drawBitmap(item,(i-1)*width_oneday,0,null);
@@ -843,6 +929,21 @@ public class ClassicWidget extends AppWidgetProvider {
 
         public int getWidgetWidthInt(){
             return Math.round(getWidgetWidth());
+        }
+
+        /**
+         * AppWidgetManager reports sizes in dp. Use dp for launcher cell / day
+         * count decisions, pixels only for bitmap and font measurements.
+         */
+        public int getWidgetWidthDp(){
+            if (orientation == Configuration.ORIENTATION_LANDSCAPE){
+                return widget_width_landscape_dp;
+            }
+            return widget_width_portrait_dp;
+        }
+
+        public float getFontScale(){
+            return context.getResources().getConfiguration().fontScale;
         }
 
         /**

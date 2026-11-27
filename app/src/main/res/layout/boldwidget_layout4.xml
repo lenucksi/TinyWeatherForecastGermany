@@ -29,7 +29,7 @@
                android:layout_width="match_parent"
                android:layout_height="match_parent"/>
 
-    <TextView android:id="@+id/widget_reference_text"
+    <TextView android:id="@+id/widget_reference_text" android:ellipsize="end" android:maxLines="2"
               android:layout_width="wrap_content"
               android:layout_height="wrap_content"
               android:layout_alignParentBottom="true"
@@ -96,7 +96,7 @@
                        android:src="@mipmap/warning_icon"
             />
 
-            <TextView android:id="@+id/widget_warningtext"
+            <TextView android:id="@+id/widget_warningtext" android:ellipsize="end" android:maxLines="2"
                       android:layout_width="match_parent"
                       android:layout_height="wrap_content"
                       android:textSize="@dimen/widget_textsize_medium"
@@ -141,7 +141,7 @@
                 android:layout_centerVertical="true"
                 android:src="@mipmap/white_bar"/>
 
-        <TextView android:id="@+id/boldwidget_fc2_max"
+        <TextView android:id="@+id/boldwidget_fc2_max" android:ellipsize="end" android:maxLines="1"
                   android:textSize="@dimen/widget_textsize_large"
                   android:textColor="@color/colorTextWidget"
                   android:layout_above="@id/boldwidget_fc2_whitebar"
@@ -151,7 +151,7 @@
                   android:text="-°"/>
 
 
-        <TextView android:id="@+id/boldwidget_fc2_min"
+        <TextView android:id="@+id/boldwidget_fc2_min" android:ellipsize="end" android:maxLines="1"
                   android:textSize="@dimen/widget_textsize_large"
                   android:textColor="@color/colorTextWidget"
                   android:layout_below="@id/boldwidget_fc2_whitebar"
@@ -161,7 +161,7 @@
                   android:text="-°"/>
 
 
-        <TextView android:id="@+id/boldwidget_dayofweek_fc2"
+        <TextView android:id="@+id/boldwidget_dayofweek_fc2" android:ellipsize="end" android:maxLines="1"
                   android:textSize="@dimen/widget_textsize_large"
                   android:textColor="@color/colorTextWidget"
                   android:layout_alignParentBottom="true"
@@ -213,7 +213,7 @@
                 android:layout_centerVertical="true"
                 android:src="@mipmap/white_bar"/>
 
-        <TextView android:id="@+id/boldwidget_fc1_max"
+        <TextView android:id="@+id/boldwidget_fc1_max" android:ellipsize="end" android:maxLines="1"
                   android:textSize="@dimen/widget_textsize_large"
                   android:textColor="@color/colorTextWidget"
                   android:layout_above="@id/boldwidget_fc1_whitebar"
@@ -223,7 +223,7 @@
                   android:text="-°"/>
 
 
-        <TextView android:id="@+id/boldwidget_fc1_min"
+        <TextView android:id="@+id/boldwidget_fc1_min" android:ellipsize="end" android:maxLines="1"
                   android:textSize="@dimen/widget_textsize_large"
                   android:textColor="@color/colorTextWidget"
                   android:layout_below="@id/boldwidget_fc1_whitebar"
@@ -232,7 +232,7 @@
                   android:layout_height="wrap_content"
                   android:text="-°"/>
 
-        <TextView android:id="@+id/boldwidget_dayofweek_fc1"
+        <TextView android:id="@+id/boldwidget_dayofweek_fc1" android:ellipsize="end" android:maxLines="1"
                   android:textSize="@dimen/widget_textsize_large"
                   android:textColor="@color/colorTextWidget"
                   android:layout_alignParentBottom="true"
@@ -259,7 +259,7 @@
             android:layout_centerVertical="true">
 
         <TextView
-                android:id="@+id/boldwidget_current_temperature"
+                android:id="@+id/boldwidget_current_temperature" android:ellipsize="end" android:maxLines="1"
                 android:textSize="@dimen/widget_textsize_verylarge"
                 android:textColor="@color/colorTextWidget"
                 android:layout_alignParentLeft="true"
@@ -285,7 +285,7 @@
                 android:layout_centerVertical="true"
                 android:src="@mipmap/white_bar"/>
 
-        <TextView android:id="@+id/boldwidget_today_max"
+        <TextView android:id="@+id/boldwidget_today_max" android:ellipsize="end" android:maxLines="1"
                   android:textSize="@dimen/widget_textsize_large"
                   android:textColor="@color/colorTextWidget"
                   android:layout_above="@id/boldwidget_today_whitebar"
@@ -296,7 +296,7 @@
                   android:minEms="5"
                   android:text="-°"/>
 
-        <TextView android:id="@+id/boldwidget_today_min"
+        <TextView android:id="@+id/boldwidget_today_min" android:ellipsize="end" android:maxLines="1"
                   android:textSize="@dimen/widget_textsize_large"
                   android:textColor="@color/colorTextWidget"
                   android:layout_below="@id/boldwidget_today_whitebar"
@@ -307,7 +307,7 @@
                   android:minEms="5"
                   android:text="-°"/>
 
-        <TextView android:id="@+id/boldwidget_dayofweek_today"
+        <TextView android:id="@+id/boldwidget_dayofweek_today" android:ellipsize="end" android:maxLines="1"
                   android:textSize="@dimen/widget_textsize_large"
                   android:textColor="@color/colorTextWidget"
                   android:layout_alignParentBottom="true"
@@ -349,7 +349,7 @@
                 android:layout_centerVertical="true"
                 android:src="@mipmap/white_bar"/>
 
-        <TextView android:id="@+id/boldwidget_fc3_max"
+        <TextView android:id="@+id/boldwidget_fc3_max" android:ellipsize="end" android:maxLines="1"
                   android:textSize="@dimen/widget_textsize_large"
                   android:textColor="@color/colorTextWidget"
                   android:layout_above="@id/boldwidget_fc3_whitebar"
@@ -358,7 +358,7 @@
                   android:layout_height="wrap_content"
                   android:text="-°"/>
 
-        <TextView android:id="@+id/boldwidget_fc3_min"
+        <TextView android:id="@+id/boldwidget_fc3_min" android:ellipsize="end" android:maxLines="1"
                   android:textSize="@dimen/widget_textsize_large"
                   android:textColor="@color/colorTextWidget"
                   android:layout_below="@id/boldwidget_fc3_whitebar"
@@ -367,7 +367,7 @@
                   android:layout_height="wrap_content"
                   android:text="-°"/>
 
-        <TextView android:id="@+id/boldwidget_dayofweek_fc3"
+        <TextView android:id="@+id/boldwidget_dayofweek_fc3" android:ellipsize="end" android:maxLines="1"
                   android:textSize="@dimen/widget_textsize_large"
                   android:textColor="@color/colorTextWidget"
                   android:layout_alignParentBottom="true"
@@ -407,7 +407,7 @@
                 android:layout_centerVertical="true"
                 android:src="@mipmap/white_bar"/>
 
-        <TextView android:id="@+id/boldwidget_fc4_max"
+        <TextView android:id="@+id/boldwidget_fc4_max" android:ellipsize="end" android:maxLines="1"
                   android:textSize="@dimen/widget_textsize_large"
                   android:textColor="@color/colorTextWidget"
                   android:layout_above="@id/boldwidget_fc4_whitebar"
@@ -416,7 +416,7 @@
                   android:layout_height="wrap_content"
                   android:text="-°"/>
 
-        <TextView android:id="@+id/boldwidget_fc4_min"
+        <TextView android:id="@+id/boldwidget_fc4_min" android:ellipsize="end" android:maxLines="1"
                   android:textSize="@dimen/widget_textsize_large"
                   android:textColor="@color/colorTextWidget"
                   android:layout_below="@id/boldwidget_fc4_whitebar"
@@ -425,7 +425,7 @@
                   android:layout_height="wrap_content"
                   android:text="-°"/>
 
-        <TextView android:id="@+id/boldwidget_dayofweek_fc4"
+        <TextView android:id="@+id/boldwidget_dayofweek_fc4" android:ellipsize="end" android:maxLines="1"
                   android:textSize="@dimen/widget_textsize_large"
                   android:textColor="@color/colorTextWidget"
                   android:layout_alignParentBottom="true"

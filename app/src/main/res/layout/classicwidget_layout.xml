@@ -28,7 +28,7 @@
                android:layout_width="match_parent"
                android:layout_height="match_parent"/>
 
-    <TextView android:id="@+id/widget_reference_text"
+    <TextView android:id="@+id/widget_reference_text" android:ellipsize="end" android:maxLines="2"
               android:layout_width="match_parent"
               android:layout_height="wrap_content"
               android:layout_alignParentBottom="true"
@@ -71,7 +71,7 @@
             android:gravity="center"
             android:orientation="vertical">
 
-            <TextView android:id="@+id/classicwidget_locationtext"
+            <TextView android:id="@+id/classicwidget_locationtext" android:ellipsize="end" android:maxLines="1"
                 android:textSize="@dimen/widget_textsize_large"
                 android:textColor="@color/colorTextWidget"
                 android:layout_marginLeft="2dp"
@@ -80,7 +80,7 @@
                 android:layout_height="wrap_content"
                 android:text="HAMBURG INNENSTADT"/>
 
-            <TextView android:id="@+id/classicwidget_weatherconditiontext"
+            <TextView android:id="@+id/classicwidget_weatherconditiontext" android:ellipsize="end" android:maxLines="1"
                 android:textSize="@dimen/widget_textsize_medium"
                 android:textColor="@color/colorTextWidget"
                 android:layout_marginLeft="2dp"
@@ -121,7 +121,7 @@
                 android:text="-°"/>
 
 
-                <TextView android:id="@+id/classicwidget_temperature_highlow"
+                <TextView android:id="@+id/classicwidget_temperature_highlow" android:ellipsize="end" android:maxLines="1"
                           android:textSize="@dimen/widget_textsize_large"
                           android:textColor="@color/colorTextWidget"
                           android:gravity="center"
@@ -145,7 +145,7 @@
                     android:src="@mipmap/not_available">
                 </ImageView>
 
-                <TextView android:id="@+id/classicwidget_wind"
+                <TextView android:id="@+id/classicwidget_wind" android:ellipsize="end" android:maxLines="1"
                     android:textSize="@dimen/widget_textsize_medium"
                     android:textColor="@color/colorTextWidget"
                     android:gravity="center"
@@ -154,7 +154,7 @@
                     android:layout_height="wrap_content"
                     android:text="- (-)"/>
 
-                <TextView android:id="@+id/classicwidget_wind_unit"
+                <TextView android:id="@+id/classicwidget_wind_unit" android:ellipsize="end" android:maxLines="1"
                     android:textSize="@dimen/widget_textsize_small"
                     android:textColor="@color/colorTextWidget"
                     android:gravity="center"
