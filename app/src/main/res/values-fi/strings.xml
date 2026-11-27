@@ -60,7 +60,6 @@
     <string name="sunset">Auringonlasku</string>
     <string name="sunrise">Auringonnousu</string>
     <string name="twilight">Hämärä</string>
-    <string name="preference_feedback_title">Palaute</string>
     <string name="logging_copy_fail">Lokien kopiointi leikepöydälle epäonnistui!</string>
     <string name="license_title">Lisenssit</string>
     <string name="button_continue">Jatka</string>
@@ -78,9 +77,6 @@
     <string name="direction_southeast">KS</string>
     <string name="direction_southwest">LI</string>
     <string name="direction_northwest">LT</string>
-    <string name="preference_feedback_summary">Anna kehittäjälle palautetta sähköpostitse.</string>
-    <string name="feedback_mail_subject">Palaute: TinyWeatherForecastGermany</string>
-    <string name="feedback_mail_text">Kun lähetät vikailmoituksen, kopioi ja liitä myös lokit, jos mahdollista.</string>
     <string name="warnings_until">kunnes</string>
     <string name="warnings_update">Varoitukset päivitetty.</string>
     <string name="warnings">Varoitukset</string>
@@ -507,4 +503,5 @@
     <string name="preference_screen_uvhi_mainType_title">Kirkas taivas</string>
     <string name="preference_screen_uvhi_mainType_summary">Älä sovella pilvimuutoskertoimia sovelluksen päänäkymässä näkyvään UV-vaaraindeksiennusteeseen.</string>
     <string name="no_data">Näyttää siltä, että tällä hetkellä ei ole saatavilla sääennustetta tähän sijaintiin. Voit yrittää päivittää tiedot tai valita toisen sijainnin.</string>
+    <string name="invalid_weather_host_message">Virheellinen säädatan palvelin. Vain DWD:n palvelimet ovat sallittuja; käytetään oletuspalvelinta.</string>
 </resources>

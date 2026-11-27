@@ -28,8 +28,6 @@
     <string name="preference_gadgetbridge_packagename_summary">Stel hier een aangepaste pakketnaam in, bijvoorbeeld als je een van Gadgetbridge afgesplitste app gebruikt. Wis de naam om de standaard pakketnaam te gebruiken.</string>
     <string name="preference_screen_display_summary">Pas de voorspellingsweergave aan.</string>
     <string name="logging_copy_success">De logboeken zijn gekopieerd naar het klembord.</string>
-    <string name="feedback_mail_text">Als je een bugmelding verstuurt, kopieer en plak dan ook de logboeken (indien mogelijk).</string>
-    <string name="feedback_mail_subject">Feedback: TinyWeatherForecastGermany</string>
     <string name="preference_logging_summary">Schakel logboeken in. Logboeken worden LOKAAL op je toestel opgeslagen en NIET automatisch verzonden.</string>
     <string name="preference_cache_warnings_summary">Hoelang waarschuwingen moeten worden getoond zonder ze opnieuw op te halen van de Deutscher Wetterdienst.</string>
     <string name="dwd_notice">Gegevensbasis: Deutscher Wetterdienst, eigen elementen toegevoegd, sommige gegevens gemiddeld over individuele waarden.</string>
@@ -149,8 +147,6 @@
     <string name="logging_button_copy">Logboeken kopiëren naar klembord</string>
     <string name="logging_title">Logboeken</string>
     <string name="preference_log_to_logcat_title">Loggen naar Logcat</string>
-    <string name="preference_feedback_summary">Geef de ontwikkelaar feedback via e-mail.</string>
-    <string name="preference_feedback_title">Feedback</string>
     <string name="direction_calm">-</string>
     <string name="sunset">Zonsondergang</string>
     <string name="sunrise">Zonsopgang</string>
@@ -508,4 +504,5 @@
     <string name="preference_uvi_notice_summary">Meer details over de berekening van de UV-risico-index zijn beschikbaar op de homepage van de DWD. Als de voorkeur voor heldere hemel wordt gewijzigd, moeten de voorspellingsgegevens van de DWD worden bijgewerkt.</string>
     <string name="preference_screen_uvhi_mainType_summary">Pas geen wolkenmodificatiefactoren toe op de UV-gevarenindexvoorspelling die wordt weergegeven in de hoofdweergave van de app.</string>
     <string name="preference_screen_uvhi_mainType_title">Heldere lucht</string>
+    <string name="invalid_weather_host_message">Ongeldige host voor weerdata. Alleen DWD-servers zijn toegestaan; de standaardserver wordt gebruikt.</string>
 </resources>

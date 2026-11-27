@@ -439,13 +439,9 @@
     <string name="sunset">Solnedgång</string>
     <string name="sunrise">Soluppgång</string>
     <string name="twilight">Skymning</string>
-    <string name="preference_feedback_title">Återkoppling</string>
-    <string name="preference_feedback_summary">Ge utvecklaren återkoppling via e-post.</string>
     <string name="preference_clearnotifications_title">Återställ aviseringar</string>
     <string name="preference_clearnotifications_summary">Återställ aviseringar för vädervarningar. Alla giltiga aviseringar visas igen.</string>
     <string name="preference_clearnotifications_message">Aviseringsminnet har rensats.</string>
-    <string name="feedback_mail_subject">Återkoppling: TinyWeatherForecastGermany</string>
-    <string name="feedback_mail_text">När du skickar en felrapport, kopiera och klistra gärna också in loggar om det är möjligt.</string>
     <string name="warnings_until">till</string>
     <string name="warnings_update">Varningarna har uppdaterats.</string>
     <string name="warnings">Varningar</string>
@@ -528,4 +524,5 @@
     <string name="preference_overviewchart_inappsize_title">Storlek</string>
     <string name="preference_overviewchart_inappsize_summary">Storlek på översiktsdiagrammet i stående läge.</string>
     <string name="error_no_data" translatable="true">Inga väderdata tillgängliga.</string>
+    <string name="invalid_weather_host_message">Ogiltig väderdataserver. Endast DWD-servrar är tillåtna; standardservern används.</string>
 </resources>

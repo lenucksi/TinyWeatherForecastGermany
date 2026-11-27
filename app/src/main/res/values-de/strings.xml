@@ -5,16 +5,16 @@
  Copyright (c) 2020, 2021, 2022, 2023 Pawel Dube
 
  This program is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
+ it under the terms of the GNU Affero General Public License as published by
  the Free Software Foundation, either version 3 of the License, or
  (at your option) any later version.
 
  This program is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
+ GNU Affero General Public License for more details.
 
- You should have received a copy of the GNU General Public License
+ You should have received a copy of the GNU Affero General Public License
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --><resources>
     <string name="app_name">Kleine Wettervorschau Deutschland</string>
@@ -192,10 +192,6 @@
     <string name="sunset">Sonnenuntergang</string>
     <string name="sunrise">Sonnenaufgang</string>
     <string name="twilight">Dämmerung</string>
-    <string name="preference_feedback_title">Rückmeldung</string>
-    <string name="preference_feedback_summary">Geben Sie dem Entwickler Feedback per E-Mail.</string>
-    <string name="feedback_mail_subject">Rückmeldung: TinyWeatherForecastGermany</string>
-    <string name="feedback_mail_text">Wenn es sich um einen Fehler handelt, bitte auch Protokolle kopieren und hier einfügen, falls möglich.</string>
     <string name="warnings_until">bis</string>
     <string name="warnings_update">Warnungen aktualisiert.</string>
     <string name="warnings">Warnungen</string>
@@ -563,4 +559,5 @@
     <string name="preference_overviewchart_inappsize_title">Größe</string>
     <string name="preference_overviewchart_inappsize_summary">Größe der Übersichtstabelle im Portrait-Modus.</string>
     <string name="error_no_data" translatable="true">Keine Wetterdaten verfügbar.</string>
+    <string name="invalid_weather_host_message">Ungültiger Wetterdaten-Server. Es sind nur DWD-Server erlaubt; der Standardserver wird verwendet.</string>
 </resources>

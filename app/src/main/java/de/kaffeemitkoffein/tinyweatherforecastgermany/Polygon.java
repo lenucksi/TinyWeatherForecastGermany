@@ -4,16 +4,16 @@
  * Copyright (c) 2020, 2021, 2022, 2023, 2024 Pawel Dube
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -111,8 +111,8 @@ public class Polygon{
      * determines if point is inside a polygon.
      *
      * Adapted to java from C, see https://wrf.ecse.rpi.edu/Research/Short_Notes/pnpoly.html,
-     * original code Copyright (c) 1970-2003, Wm. Randolph Franklin, see COPYING.txt for
-     * license.
+     * original code Copyright (c) 1970-2003, Wm. Randolph Franklin; the PNPOLY
+     * license notice is included in res/raw/license.txt and at the source URL above.
      *
      * @param nvert
      * @param vertx
