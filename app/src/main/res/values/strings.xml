@@ -414,7 +414,7 @@
     <string name="legend_sample_caption">Currently displayed overview chart</string>
     <string name="legend_open">Open overview chart legend</string>
     <string name="legend_temp_above">Orange line: temperature above 0 °C</string>
-    <string name="legend_temp_below">Blue line: temperature below 0 °C</string>
+    <string name="legend_temp_below">Cyan line: temperature below 0 °C</string>
     <string name="legend_clouds">Grey area: cloud cover (percent)</string>
     <string name="legend_rain_prob">Blue area: probability of precipitation (percent)</string>
     <string name="legend_rain_amount">Cyan bars: amount of precipitation (mm)</string>
