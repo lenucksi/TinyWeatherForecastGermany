@@ -158,26 +158,34 @@
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/chartwidget" />
         </receiver>
 
+        <!--
+          Gadgetbridge is a separate app. It triggers updates with an implicit,
+          package-targeted broadcast for REQUEST_UPDATE (see the integration notes in
+          WeatherBroadcastReceiver.java), so this receiver must remain exported.
+          It only re-serves cached weather data (throttled to 30 minutes) and does not
+          start a weather refresh; see GadgetbridgeBroadcastReceiver.onReceive().
+        -->
         <receiver android:name=".GadgetbridgeBroadcastReceiver" android:exported="true">
             <intent-filter>
                 <action android:name="de.kaffeemitkoffein.broadcast.REQUEST_UPDATE" />
             </intent-filter>
         </receiver>
 
-
-        <receiver android:name=".AlarmClockUpdatedReceiver" android:exported="true">
+        <!-- System and app-internal senders only: no external app needs to reach these. -->
+        <receiver android:name=".AlarmClockUpdatedReceiver" android:exported="false">
             <intent-filter>
                 <action android:name="android.app.action.NEXT_ALARM_CLOCK_CHANGED" />
             </intent-filter>
         </receiver>
 
-        <receiver android:name=".OnBootCompletedReceiver" android:enabled="true" android:exported="true">
+        <receiver android:name=".OnBootCompletedReceiver" android:enabled="true" android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
 
-        <receiver android:name=".CancelNotificationBroadcastReceiver" android:enabled="true" android:exported="true">
+        <!-- Sent by this app (AlarmManager PendingIntent and the clear-notifications preference). -->
+        <receiver android:name=".CancelNotificationBroadcastReceiver" android:enabled="true" android:exported="false">
             <intent-filter>
                 <action android:name="de.kaffeemitkoffein.broadcast.CANCEL_NOTIFICATIONS"/>
                 <action android:name="de.kaffeemitkoffein.broadcast.CLEAR_NOTIFICATIONS"/>
