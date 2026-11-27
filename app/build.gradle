@@ -132,9 +132,30 @@ android {
 }
 
 dependencies {
+    // TASK-51: MapLibre Native Android 13.8.0 (BSD-2-Clause).
+    // Coordinates: org.maplibre.gl:android-sdk-opengl:13.8.0
+    // The default org.maplibre.gl:android-sdk:13.8.0 is the Vulkan flavour: its AAR
+    // AndroidManifest.xml declares
+    //   <uses-feature android:name="android.hardware.vulkan.version" android:required="true"/>
+    // which makes F-Droid/IzzyOnDroid filter out devices without Vulkan 1.0. The
+    // -opengl flavour has no such required feature and works on every device.
+    // POM: https://repo1.maven.org/maven2/org/maplibre/gl/android-sdk-opengl/13.8.0/android-sdk-opengl-13.8.0.pom
+    implementation 'org.maplibre.gl:android-sdk-opengl:13.8.0'
+
     // Gadgetbridge's WeatherSpec (AGPLv3) uses androidx.annotation.Nullable,
     // which has CLASS retention - javac only, no runtime dependency needed.
     compileOnly 'androidx.annotation:annotation:1.9.1'
+
+    // MapLibre brings androidx.annotation 1.8.2 in at runtime. Gradle's
+    // consistent-resolution feature would otherwise derive a strict 1.8.2
+    // constraint for the compile classpath and clash with the compileOnly 1.9.1
+    // above. Align the runtime resolution on 1.9.1 instead; this is a constraint,
+    // not a new dependency declaration (MapLibre already needs the artifact).
+    constraints {
+        implementation('androidx.annotation:annotation:1.9.1') {
+            because 'keep javac annotation API aligned with MapLibre runtime transitive'
+        }
+    }
 
     // TASK-16: JVM test foundation. The presence of testImplementation also
     // enables the (otherwise guarded) unit-test step in the CI workflow.

@@ -136,6 +136,22 @@ This program uses the Astronomy class, Copyright (C) 2010-2012, Helmut Lehmeyer,
 
 Map used to display the rain radar © OpenStreetMap <https://openstreetmap.org/copyright>. 
 
+Maps are rendered with [MapLibre Native Android](https://github.com/maplibre/maplibre-native)
+13.8.0 (`org.maplibre.gl:android-sdk-opengl:13.8.0`), Copyright (c) MapLibre
+contributors, licensed under the BSD 2-Clause license
+(<https://opensource.org/licenses/BSD-2-Clause>). This fork deliberately uses the
+OpenGL ES artifact instead of the default `org.maplibre.gl:android-sdk` (Vulkan):
+the Vulkan AAR declares `android.hardware.vulkan.version` as a required feature,
+which causes F-Droid/IzzyOnDroid to filter the app out on devices without Vulkan.
+The OpenGL ES artifact has no such requirement. See
+<https://repo1.maven.org/maven2/org/maplibre/gl/android-sdk-opengl/13.8.0/android-sdk-opengl-13.8.0.pom>.
+
+Map data © OpenStreetMap contributors (<https://www.openstreetmap.org/copyright>),
+available under the Open Database License (ODbL, <https://opendatacommons.org/licenses/odbl/>).
+Vector tiles and style by [OpenMapTiles](https://openmaptiles.org/) (ODbL), served by
+[OpenFreeMap](https://openfreemap.org/). These attributions must remain visible
+wherever the map is displayed.
+
 Images of the "Lange Anna" (Helgoland) and the Pellworm lighthouse by arwanger.
 
 Calculation of relative humidity from temperature and dew point is done using a simplified formula example from the DWD (Deutscher Wetterdienst), see <https://www.dwd.de/DE/leistungen/met_verfahren_mosmix/faq/faq_mosmix_node.html>.
