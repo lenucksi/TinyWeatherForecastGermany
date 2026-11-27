@@ -1,5 +1,21 @@
 # Release notes
 
+## Database upgrades now migrate in place
+
+Upgrading from an older app version no longer drops and recreates all seven
+database tables. Each schema version is applied as a separate migration: new
+columns are added with `ALTER TABLE`, new tables are created, and cached
+forecasts, warnings, text forecasts, areas, pollen data and locally stored
+values are kept.
+
+Columns introduced by an upgrade are backfilled for existing rows: serialized
+forecast fields get the empty value used for "no data", and the area centroid
+coordinates added in schema version 6 are recalculated from the polygons
+already stored in the database, so `areas.txt` does not have to be downloaded
+again. Newly introduced forecast parameters appear empty in cached forecasts
+until the next successful data refresh. Database downgrades (installing an
+older app version over a newer database) still rebuild the tables from scratch.
+
 ## Android 13 (API 33) is now the minimum version
 
 This fork now requires **Android 13 (API 33) or newer**. `minSdkVersion` in
