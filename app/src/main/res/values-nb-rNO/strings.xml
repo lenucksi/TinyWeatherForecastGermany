@@ -124,9 +124,7 @@
     <string name="direction_east">Ø</string>
     <string name="direction_northeast">NØ</string>
     <string name="sunrise">Soloppgang</string>
-    <string name="preference_feedback_title">Tilbakemelding</string>
     <string name="service_notification_text3">Rengjøring…</string>
-    <string name="preference_feedback_summary">Gi utvikleren en tilbakemelding via e-post.</string>
     <string name="warnings_until">til</string>
     <string name="warnings_update_fail">Kunne ikke oppdatere væradvarsler!</string>
     <string name="welcome_s2_text2">skyer</string>
@@ -207,7 +205,6 @@
     <string name="service_notification_title">Tiny Weather Forecast Germany</string>
     <string name="direction_calm">-</string>
     <string name="twilight">Skumring</string>
-    <string name="feedback_mail_text">Når du sender en feilrapport, kan du også kopiere &amp; lime logger, hvis det er mulig.</string>
     <string name="welcome_s1_text1">fri, gratis, åpen kildekode</string>
     <string name="warnings_none">Foreløpig er det ingen væradvarsler for Tyskland.</string>
     <string name="welcome_s3_text1">Klikk/Trykk på ikonet i øvre venstre hjørne til å kollapse kartet.</string>
@@ -225,7 +222,6 @@
     <string name="textforecasttype_maritime_warning">Maritime Advarsel</string>
     <string name="textforecasttype_medium_term">Vær Mellomlang Sikt</string>
     <string name="geoinput_rationale">Appen kan bruke stedstjenester på enheten din til å finne den nærmeste værstasjonen. Alternativt kan du søke etter en værstasjon selv, angi koordinatene manuelt eller dele en posisjon fra en kartapp. Hvis du vil at appen skal søke etter posisjonen din, må du ha posisjonstillatelse.</string>
-    <string name="feedback_mail_subject">Tilbakemelding: TinyWeatherForecastGermany</string>
     <string name="alertdialog_2_text">Denne app som logger seg til logcat. Logging for å logcat vil bli deaktivert, siden denne funksjonen er ikke ment for offisielle utgivelser.</string>
     <string name="weathercode_DRIZZLE_FREEZING_MODERATE_OR_HEAVY">frysing duskregn</string>
     <string name="textforecasttype_maritime_north_and_baltic_medium_term">Maritime Nord- &amp; Østersjøen Mellomlang Sikt</string>
@@ -500,4 +496,5 @@
     <string name="preference_screen_uvhi_mainType_title">Klar himmel</string>
     <string name="preference_screen_uvhi_mainType_summary">Ikke bruk skymodifikasjonsfaktorer på UV-fareindeksen som vises i hovedvisningen i appen.</string>
     <string name="preference_widget_clock_summary">Juster klokkestørrelsen i widgeten for vær og tid.</string>
+    <string name="invalid_weather_host_message">Ugyldig vert for værdata. Bare DWD-servere er tillatt; standardserveren brukes.</string>
 </resources>

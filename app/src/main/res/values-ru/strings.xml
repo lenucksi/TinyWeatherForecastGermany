@@ -198,10 +198,7 @@
     <string name="sunset">Закат</string>
     <string name="sunrise">Восход солнца</string>
     <string name="twilight">Сумерки</string>
-    <string name="preference_feedback_summary">Дайте разработчику обратную связь по электронной почте.</string>
     <string name="preference_clearnotifications_message">Память уведомлений очищена.</string>
-    <string name="feedback_mail_subject">Обратная связь: TinyWeatherForecastGermany</string>
-    <string name="feedback_mail_text">При отправке сообщения об ошибке, пожалуйста, также скопируйте и вставьте журналы, если это возможно.</string>
     <string name="warnings_until">до</string>
     <string name="warnings_update">Предупреждения обновлены.</string>
     <string name="warnings">Предупреждения</string>
@@ -323,7 +320,6 @@
     <string name="logging_comment_hint">Вы можете добавить комментарий к журналам, чтобы помочь найти ошибку - пожалуйста, объясните, что произошло:</string>
     <string name="service_notification_title">Tiny Weather Forecast Germany</string>
     <string name="service_notification_text2">Получение текстовых прогнозов…</string>
-    <string name="preference_feedback_title">Обратная связь</string>
     <string name="preference_clearnotifications_title">Сброс уведомлений</string>
     <string name="preference_clearnotifications_summary">Сброс уведомлений для погодных предупреждений. Все действующие уведомления будут отображаться снова.</string>
     <string name="warnings_outdated">Предупреждения о погоде устарели.</string>
@@ -507,4 +503,5 @@
     <string name="preference_screen_uvhi_mainType_summary">Не применяйте коэффициенты модификации облачности к прогнозу индекса опасности ультрафиолетового излучения, отображаемому в главном окне приложения.</string>
     <string name="preference_uvi_notice_summary">Более подробную информацию о расчете индекса опасности ультрафиолетового излучения можно найти на домашней странице DWD. Изменение предпочтения ясного неба приводит к необходимости обновления данных прогноза DWD.</string>
     <string name="preference_widget_clock_title">Размер часов</string>
+    <string name="invalid_weather_host_message">Недопустимый сервер данных о погоде. Разрешены только серверы DWD; используется сервер по умолчанию.</string>
 </resources>

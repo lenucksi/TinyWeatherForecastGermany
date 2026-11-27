@@ -153,7 +153,6 @@
     <string name="preference_loggingactivity_summary">Odesílání a/nebo vymazání protokolů.</string>
     <string name="preference_intro_title">Úvod</string>
     <string name="preference_intro_summary">Znovu spustit intro.</string>
-    <string name="feedback_mail_subject">Zpětná vazba: TinyWeatherForecastGermany</string>
     <string name="alertdialog_yes">Ano</string>
     <string name="alertdialog_no">Ne</string>
     <string name="alertdialog_ok">Ok</string>
@@ -184,9 +183,6 @@
     <string name="sunset">západ slunce</string>
     <string name="sunrise">Východ slunce</string>
     <string name="twilight">Soumrak</string>
-    <string name="preference_feedback_title">Zpětná vazba</string>
-    <string name="preference_feedback_summary">Poskytněte vývojáři zpětnou vazbu e-mailem.</string>
-    <string name="feedback_mail_text">Při odesílání hlášení o chybě zkopírujte a vložte také protokoly, pokud je to možné.</string>
     <string name="warnings_until">do</string>
     <string name="warnings_update">Upozornění aktualizována.</string>
     <string name="warnings">Upozornění</string>
@@ -507,4 +503,5 @@
     <string name="preference_uvi_notice_summary">Další podrobnosti o výpočtu indexu UV nebezpečí jsou k dispozici na domovské stránce DWD. Při změně preference jasné oblohy je nutné aktualizovat předpovědní údaje z DWD.</string>
     <string name="preference_screen_uvhi_mainType_title">Jasná obloha</string>
     <string name="preference_screen_uvhi_mainType_summary">Na předpověď indexu UV nebezpečí zobrazenou v hlavním zobrazení aplikace nepoužívejte faktory modifikace oblačnosti.</string>
+    <string name="invalid_weather_host_message">Neplatný server s daty o počasí. Jsou povoleny pouze servery DWD; používá se výchozí server.</string>
 </resources>

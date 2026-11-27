@@ -188,10 +188,6 @@
     <string name="sunset">Tramonto</string>
     <string name="sunrise">Alba</string>
     <string name="twilight">Crepuscolo</string>
-    <string name="preference_feedback_title">Risultati</string>
-    <string name="preference_feedback_summary">Dare un feedback allo sviluppatore via e-mail.</string>
-    <string name="feedback_mail_subject">Risultati: TinyWeatherForecastGermany</string>
-    <string name="feedback_mail_text">Quando invii una segnalazione di bug, per favore copia e incolla anche i log, se possibile.</string>
     <string name="warnings_until">fino a</string>
     <string name="warnings_update">Avvisi aggiornati.</string>
     <string name="warnings">Avvertenze</string>
@@ -508,4 +504,5 @@
     <string name="preference_screen_uvhi_mainType_title">Cielo sereno</string>
     <string name="preference_screen_uvhi_mainType_summary">Non applicare i fattori di modifica delle nubi alle previsioni dell\'indice di pericolo UV visualizzate nella vista principale dell\'applicazione.</string>
     <string name="no_data">Sembra che al momento non siano disponibili previsioni meteo per questa località. È possibile provare ad aggiornare i dati o scegliere un\'altra località.</string>
+    <string name="invalid_weather_host_message">Host dei dati meteo non valido. Sono consentiti solo i server DWD; viene usato il server predefinito.</string>
 </resources>
