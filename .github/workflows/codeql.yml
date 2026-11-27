@@ -1,0 +1,69 @@
+# Static analysis and supply-chain checks for TinyWeatherForecastGermany.
+#
+# Third-party actions are pinned to full commit SHAs, resolved with
+# `git ls-remote` on 2026-11-27; keep the version comment next to each pin.
+# Top-level permissions are read-only; only the CodeQL job is elevated with
+# `security-events: write` so it can upload SARIF results.
+name: CodeQL and dependency review
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  schedule:
+    # Weekly, Mondays 05:23 UTC.
+    - cron: '23 5 * * 1'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  codeql:
+    name: Analyze (java-kotlin)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Check out sources
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@915412ff23e8b7659517e607487dbeae018f2934 # v4.39.5
+        with:
+          languages: java-kotlin
+          # The tree contains Java sources only, so a build-free database
+          # covers all code without provisioning the Android SDK. If Kotlin
+          # sources are added later, switch to `autobuild` or `manual`.
+          build-mode: none
+
+      - name: Perform CodeQL analysis
+        uses: github/codeql-action/analyze@915412ff23e8b7659517e607487dbeae018f2934 # v4.39.5
+        with:
+          category: "/language:java-kotlin"
+
+  dependency-review:
+    name: Dependency review
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Check out sources
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Default policy fails on any severity of vulnerability introduced by
+      # the PR; tune with `fail-on-severity` here if the project needs it.
+      - name: Review dependency changes
+        uses: actions/dependency-review-action@bbc44d14a204704ccc493733616cd1e93a0321ec # v5.0.1
