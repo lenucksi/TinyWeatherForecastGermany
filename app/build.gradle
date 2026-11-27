@@ -86,15 +86,37 @@ android {
         abortOnError = true
     }
 
+    // TASK-12 (decision D-05): release signing material is injected at build
+    // time from the environment (CI maps these to GitHub Environment secrets).
+    // No keystore, alias or password is stored in this repository. Debug and
+    // userdebug variants do not reference this config, so local debug builds
+    // need none of these variables. See docs/signing.md.
+    signingConfigs {
+        release {
+            def keystorePath = System.getenv('RELEASE_KEYSTORE_FILE')
+            if (keystorePath) {
+                storeFile file(keystorePath)
+            }
+            storePassword System.getenv('RELEASE_STORE_PASSWORD') ?: ''
+            keyAlias System.getenv('RELEASE_KEY_ALIAS') ?: ''
+            keyPassword System.getenv('RELEASE_KEY_PASSWORD') ?: ''
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
         }
 
     userdebug {
         initWith release
+        // initWith copies the release signing config; a userdebug fixture must
+        // remain buildable without release secrets and must not be signed with
+        // the release key (nor with the debug key, which is debug-only).
+        signingConfig null
         minifyEnabled false
         shrinkResources false
         versionNameSuffix "-userdebug_"+new Date().format("yyyyMMDD")
