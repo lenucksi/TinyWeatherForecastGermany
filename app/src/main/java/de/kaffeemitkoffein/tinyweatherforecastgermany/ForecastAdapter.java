@@ -87,7 +87,11 @@ private final SparseArray<Bitmap> bitmapCache = new SparseArray<>();
 
 public ForecastAdapter(final Context context, final ArrayList<Weather.WeatherInfo> weatherForecasts, final ArrayList<Weather.WeatherInfo> weatherForecasts_hourly, final Weather.WeatherLocation weatherLocation) {
     this.context = context;
-    this.weatherForecasts = weatherForecasts;
+    // A background refresh can leave a stale card in memory (issue #149). Drop
+    // already-ended long-range blocks here so the first block shown after an
+    // automatic refresh is the same one a manual refresh would show.
+    this.weatherForecasts = ForecastBlockTime.withoutExpiredLongRangeBlocks(
+            weatherForecasts, Calendar.getInstance().getTimeInMillis());
     this.weatherForecasts_hourly = weatherForecasts_hourly;
     this.weatherLocation = weatherLocation;
     this.display_bar = WeatherSettings.getDisplayBar(context);
@@ -1285,24 +1289,7 @@ private int getColorGradient(int position){
     return pos;
 }
     private long neededHoursAgo(Weather.WeatherInfo weatherInfo){
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTimeInMillis(weatherInfo.getTimestamp());
-        if (weatherInfo.getForecastType() == Weather.WeatherInfo.ForecastType.HOURS_24){
-            calendar.add(Calendar.HOUR_OF_DAY,-24);
-        } else
-        if (weatherInfo.getForecastType() == Weather.WeatherInfo.ForecastType.HOURS_6){
-            calendar.add(Calendar.HOUR_OF_DAY,-6);
-        } else {
-            calendar.add(Calendar.HOUR_OF_DAY,-1);
-        }
-        if (calendar.getTimeInMillis()<Calendar.getInstance().getTimeInMillis()){
-            Calendar result = Calendar.getInstance();
-            result.set(Calendar.MINUTE,0);
-            result.set(Calendar.SECOND,0);
-            result.set(Calendar.MILLISECOND,0);
-            return result.getTimeInMillis();
-        }
-        return calendar.getTimeInMillis();
+        return ForecastBlockTime.getBlockStartTime(weatherInfo, Calendar.getInstance().getTimeInMillis());
     }
 
     private void setMiniWarningsString(TextView textView, Weather.WeatherInfo weatherInfo, ArrayList<WeatherWarning> applicableWarnings){
