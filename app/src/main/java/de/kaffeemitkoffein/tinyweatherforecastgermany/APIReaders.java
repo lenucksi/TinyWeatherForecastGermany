@@ -45,6 +45,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.regex.Pattern;
 import java.util.zip.ZipInputStream;
 
 public class APIReaders {
@@ -62,6 +63,17 @@ public class APIReaders {
         // Only used to strip a legacy scheme from a stored host; never to open a connection.
         // Kept as a composed literal so a cleartext scheme cannot appear in URL construction.
         private static final String LEGACY_HTTP_SCHEME = "http" + ":" + "//";
+
+        /**
+         * Explicit allowlist of the DWD servers this app is allowed to contact. Both are data
+         * endpoints used in this code base. www.dwd.de and kunden.dwd.de only appear in
+         * documentation/about texts, not in data URLs, so they are deliberately not included.
+         */
+        private static final Set<String> ALLOWED_HOSTS = Collections.unmodifiableSet(
+                new HashSet<String>(Arrays.asList("opendata.dwd.de", "maps.dwd.de")));
+
+        /** Plain file-name pattern: no separators, no query/fragment delimiters, no escapes. */
+        private static final Pattern SAFE_FILE_NAME = Pattern.compile("^[A-Za-z0-9_.-]+$");
 
         private HttpsUrl() {
         }
@@ -82,16 +94,64 @@ public class APIReaders {
             return result;
         }
 
-        /** Builds an absolute https URL from a configured host and an absolute path. */
-        public static String build(String host, String path) {
+        /**
+         * The normalised host if, and only if, it is on the allowlist. Exact matching also
+         * rejects userinfo tricks (host@attacker), ports, paths and query strings.
+         */
+        public static String validatedHost(String host) {
             String normalizedHost = normalizeHost(host);
-            if (normalizedHost == null || normalizedHost.isEmpty() || path == null) {
+            return (normalizedHost != null && ALLOWED_HOSTS.contains(normalizedHost))
+                    ? normalizedHost : null;
+        }
+
+        public static boolean isAllowedHost(String host) {
+            return validatedHost(host) != null;
+        }
+
+        /**
+         * Builds an absolute https URL from an allowlisted host and an absolute path.
+         * Returns null for a missing/disallowed host so no request can be made at all.
+         */
+        public static String build(String host, String path) {
+            String normalizedHost = validatedHost(host);
+            if (normalizedHost == null || path == null) {
                 return null;
             }
             if (!path.startsWith("/")) {
                 path = "/" + path;
             }
             return HTTPS_SCHEME + normalizedHost + path;
+        }
+
+        /** True for a single safe file name; rejects traversal (., ..) and query injection. */
+        public static boolean isValidFileName(String name) {
+            return name != null && SAFE_FILE_NAME.matcher(name).matches()
+                    && !name.contains("..") && !name.equals(".");
+        }
+
+        /**
+         * Extracts the last href from an Apache-style directory index and returns it only when
+         * it is a safe file name. A missing link, path traversal, a query string or HTML noise
+         * yields null instead of being concatenated into a request URL.
+         */
+        public static String validatedDirectoryEntry(String html) {
+            if (html == null) {
+                return null;
+            }
+            int tag = html.lastIndexOf("<a href=");
+            if (tag < 0) {
+                return null;
+            }
+            int quoteStart = html.indexOf('"', tag);
+            if (quoteStart < 0) {
+                return null;
+            }
+            int quoteEnd = html.indexOf('"', quoteStart + 1);
+            if (quoteEnd < 0) {
+                return null;
+            }
+            String candidate = html.substring(quoteStart + 1, quoteEnd);
+            return isValidFileName(candidate) ? candidate : null;
         }
     }
 
@@ -322,7 +382,11 @@ public class APIReaders {
            // Warnings are always polled over TLS. A failed handshake is reported, never
            // retried over cleartext (the network security config also forbids it).
            try {
-               URL url = new URL(getUrlString(context));
+               String urlString = getUrlString(context);
+               if (urlString==null){
+                   throw new IOException("Disallowed weather data host; not requesting warnings.");
+               }
+               URL url = new URL(urlString);
                HttpsURLConnection httpsURLConnection = (HttpsURLConnection) url.openConnection();
                return new BufferedInputStream(httpsURLConnection.getInputStream());
            } catch (MalformedURLException e){
@@ -446,8 +510,14 @@ public class APIReaders {
         }
 
         public String getLastestDMOUrl(Context context, String stationName) throws IOException {
+            if (!HttpsUrl.isValidFileName(stationName)){
+                return null;
+            }
             String basicUrl = HttpsUrl.build(WeatherSettings.getWeatherUrl(context),
                     "/weather/local_forecasts/dmo/icon-eu/single_stations/" + stationName + "/kmz/");
+            if (basicUrl==null){
+                return null;
+            }
             InputStream inputStream = null;
             try {
                 URL url = new URL(basicUrl);
@@ -470,10 +540,14 @@ public class APIReaders {
                     stringBuilder.append(l);
                 }
                 bufferedReader.close();
-                String s = stringBuilder.toString();
-                s = s.substring(s.lastIndexOf("<a href="),s.lastIndexOf("\""));
-                s = s.substring(s.indexOf("\"")+1);
-                return s;
+                // The directory index is remote input: validate the scraped entry before it
+                // becomes part of a request URL (traversal and query injection must not pass).
+                String fileName = HttpsUrl.validatedDirectoryEntry(stringBuilder.toString());
+                if (fileName==null){
+                    PrivateLog.log(context,PrivateLog.DATA,PrivateLog.ERR,"Rejected invalid DMO directory entry.");
+                    return null;
+                }
+                return fileName;
             } else {
             }
             return null;
@@ -482,14 +556,24 @@ public class APIReaders {
 
         private InputStream getWeatherInputStream(Weather.WeatherLocation weatherLocation) throws IOException {
             String stationName = weatherLocation.getName().replace("*","");
+            if (!HttpsUrl.isValidFileName(stationName)){
+                throw new IOException("Invalid station name; not requesting weather data.");
+            }
             String weatherPath;
             // stationType MOS is default
             weatherPath = "/weather/local_forecasts/mos/MOSMIX_L/single_stations/"+stationName+"/kml/MOSMIX_L_LATEST_"+stationName+".kmz";
             // change to DMO if applicable
             if (weatherLocation.type==RawWeatherInfo.Source.DMO){
-                weatherPath = "/weather/local_forecasts/dmo/icon-eu/single_stations/"+stationName+"/kmz/"+getLastestDMOUrl(context,stationName);
+                String latestFile = getLastestDMOUrl(context,stationName);
+                if (latestFile==null){
+                    throw new IOException("No valid DMO directory entry; not requesting a forecast file.");
+                }
+                weatherPath = "/weather/local_forecasts/dmo/icon-eu/single_stations/"+stationName+"/kmz/"+latestFile;
             }
             String weather_url = HttpsUrl.build(WeatherSettings.getWeatherUrl(context),weatherPath);
+            if (weather_url==null){
+                throw new IOException("Disallowed weather data host; not requesting weather data.");
+            }
             // PrivateLog.log(context,Tag.SERVICE2,"URL: "+weather_url);
             URL url = new URL(weather_url);
             try {

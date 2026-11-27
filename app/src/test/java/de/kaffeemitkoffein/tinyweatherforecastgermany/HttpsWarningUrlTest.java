@@ -68,12 +68,28 @@ public class HttpsWarningUrlTest {
     @Test
     public void legacyCleartextPreferenceCannotDowngradeWarningUrl() throws Exception {
         Context context = RuntimeEnvironment.getApplication();
-        // A user upgrading from an old install may still have the scheme stored.
-        WeatherSettings.setWeatherUrl(context, "http://legacy.example");
+        // A user upgrading from an old install may still have a scheme stored. It is stripped,
+        // but only an allowlisted DWD host may be used as a request target (TASK-11).
+        WeatherSettings.setWeatherUrl(context, "http://opendata.dwd.de/");
         try {
             String url = warningUrl(context);
             assertEquals("https", new URL(url).getProtocol());
-            assertEquals("legacy.example", new URL(url).getHost());
+            assertEquals("opendata.dwd.de", new URL(url).getHost());
+        } finally {
+            WeatherSettings.setWeatherUrl(context, WeatherSettings.PREF_WEATHER_URL_DEFAULT);
+        }
+    }
+
+    @Test
+    public void nonDwdHostFallsBackToDefaultWarningsServer() throws Exception {
+        Context context = RuntimeEnvironment.getApplication();
+        WeatherSettings.setWeatherUrl(context, "http://legacy.example");
+        try {
+            assertEquals(WeatherSettings.PREF_WEATHER_URL_DEFAULT,
+                    WeatherSettings.getWeatherUrl(context));
+            String url = warningUrl(context);
+            assertEquals("https", new URL(url).getProtocol());
+            assertEquals("opendata.dwd.de", new URL(url).getHost());
         } finally {
             WeatherSettings.setWeatherUrl(context, WeatherSettings.PREF_WEATHER_URL_DEFAULT);
         }

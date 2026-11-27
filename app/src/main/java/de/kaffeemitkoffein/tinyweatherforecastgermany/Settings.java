@@ -48,6 +48,11 @@ public class Settings extends PreferenceActivity implements SharedPreferences.On
     private CheckBoxPreference useBackgroundLocation;
     private boolean ignoreNextPrefUpdate = false;
 
+    // Follow-up (WS-2): move this message into strings.xml for localisation. This file does not
+    // own string resources, so the user-facing feedback stays a literal until that hand-off.
+    private static final String INVALID_WEATHER_HOST_MESSAGE =
+            "Invalid weather data host. Only DWD servers are allowed; using the default server.";
+
     SharedPreferences.OnSharedPreferenceChangeListener listener = new SharedPreferences.OnSharedPreferenceChangeListener() {
         @Override
         public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
@@ -208,15 +213,33 @@ public class Settings extends PreferenceActivity implements SharedPreferences.On
                 WeatherSettings.setWeatherUpdatedFlag(context,WeatherSettings.UpdateType.VIEWS);
             }
             if (s.equals(WeatherSettings.PREF_WEATHER_URL)){
-                String weatherUrl = WeatherSettings.getWeatherUrl(context);
+                // Any write below is a normalisation/correction of this very change.
+                ignoreNextPrefUpdate = true;
+                // Read the raw entry: getWeatherUrl() already falls back to the default for
+                // invalid values, which would hide the rejection from the user.
+                String weatherUrl = WeatherSettings.getRawWeatherUrl(context);
                 if ((weatherUrl==null) || (weatherUrl.trim().isEmpty())){
                     WeatherSettings.setWeatherUrl(context,WeatherSettings.PREF_WEATHER_URL_DEFAULT);
+                    updateValuesDisplay();
                 } else {
-                    // Normalise the configured host to a bare host name. Requests always add
-                    // https:// themselves (see APIReaders.HttpsUrl); no cleartext scheme is kept.
-                    weatherUrl = APIReaders.HttpsUrl.normalizeHost(weatherUrl);
-                    PrivateLog.log(context,PrivateLog.MAIN,PrivateLog.INFO,"Data url changed to: "+weatherUrl);
-                    WeatherSettings.setWeatherUrl(context,weatherUrl);
+                    // Only allowlisted DWD hosts are accepted. Rejecting here means no
+                    // derived URL can ever be built from arbitrary user input.
+                    String validatedHost = APIReaders.HttpsUrl.validatedHost(weatherUrl);
+                    if (validatedHost==null){
+                        WeatherSettings.setWeatherUrl(context,WeatherSettings.PREF_WEATHER_URL_DEFAULT);
+                        EditTextPreference weatherUrlPreference = (EditTextPreference) findPreference(WeatherSettings.PREF_WEATHER_URL);
+                        if (weatherUrlPreference!=null){
+                            weatherUrlPreference.setText(WeatherSettings.PREF_WEATHER_URL_DEFAULT);
+                        }
+                        Toast.makeText(context,INVALID_WEATHER_HOST_MESSAGE,Toast.LENGTH_LONG).show();
+                        PrivateLog.log(context,PrivateLog.MAIN,PrivateLog.ERR,
+                                "Rejected invalid weather data host, using default: "+weatherUrl);
+                    } else {
+                        // Requests always add https:// themselves (see APIReaders.HttpsUrl).
+                        PrivateLog.log(context,PrivateLog.MAIN,PrivateLog.INFO,"Data url changed to: "+validatedHost);
+                        WeatherSettings.setWeatherUrl(context,validatedHost);
+                    }
+                    updateValuesDisplay();
                 }
             }
             if (s.equals(WeatherSettings.PREF_VISUALIZE_DAYTIME)){
