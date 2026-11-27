@@ -16,7 +16,7 @@
 
  You should have received a copy of the GNU Affero General Public License
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
---><resources>
+--><resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">Tiny Weather Forecast Germany</string>
     <string name="account_type" translatable="false">de.kaffeemitkoffein.tinyweatherforecastgermany</string>
     <string name="main_selectstation">Region:</string>
@@ -575,4 +575,15 @@
     <string name="error_no_data" translatable="true">No weather data available.</string>
 
     <string name="invalid_weather_host_message">Invalid weather data host. Only DWD servers are allowed; using the default server.</string>
+
+    <!-- Accessibility labels for icon-only controls on the main screens (TASK-34). -->
+    <string name="a11y_search" tools:ignore="MissingTranslation">Search for a station</string>
+    <string name="a11y_reset_favorites" tools:ignore="MissingTranslation">Delete favorites</string>
+    <string name="a11y_forecast_bar" tools:ignore="MissingTranslation">Forecast chart: cloud cover and precipitation; long-press for the legend</string>
+    <string name="a11y_warning_symbol" tools:ignore="MissingTranslation">Show weather warning details</string>
+    <string name="a11y_share_warning" tools:ignore="MissingTranslation">Share weather warning</string>
+    <string name="a11y_close_map" tools:ignore="MissingTranslation">Close map</string>
+    <string name="a11y_warning_map" tools:ignore="MissingTranslation">Map of weather warnings</string>
+    <string name="a11y_text_forecast_filter" tools:ignore="MissingTranslation">Toggle text forecast filter</string>
+    <string name="a11y_chart_data" tools:ignore="MissingTranslation">Chart data</string>
 </resources>

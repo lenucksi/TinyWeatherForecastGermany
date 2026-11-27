@@ -26,12 +26,17 @@
     android:layout_width="match_parent"
     android:orientation="horizontal">
 
-    <ImageView
+    <ImageView android:contentDescription="@string/a11y_search"
         android:id="@+id/actionbar_search_icon"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
+        android:minWidth="48dp"
+        android:minHeight="48dp"
+        android:focusable="true"
         android:layout_alignParentRight="true"
         android:gravity="center"
+        android:nextFocusLeft="@id/actionbar_textview"
+        android:nextFocusForward="@id/actionbar_textview"
         android:src="?attr/ic_search"/>
 
     <LinearLayout
@@ -46,7 +51,7 @@
             android:id="@+id/actionbar_text"
             android:layout_height="wrap_content"
             android:layout_width="match_parent"
-            android:textSize="@dimen/fcmain_textsize_medium_fixed"
+            android:textSize="@dimen/fcmain_textsize_medium"
             android:textColor="?attr/colorText"
             android:text="@string/actionbar_textinput_title" />
 
@@ -58,6 +63,9 @@
             android:layout_marginBottom="2dp"
             android:inputType="text"
             android:singleLine="true"
+            android:minHeight="48dp"
+            android:nextFocusRight="@id/actionbar_search_icon"
+            android:nextFocusForward="@id/actionbar_search_icon"
             android:completionHint="@string/actionbar_textinput_hint"
             android:textColor="?attr/colorTextLight"
             android:completionHintView="@layout/autocompletetextview_hint"

@@ -45,7 +45,7 @@
             android:layout_marginBottom="5dp"
             android:orientation="horizontal">
 
-        <ImageView
+        <ImageView android:contentDescription="@null"
                 android:id="@+id/dl_icon"
                 android:layout_width="0dp"
                 android:layout_weight="1"
@@ -65,7 +65,7 @@
                 android:layout_gravity="center"
                 android:textAlignment="center"/>
 
-        <ImageView
+        <ImageView android:contentDescription="@string/a11y_chart_data"
                 android:id="@+id/dl_chart"
                 android:layout_width="0dp"
                 android:layout_weight="7"

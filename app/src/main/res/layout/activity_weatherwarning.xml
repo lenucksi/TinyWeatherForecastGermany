@@ -30,7 +30,7 @@
     <RelativeLayout
             android:id="@+id/gps_progress_holder"
             android:layout_width="match_parent"
-            android:layout_height="18dp"
+            android:layout_height="48dp"
             android:visibility="gone"
             android:background="?attr/colorPrimaryLight"
             android:orientation="horizontal">
@@ -59,7 +59,8 @@
         <Button
                 android:id="@+id/cancel_gps"
                 android:layout_width="wrap_content"
-                android:layout_height="14dp"
+                android:layout_height="48dp"
+                android:minHeight="48dp"
                 android:background="?attr/colorPrimary"
                 android:gravity="center"
                 android:layout_gravity="center_vertical"
@@ -86,14 +87,14 @@
                 android:layout_height="0dp"
                 android:visibility="gone">
 
-            <ImageView
+            <ImageView android:contentDescription="@null"
                     android:id="@+id/warningactivity_map_collapsed"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:layout_alignParentTop="true"
                     android:layout_alignParentLeft="true"
                     android:src="@mipmap/arrow_down"/>
-            <ImageView
+            <ImageView android:contentDescription="@null"
                     android:id="@+id/warningactivity_map_collapsed_icon"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -136,7 +137,7 @@
                         android:textStyle="bold"
                         android:text=""/>
 
-                <ImageView
+                <ImageView android:contentDescription="@null"
                         android:id="@+id/warningactivity_mapinfo"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
@@ -173,7 +174,7 @@
                     android:visibility="invisible"
             >
 
-                <ImageView
+                <ImageView android:contentDescription="@null"
                         android:id="@+id/warningactivity_rainsliderColors"
                         android:layout_width="match_parent"
                         android:layout_height="10dp"
@@ -205,7 +206,7 @@
 
             </RelativeLayout>
 
-            <ImageView
+            <ImageView android:contentDescription="@string/a11y_warning_map"
                     android:id="@+id/warningactivity_map"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
@@ -214,7 +215,7 @@
                     android:src="@drawable/germany2_scale1">
             </ImageView>
 
-            <ImageView
+            <ImageView android:contentDescription="@string/a11y_close_map"
                     android:id="@+id/closeicon_map"
                     android:layout_width="48dp"
                     android:layout_height="48dp"
@@ -235,14 +236,14 @@
                     android:layout_alignParentRight="true"
                     android:layout_centerInParent="true">
 
-                <ImageView
+                <ImageView android:contentDescription="@null"
                         android:id="@+id/warningactivity_windicon_background"
                         android:layout_width="28dp"
                         android:layout_height="28dp"
                         android:layout_centerInParent="true">
                 </ImageView>
 
-                <ImageView
+                <ImageView android:contentDescription="@null"
                         android:id="@+id/warningactivity_windicon"
                         android:layout_width="22dp"
                         android:layout_height="22dp"
@@ -281,7 +282,7 @@
                         android:gravity="center"
                         android:layout_alignParentRight="true"
                         android:layout_alignParentBottom="true"
-                        android:textSize="6dp"
+                        android:textSize="6sp"
                         android:textColor="@android:color/white"
                         android:shadowColor="@android:color/black"
                         android:shadowDx="1"

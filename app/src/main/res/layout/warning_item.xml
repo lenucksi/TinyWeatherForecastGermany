@@ -201,12 +201,12 @@
             </TextView>
         </LinearLayout>
 
-        <ImageView
+        <ImageView android:contentDescription="@string/a11y_share_warning"
                 android:id="@+id/warning_item_shareicon"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:paddingTop="10dp"
-                android:paddingRight="4dp"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:padding="12dp"
+                android:focusable="true"
                 android:layout_alignParentTop="true"
                 android:layout_alignParentRight="true"
                 android:src="?attr/ic_share"/>
