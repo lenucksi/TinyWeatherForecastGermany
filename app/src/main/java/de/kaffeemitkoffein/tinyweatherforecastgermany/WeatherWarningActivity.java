@@ -46,6 +46,15 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.*;
 
+import org.maplibre.android.MapLibre;
+import org.maplibre.android.WellKnownTileServer;
+import org.maplibre.android.camera.CameraPosition;
+import org.maplibre.android.camera.CameraUpdateFactory;
+import org.maplibre.android.geometry.LatLng;
+import org.maplibre.android.maps.MapLibreMap;
+import org.maplibre.android.maps.MapView;
+import org.maplibre.android.maps.OnMapReadyCallback;
+
 public class WeatherWarningActivity extends Activity {
 
     ArrayList<WeatherWarning> weatherWarnings;
@@ -68,6 +77,9 @@ public class WeatherWarningActivity extends Activity {
     Bitmap advancedWindStencilBitmap;
     Bitmap visibleBitmap;
     ZoomableImageView mapZoomable;
+    // TASK-52: optional MapLibre vector basemap; the static map above remains the fallback.
+    MapView mapLibreMapView;
+    boolean useVectorMap;
     RelativeLayout map_collapsed_container;
     LinearLayout warningactivityMapinfoContainer;
     boolean deviceIsLandscape;
@@ -221,6 +233,10 @@ public class WeatherWarningActivity extends Activity {
     };
 
     private synchronized void startRainRadar(){
+        // Radar slides are drawn on the static bitmap only (TASK-54 will overlay them on the vector map).
+        if (useVectorMap){
+            return;
+        }
         if (!hide_rain){
             if (!rainSlidesRunning){
                 // make sure not to start rain radar before views are created
@@ -267,6 +283,10 @@ public class WeatherWarningActivity extends Activity {
         }
         state.putBoolean(SIS_HIDERAIN,hide_rain);
         state.putBoolean(SIS_HIDEADMIN,hide_admin);
+        // TASK-52: MapView needs the saved state to restore its camera/native map.
+        if (useVectorMap && mapLibreMapView!=null){
+            mapLibreMapView.onSaveInstanceState(state);
+        }
         super.onSaveInstanceState(state);
     }
 
@@ -277,8 +297,35 @@ public class WeatherWarningActivity extends Activity {
     }
 
     @Override
+    protected void onStart() {
+        super.onStart();
+        if (useVectorMap && mapLibreMapView!=null){
+            mapLibreMapView.onStart();
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        if (useVectorMap && mapLibreMapView!=null){
+            mapLibreMapView.onStop();
+        }
+        super.onStop();
+    }
+
+    @Override
+    public void onLowMemory() {
+        if (useVectorMap && mapLibreMapView!=null){
+            mapLibreMapView.onLowMemory();
+        }
+        super.onLowMemory();
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
+        if (useVectorMap && mapLibreMapView!=null){
+            mapLibreMapView.onResume();
+        }
         // invalidate some map views so that they will be updated
         mapIsDrawn = false;
         // stop rain radar while processing warnings to avoid performance issues on older devices
@@ -312,13 +359,19 @@ public class WeatherWarningActivity extends Activity {
         }
         // at this point, do not cancel slides (anymore)
         cancelRainSlides = false;
-        // reader is started unconditionally, because it will check in APIReaders if slides are outdated and/or incomplete
-        scheduledExecutorService.execute(radarMNSetGeoserverRunnable);
+        // Radar slides and the precipitation legend are drawn on the static bitmap only.
+        // Starting the reader in vector mode would also try to measure the hidden SeekBar.
+        if (!useVectorMap){
+            scheduledExecutorService.execute(radarMNSetGeoserverRunnable);
+        }
     }
 
     @Override
     protected void onPause(){
         cancelRainSlides = true;
+        if (useVectorMap && mapLibreMapView!=null){
+            mapLibreMapView.onPause();
+        }
         // save the map state if desired
         if (WeatherSettings.saveMapState(context)){
             PrivateLog.log(getApplicationContext(),PrivateLog.WARNINGS,PrivateLog.INFO,"Saving map state enabled.");
@@ -335,6 +388,10 @@ public class WeatherWarningActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        if (useVectorMap && mapLibreMapView!=null){
+            mapLibreMapView.onDestroy();
+            mapLibreMapView = null;
+        }
         super.onDestroy();
         if (hintPopupWindow!=null){
             if (hintPopupWindow.isShowing()){
@@ -354,6 +411,12 @@ public class WeatherWarningActivity extends Activity {
         }
         super.onCreate(savedInstanceState);
         context = getApplicationContext();
+        useVectorMap = VectorMapConfig.isVectorMapEnabled(context);
+        // MapLibre 13.8 refuses to inflate a MapView unless its singleton was initialised first.
+        // Both map layouts contain the MapView, so this must happen in either mode.
+        if (!MapLibre.hasInstance()){
+            MapLibre.getInstance(context,"",WellKnownTileServer.MapLibre);
+        }
         mercatorProjectionTile = RadarMN2.getRadarMapMercatorProjectionTile(context);
         mercatorProjectionTile.setScaleFactor(RadarMN2.getScaleFactor(context));
         // set to station, perhaps override with current location later
@@ -363,6 +426,11 @@ public class WeatherWarningActivity extends Activity {
         rainSlidesStartTime = WeatherSettings.getPrefRadarLastdatapoll(context);
         WeatherSettings.setRotationMode(this);
         setContentView(R.layout.activity_weatherwarning);
+        // TASK-52: pick the vector basemap or the legacy static map once per activity start.
+        applyMapMode();
+        if (useVectorMap){
+            setupVectorMap(savedInstanceState);
+        }
         registerForBroadcast();
         // try to restore zoom factor if it is available from the savedInstanceState
         if (savedInstanceState!=null){
@@ -430,6 +498,9 @@ public class WeatherWarningActivity extends Activity {
             @Override
             public void onStart() {
                 super.onStart();
+                if (useVectorMap){
+                    return;
+                }
                 validSlideSetObtained = false;
                 showRainSlideProgressBar();
                 updateRainSlideProgressBar(0);
@@ -437,6 +508,9 @@ public class WeatherWarningActivity extends Activity {
 
             @Override
             public void onProgress(long startTime, final int progress) {
+                if (useVectorMap){
+                    return;
+                }
                 if (progress==1){
                     rainSlidesStartTime = startTime;
                     runOnUiThread(new Runnable() {
@@ -460,6 +534,9 @@ public class WeatherWarningActivity extends Activity {
             @Override
             public void onFinished(long startTime, boolean success){
                 super.onFinished(startTime,success);
+                if (useVectorMap){
+                    return;
+                }
                 hideRainSlideProgressBar();
                 if (success){
                     validSlideSetObtained = true;
@@ -1148,6 +1225,10 @@ public class WeatherWarningActivity extends Activity {
     }
     
     private void displayMap(){
+        // In vector mode the static bitmap pipeline is intentionally unused.
+        if (useVectorMap){
+            return;
+        }
         if (germany==null || pinPoint==null || weatherWarnings==null){
             return;
         }
@@ -1606,7 +1687,66 @@ public class WeatherWarningActivity extends Activity {
         }
     }
 
+    /**
+     * TASK-52: initialise the MapLibre MapView declared in both warning-map layouts.
+     * The style is loaded from OpenFreeMap over HTTPS; the legacy static map is not touched.
+     */
+    private void setupVectorMap(Bundle savedInstanceState){
+        mapLibreMapView = (MapView) findViewById(R.id.warningactivity_maplibre);
+        if (mapLibreMapView==null){
+            // Defensive fallback if a future layout variant omits the vector container.
+            useVectorMap = false;
+            applyMapMode();
+            return;
+        }
+        mapLibreMapView.onCreate(savedInstanceState);
+        mapLibreMapView.getMapAsync(new OnMapReadyCallback() {
+            @Override
+            public void onMapReady(MapLibreMap map){
+                if (map==null){
+                    return;
+                }
+                try {
+                    map.setStyle(VectorMapConfig.OPENFREEMAP_STYLE_URL);
+                    map.moveCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder()
+                            .target(new LatLng(VectorMapConfig.DEFAULT_CENTER_LATITUDE,VectorMapConfig.DEFAULT_CENTER_LONGITUDE))
+                            .zoom(VectorMapConfig.DEFAULT_ZOOM)
+                            .build()));
+                } catch (Exception e){
+                    PrivateLog.log(context,PrivateLog.WARNINGS,PrivateLog.ERR,"Could not initialise the vector basemap.");
+                }
+            }
+        });
+    }
+
+    /** Shows the selected map kind and removes static-map-only overlays in vector mode. */
+    private void applyMapMode(){
+        setVectorViewVisibility(R.id.warningactivity_maplibre_container,useVectorMap ? View.VISIBLE : View.GONE);
+        setVectorViewVisibility(R.id.warningactivity_maplibre_attribution,useVectorMap ? View.VISIBLE : View.GONE);
+        if (useVectorMap){
+            setVectorViewVisibility(R.id.warningactivity_map,View.GONE);
+            setVectorViewVisibility(R.id.warningactivity_mapinfo_container,View.GONE);
+            // Keep the SeekBar view measured (invisible, not gone): legacy precipitation
+            // helpers may still measure it, and it never becomes visible in vector mode.
+            setVectorViewVisibility(R.id.closeicon_map,View.GONE);
+            setVectorViewVisibility(R.id.warningactivity_windicon_container,View.GONE);
+            setVectorViewVisibility(R.id.warningactivity_rainslideprogressbar,View.GONE);
+            setVectorViewVisibility(R.id.warningactivity_rainslideprogressbartext,View.GONE);
+        }
+    }
+
+    private void setVectorViewVisibility(int id, int visibility){
+        View view = findViewById(id);
+        if (view!=null){
+            view.setVisibility(visibility);
+        }
+    }
+
     public void displayOsmNotice(){
+        // Vector mode has its own attribution view (OpenFreeMap/OpenMapTiles/OSM).
+        if (useVectorMap){
+            return;
+        }
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
