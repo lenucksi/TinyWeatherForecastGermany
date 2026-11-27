@@ -37,7 +37,6 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -49,6 +48,52 @@ import java.util.concurrent.Executors;
 import java.util.zip.ZipInputStream;
 
 public class APIReaders {
+
+    /**
+     * Single seam for every DWD URL built by this app. The configured weather host is a bare
+     * host name (see Settings), but older installs may still carry a scheme in the preference.
+     * Normalising the host and always prepending https makes it impossible for a stored value
+     * to turn a request into cleartext HTTP.
+     *
+     * Pure Java on purpose: unit tests can exercise it without Robolectric or a device.
+     */
+    public static final class HttpsUrl {
+        public static final String HTTPS_SCHEME = "https://";
+        // Only used to strip a legacy scheme from a stored host; never to open a connection.
+        // Kept as a composed literal so a cleartext scheme cannot appear in URL construction.
+        private static final String LEGACY_HTTP_SCHEME = "http" + ":" + "//";
+
+        private HttpsUrl() {
+        }
+
+        public static String normalizeHost(String host) {
+            if (host == null) {
+                return null;
+            }
+            String result = host.trim().toLowerCase(Locale.ROOT);
+            if (result.startsWith(HTTPS_SCHEME)) {
+                result = result.substring(HTTPS_SCHEME.length());
+            } else if (result.startsWith(LEGACY_HTTP_SCHEME)) {
+                result = result.substring(LEGACY_HTTP_SCHEME.length());
+            }
+            while (result.endsWith("/")) {
+                result = result.substring(0, result.length() - 1);
+            }
+            return result;
+        }
+
+        /** Builds an absolute https URL from a configured host and an absolute path. */
+        public static String build(String host, String path) {
+            String normalizedHost = normalizeHost(host);
+            if (normalizedHost == null || normalizedHost.isEmpty() || path == null) {
+                return null;
+            }
+            if (!path.startsWith("/")) {
+                path = "/" + path;
+            }
+            return HTTPS_SCHEME + normalizedHost + path;
+        }
+    }
 
    public static class WeatherWarningsRunnable implements Runnable {
 
@@ -262,64 +307,30 @@ public class APIReaders {
                country = context.getResources().getConfiguration().locale.getCountry();
            }
            // 3.2.1 Gemeindebasis mit DWD Aktualisierungsstrategie
-           final String C_FIRST ="https://"+WeatherSettings.getWeatherUrl(context)+"/weather/alerts/cap/COMMUNEUNION_DWD_STAT/Z_CAP_C_EDZW_LATEST_PVW_STATUS_PREMIUMDWD_COMMUNEUNION_";
+           final String C_PATH = "/weather/alerts/cap/COMMUNEUNION_DWD_STAT/Z_CAP_C_EDZW_LATEST_PVW_STATUS_PREMIUMDWD_COMMUNEUNION_";
            final String C_LAST  = ".zip";
            switch (country){
-               case "FR": return C_FIRST+"FR"+C_LAST;
-               case "ES": return C_FIRST+"ES"+C_LAST;
-               case "DE": return C_FIRST+"DE"+C_LAST;
+               case "FR": return HttpsUrl.build(WeatherSettings.getWeatherUrl(context),C_PATH+"FR"+C_LAST);
+               case "ES": return HttpsUrl.build(WeatherSettings.getWeatherUrl(context),C_PATH+"ES"+C_LAST);
+               case "DE": return HttpsUrl.build(WeatherSettings.getWeatherUrl(context),C_PATH+"DE"+C_LAST);
            }
-           return C_FIRST+"EN"+C_LAST;
+           return HttpsUrl.build(WeatherSettings.getWeatherUrl(context),C_PATH+"EN"+C_LAST);
            //return "https://kaffeemitkoffein.de/local/Z_CAP_C_EDZW_LATEST_PVW_STATUS_PREMIUMDWD_COMMUNEUNION_DE.zip";
        }
 
-       @SuppressWarnings("deprecation")
-       private String getLegacyUrlString(Context context){
-           String country = "EN";
-           if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.N){
-               country = context.getResources().getConfiguration().getLocales().get(0).getCountry();
-           } else {
-               country = context.getResources().getConfiguration().locale.getCountry();
-           }
-           final String C_FIRST ="http://"+WeatherSettings.getWeatherUrl(context)+"/weather/alerts/cap/COMMUNEUNION_DWD_STAT/Z_CAP_C_EDZW_LATEST_PVW_STATUS_PREMIUMDWD_COMMUNEUNION_";
-           final String C_LAST  = ".zip";
-           switch (country){
-               case "FR": return C_FIRST+"FR"+C_LAST;
-               case "ES": return C_FIRST+"ES"+C_LAST;
-               case "DE": return C_FIRST+"DE"+C_LAST;
-           }
-           return C_FIRST+"EN"+C_LAST;
-       }
-
        private InputStream getWeatherWarningInputStream() throws IOException {
-           URL url;
-           URL url_legacy;
+           // Warnings are always polled over TLS. A failed handshake is reported, never
+           // retried over cleartext (the network security config also forbids it).
            try {
-               url = new URL(getUrlString(context));
-               url_legacy = new URL(getLegacyUrlString(context));
-           } catch (MalformedURLException e){
-               throw e;
-           }
-           try {
+               URL url = new URL(getUrlString(context));
                HttpsURLConnection httpsURLConnection = (HttpsURLConnection) url.openConnection();
-               InputStream inputStream = new BufferedInputStream(httpsURLConnection.getInputStream());
-               return inputStream;
+               return new BufferedInputStream(httpsURLConnection.getInputStream());
+           } catch (MalformedURLException e){
+               PrivateLog.log(context,PrivateLog.DATA,PrivateLog.ERR,"Malformed URL for DWD resource:"+e.getMessage());
+               throw e;
            } catch (SSLException e){
-               if (WeatherSettings.isTLSdisabled(context)){
-                   // try fallback to http
-                   try {
-                       HttpURLConnection httpURLConnection = (HttpURLConnection) url_legacy.openConnection();
-                       InputStream inputStream = new BufferedInputStream(httpURLConnection.getInputStream());
-                       PrivateLog.log(context,PrivateLog.DATA,PrivateLog.WARN,"Warning: weather warnings are polled over http without encryption.");
-                       return inputStream;
-                   } catch (IOException e2){
-                       PrivateLog.log(context,PrivateLog.DATA,PrivateLog.ERR,"Reading weather warnings via http failed: "+e2.getMessage());
-                       throw e2;
-                   }
-               } else {
-                   PrivateLog.log(context,PrivateLog.DATA,PrivateLog.ERR,"ssl connection could not be established, but http is not allowed.");
-                   throw e;
-               }
+               PrivateLog.log(context,PrivateLog.DATA,PrivateLog.ERR,"ssl connection could not be established, but http is not allowed.");
+               throw e;
            }
        }
 
@@ -435,32 +446,18 @@ public class APIReaders {
         }
 
         public String getLastestDMOUrl(Context context, String stationName) throws IOException {
-            String basicUrl        = "https://"+WeatherSettings.getWeatherUrl(context)+"/weather/local_forecasts/dmo/icon-eu/single_stations/" + stationName + "/kmz/";
-            String basicUrlLegacy = "http://"+WeatherSettings.getWeatherUrl(context)+"/weather/local_forecasts/dmo/icon-eu/single_stations/" + stationName + "/kmz/";
-            URL url;
-            URL url_legacy;
+            String basicUrl = HttpsUrl.build(WeatherSettings.getWeatherUrl(context),
+                    "/weather/local_forecasts/dmo/icon-eu/single_stations/" + stationName + "/kmz/");
             InputStream inputStream = null;
             try {
-                url = new URL(basicUrl);
-                url_legacy = new URL(basicUrlLegacy);
-            } catch (MalformedURLException e){
-                return null;
-            }
-            try {
+                URL url = new URL(basicUrl);
                 HttpsURLConnection httpsURLConnection = (HttpsURLConnection) url.openConnection();
                 inputStream = httpsURLConnection.getInputStream();
+            } catch (MalformedURLException e){
+                return null;
             } catch (SSLException e) {
                 ssl_exception = true;
-                if (WeatherSettings.isTLSdisabled(context)) {
-                    // try fallback to http
-                    try {
-                        HttpURLConnection httpURLConnection = (HttpURLConnection) url_legacy.openConnection();
-                        inputStream = new BufferedInputStream(httpURLConnection.getInputStream());
-                        PrivateLog.log(context, PrivateLog.DATA, PrivateLog.WARN, "weather data is polled over http without encryption.");
-                    } catch (IOException e2) {
-                        throw e2;
-                    }
-                }
+                throw e;
             } catch (IOException e) {
                 throw e;
             } catch (Exception e){
@@ -485,45 +482,23 @@ public class APIReaders {
 
         private InputStream getWeatherInputStream(Weather.WeatherLocation weatherLocation) throws IOException {
             String stationName = weatherLocation.getName().replace("*","");
+            String weatherPath;
             // stationType MOS is default
-            String weather_url = "https://"+WeatherSettings.getWeatherUrl(context)+"/weather/local_forecasts/mos/MOSMIX_L/single_stations/"+stationName+"/kml/MOSMIX_L_LATEST_"+stationName+".kmz";
-            String weather_url_legacy = "http://"+WeatherSettings.getWeatherUrl(context)+"/weather/local_forecasts/mos/MOSMIX_L/single_stations/"+stationName+"/kml/MOSMIX_L_LATEST_"+stationName+".kmz";
+            weatherPath = "/weather/local_forecasts/mos/MOSMIX_L/single_stations/"+stationName+"/kml/MOSMIX_L_LATEST_"+stationName+".kmz";
             // change to DMO if applicable
             if (weatherLocation.type==RawWeatherInfo.Source.DMO){
-                String fileName = WeatherSettings.getWeatherUrl(context)+"/weather/local_forecasts/dmo/icon-eu/single_stations/"+stationName+"/kmz/"+getLastestDMOUrl(context,stationName);
-                weather_url = "https://"+fileName;
-                weather_url_legacy = "http://"+fileName;
+                weatherPath = "/weather/local_forecasts/dmo/icon-eu/single_stations/"+stationName+"/kmz/"+getLastestDMOUrl(context,stationName);
             }
+            String weather_url = HttpsUrl.build(WeatherSettings.getWeatherUrl(context),weatherPath);
             // PrivateLog.log(context,Tag.SERVICE2,"URL: "+weather_url);
-            URL url;
-            URL url_legacy;
-            try {
-                url = new URL(weather_url);
-                url_legacy = new URL(weather_url_legacy);
-            } catch (MalformedURLException e){
-                throw e;
-            }
+            URL url = new URL(weather_url);
             try {
                 HttpsURLConnection httpsURLConnection = (HttpsURLConnection) url.openConnection();
                 InputStream inputStream = new BufferedInputStream(httpsURLConnection.getInputStream());
                 return inputStream;
             } catch (SSLException e){
                 ssl_exception = true;
-                if (WeatherSettings.isTLSdisabled(context)){
-                    // try fallback to http
-                    try {
-                        HttpURLConnection httpURLConnection = (HttpURLConnection) url_legacy.openConnection();
-                        InputStream inputStream = new BufferedInputStream(httpURLConnection.getInputStream());
-                        PrivateLog.log(context,PrivateLog.DATA,PrivateLog.WARN,"weather data is polled over http without encryption.");
-                        return inputStream;
-                    } catch (IOException e2){
-                        throw e2;
-                    }
-                } else {
-                    PrivateLog.log(context,PrivateLog.DATA,PrivateLog.ERR,"Error: ssl connection could not be established, but http is not allowed.");
-                    throw e;
-                }
-            } catch (Exception e){
+                PrivateLog.log(context,PrivateLog.DATA,PrivateLog.ERR,"Error: ssl connection could not be established, but http is not allowed.");
                 throw e;
             }
         }
@@ -820,19 +795,10 @@ public class APIReaders {
 
         private ArrayList<String> getTextFromUrl(String url_string){
             try {
-                InputStream inputStream;
-                try {
-                    // https standard
-                    URL url = new URL(url_string);
-                    HttpsURLConnection httpsURLConnection = (HttpsURLConnection) url.openConnection();
-                    inputStream = new BufferedInputStream(httpsURLConnection.getInputStream());
-                } catch (SSLException e){
-                    // http fallback
-                    String url_string_legacy = url_string.replace("https","http");
-                    URL url_legacy = new URL(url_string_legacy);
-                    HttpURLConnection httpURLConnection = (HttpURLConnection) url_legacy.openConnection();
-                    inputStream = new BufferedInputStream(httpURLConnection.getInputStream());
-                }
+                // Text forecasts are always polled over TLS; a failed handshake fails the poll.
+                URL url = new URL(url_string);
+                HttpsURLConnection httpsURLConnection = (HttpsURLConnection) url.openConnection();
+                InputStream inputStream = new BufferedInputStream(httpsURLConnection.getInputStream());
                 BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.ISO_8859_1));
                 ArrayList<String> resultList = new ArrayList<String>();
                 String line = null;
@@ -859,7 +825,7 @@ public class APIReaders {
             ArrayList<TextForecast> textForecasts = new ArrayList<TextForecast>();
             ArrayList<TextForecasts.TextForecastSource> fileSources = TextForecasts.getTextForecastSources(context);
             for (int sourcePosition=0; sourcePosition<fileSources.size(); sourcePosition++){
-                ArrayList<String> index = getTextFromUrl(fileSources.get(sourcePosition).getWebPath(context));
+                ArrayList<String> index = getTextFromUrl(fileSources.get(sourcePosition).getWebPath());
                 if (index!=null) {
                     for (int i = 0; i < index.size(); i++) {
                         String s = index.get(i);
@@ -871,7 +837,7 @@ public class APIReaders {
                             if (textForecast.identifier.contains(">")){
                                 textForecast.identifier = textForecast.identifier.substring(0,18);
                             }
-                            textForecast.webUrl = fileSources.get(sourcePosition).getWebPath(context);
+                            textForecast.webUrl = fileSources.get(sourcePosition).getWebPath();
                             textForecast.type = forecastFile.type;
                             textForecasts.add(textForecast);
                         }
@@ -970,7 +936,7 @@ public class APIReaders {
             return calendar.getTimeInMillis();
         }
 
-        public URL getUrlStringForTime(long time, boolean ssl){
+        public URL getUrlStringForTime(long time){
             /*
             The forecast is available at the Geoserver for every five minutes, eg 10:00, 10:05, 10:10
             Other timestamps give an error. Format is:
@@ -1013,11 +979,7 @@ public class APIReaders {
             stringBuilder.append(":00.000Z");
             String result = String.copyValueOf(WN_RADAR_URL.toCharArray());
             result = result.replace("TIMESTAMP",stringBuilder.toString());
-            if (ssl) {
-                result = "https:" + result;
-            } else {
-                result = "http:"+result;
-            }
+            result = HttpsUrl.HTTPS_SCHEME + result;
             URL url = null;
             try {
                 url = new URL(result);
@@ -1028,29 +990,14 @@ public class APIReaders {
         }
 
         private InputStream getRadarInputStream(long time) throws IOException {
-            URL url = getUrlStringForTime(time,true);
-            URL url_legacy = getUrlStringForTime(time,false);
+            URL url = getUrlStringForTime(time);
             try {
                 HttpsURLConnection httpsURLConnection = (HttpsURLConnection) url.openConnection();
                 InputStream inputStream = new BufferedInputStream(httpsURLConnection.getInputStream());
                 return inputStream;
             } catch (SSLException e){
                 ssl_exception = true;
-                if (WeatherSettings.isTLSdisabled(context)){
-                    // try fallback to http
-                    try {
-                        HttpURLConnection httpURLConnection = (HttpURLConnection) url_legacy.openConnection();
-                        InputStream inputStream = new BufferedInputStream(httpURLConnection.getInputStream());
-                        PrivateLog.log(context,PrivateLog.DATA,PrivateLog.WARN,"MN radar data is polled over http without encryption.");
-                        return inputStream;
-                    } catch (IOException e2){
-                        throw e2;
-                    }
-                } else {
-                    PrivateLog.log(context,PrivateLog.DATA,PrivateLog.ERR,"Error: ssl connection could not be established, but http is not allowed.");
-                    throw e;
-                }
-            } catch (Exception e){
+                PrivateLog.log(context,PrivateLog.DATA,PrivateLog.ERR,"Error: ssl connection could not be established, but http is not allowed.");
                 throw e;
             }
         }
@@ -1281,14 +1228,10 @@ public class APIReaders {
             this.layers = layers;
         }
 
-        public static URL getGeoServerURL(boolean ssl, WeatherLayer weatherLayer){
+        public static URL getGeoServerURL(WeatherLayer weatherLayer){
             float x0 = weatherLayer.mapGeo[0]; float y0 = weatherLayer.mapGeo[1]; float x1 = weatherLayer.mapGeo[2]; float y1 = weatherLayer.mapGeo[3];
             StringBuilder stringBuilder = new StringBuilder();
-            if (ssl){
-                stringBuilder.append("https://");
-            } else {
-                stringBuilder.append("http://");
-            }
+            stringBuilder.append(HttpsUrl.HTTPS_SCHEME);
             stringBuilder.append("maps.dwd.de/geoserver/dwd/wms?service=WMS&version=1.1.0&request=GetMap&layers=dwd%3A");
             stringBuilder.append(WeatherLayer.getLayerID(weatherLayer.layer));
             stringBuilder.append("&bbox=");
@@ -1353,29 +1296,14 @@ public class APIReaders {
         }
 
         public InputStream getLayerInputStream(WeatherLayer weatherLayer) throws IOException {
-            URL url = getGeoServerURL(true,weatherLayer);
-            URL url_legacy = getGeoServerURL(false,weatherLayer);
+            URL url = getGeoServerURL(weatherLayer);
             try {
                 HttpsURLConnection httpsURLConnection = (HttpsURLConnection) url.openConnection();
                 InputStream inputStream = new BufferedInputStream(httpsURLConnection.getInputStream());
                 return inputStream;
             } catch (SSLException e){
                 ssl_exception = true;
-                if (WeatherSettings.isTLSdisabled(context)){
-                    // try fallback to http
-                    try {
-                        HttpURLConnection httpURLConnection = (HttpURLConnection) url_legacy.openConnection();
-                        InputStream inputStream = new BufferedInputStream(httpURLConnection.getInputStream());
-                        PrivateLog.log(context,PrivateLog.DATA,PrivateLog.WARN,"Layer data ("+weatherLayer.layer+") is polled over http without encryption.");
-                        return inputStream;
-                    } catch (IOException e2){
-                        throw e2;
-                    }
-                } else {
-                    PrivateLog.log(context,PrivateLog.DATA,PrivateLog.ERR,"Error: ssl connection could not be established, but http is not allowed.");
-                    throw e;
-                }
-            } catch (Exception e){
+                PrivateLog.log(context,PrivateLog.DATA,PrivateLog.ERR,"Error: ssl connection could not be established, but http is not allowed.");
                 throw e;
             }
         }
@@ -1468,28 +1396,13 @@ public class APIReaders {
             this.context = context;
         }
 
-        public static InputStream getPollenStream(boolean ssl) {
-            String urlString = WeatherSettings.getWeatherUrl(context)+"/climate_environment/health/alerts/s31fg.json";
-            InputStream inputStream;
-            long sourceLastModified = 0;
-            if (ssl) {
-                urlString = "https://" + urlString;
-            } else {
-                    urlString = "http://"+urlString;
-            }
+        public static InputStream getPollenStream() {
+            String urlString = HttpsUrl.build(WeatherSettings.getWeatherUrl(context),
+                    "/climate_environment/health/alerts/s31fg.json");
             try {
                 URL url = new URL(urlString);
-                if (ssl) {
-                    HttpsURLConnection httpsURLConnection = (HttpsURLConnection) url.openConnection();
-                    inputStream = httpsURLConnection.getInputStream();
-                    sourceLastModified = httpsURLConnection.getLastModified();
-                } else {
-                    PrivateLog.log(context,PrivateLog.UPDATER,PrivateLog.WARN,"Getting pollen-data unencrypted via http");
-                    HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
-                    inputStream = httpURLConnection.getInputStream();
-                    sourceLastModified = httpURLConnection.getLastModified();
-                }
-                return inputStream;
+                HttpsURLConnection httpsURLConnection = (HttpsURLConnection) url.openConnection();
+                return httpsURLConnection.getInputStream();
             } catch (MalformedURLException e){
                 PrivateLog.log(context,PrivateLog.UPDATER,PrivateLog.FATAL,"Malformed pollen url: "+e.getMessage());
             } catch (IOException e) {
@@ -1499,7 +1412,7 @@ public class APIReaders {
         }
 
         public String readPollenDataRawString() {
-            InputStream pollenImputStream = getPollenStream(!WeatherSettings.isTLSdisabled(context));
+            InputStream pollenImputStream = getPollenStream();
             if (pollenImputStream!=null){
                 BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(pollenImputStream));
                 StringBuilder stringBuilder = new StringBuilder();
@@ -1612,28 +1525,13 @@ public class APIReaders {
             this.context = context;
         }
 
-        public static InputStream getPollenAreaStream(boolean ssl) {
-            String urlString = "maps.dwd.de/geoserver/dwd/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=dwd%3APollenfluggebiete&outputFormat=application%2Fjson";
-            InputStream inputStream;
-            long sourceLastModified = 0;
-            if (ssl) {
-                urlString = "https://" + urlString;
-            } else {
-                urlString = "http://" + urlString;
-            }
+        public static InputStream getPollenAreaStream() {
+            String urlString = HttpsUrl.build("maps.dwd.de",
+                    "/geoserver/dwd/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=dwd%3APollenfluggebiete&outputFormat=application%2Fjson");
             try {
                 URL url = new URL(urlString);
-                if (ssl) {
-                    HttpsURLConnection httpsURLConnection = (HttpsURLConnection) url.openConnection();
-                    inputStream = httpsURLConnection.getInputStream();
-                    sourceLastModified = httpsURLConnection.getLastModified();
-                } else {
-                    PrivateLog.log(context, PrivateLog.UPDATER, PrivateLog.WARN, "Getting pollen areas unencrypted via http");
-                    HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
-                    inputStream = httpURLConnection.getInputStream();
-                    sourceLastModified = httpURLConnection.getLastModified();
-                }
-                return inputStream;
+                HttpsURLConnection httpsURLConnection = (HttpsURLConnection) url.openConnection();
+                return httpsURLConnection.getInputStream();
             } catch (MalformedURLException e) {
                 PrivateLog.log(context, PrivateLog.UPDATER, PrivateLog.FATAL, "Malformed pollen area url: " + e.getMessage());
             } catch (IOException e) {
@@ -1643,7 +1541,7 @@ public class APIReaders {
         }
 
         public String readPollenAreaDataRawString() {
-            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(getPollenAreaStream(!WeatherSettings.isTLSdisabled(context))));
+            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(getPollenAreaStream()));
             StringBuilder stringBuilder = new StringBuilder();
             String s;
             try {
@@ -1730,28 +1628,13 @@ public class APIReaders {
             this.contentResolver = context.getApplicationContext().getContentResolver();
         }
 
-        public static InputStream getAreaStream(Context context, boolean ssl, String area) {
-            String urlString = "maps.dwd.de/geoserver/dwd/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=dwd%3A"+area+"&outputFormat=application%2Fjson";
-            InputStream inputStream;
-            long sourceLastModified = 0;
-            if (ssl) {
-                urlString = "https://" + urlString;
-            } else {
-                urlString = "http://" + urlString;
-            }
+        public static InputStream getAreaStream(Context context, String area) {
+            String urlString = HttpsUrl.build("maps.dwd.de",
+                    "/geoserver/dwd/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=dwd%3A"+area+"&outputFormat=application%2Fjson");
             try {
                 URL url = new URL(urlString);
-                if (ssl) {
-                    HttpsURLConnection httpsURLConnection = (HttpsURLConnection) url.openConnection();
-                    inputStream = httpsURLConnection.getInputStream();
-                    sourceLastModified = httpsURLConnection.getLastModified();
-                } else {
-                    PrivateLog.log(context, PrivateLog.UPDATER, PrivateLog.WARN, "Getting pollen areas unencrypted via http");
-                    HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
-                    inputStream = httpURLConnection.getInputStream();
-                    sourceLastModified = httpURLConnection.getLastModified();
-                }
-                return inputStream;
+                HttpsURLConnection httpsURLConnection = (HttpsURLConnection) url.openConnection();
+                return httpsURLConnection.getInputStream();
             } catch (MalformedURLException e) {
                 PrivateLog.log(context, PrivateLog.UPDATER, PrivateLog.FATAL, "Malformed pollen area url: " + e.getMessage());
             } catch (IOException e) {
@@ -1761,7 +1644,7 @@ public class APIReaders {
         }
 
         public String readAreaDataRawString(String area) {
-            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(getAreaStream(context,!WeatherSettings.isTLSdisabled(context),area)));
+            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(getAreaStream(context,area)));
             StringBuilder stringBuilder = new StringBuilder();
             String s;
             try {
@@ -1875,23 +1758,12 @@ public class APIReaders {
             String x1 = String.format(Locale.US,"%.2f",weatherLocation.longitude+GEOACCURACY_UVI);
             String timestring = getLayerImages.getTimeStamp(time);
             // String urlString ="maps.dwd.de/geoserver/dwd/wms?service=WMS&version=1.1.0&request=GetMap&layers=dwd%3AUVI_Global_CL&bbox="+x0+"%2C"+y0+"%2C"+x1+"%2C"+y1+"&"+timestring+"&width=1&height=1&srs=EPSG%3A4326&format=image%2Fpng";
-            String urlString ="maps.dwd.de/geoserver/dwd/wms?service=WMS&version=1.1.0&request=GetMap&layers=dwd%3AUVI_Global_"+WeatherSettings.getPrefUVHIMaindisplayType(context)+"&bbox="+x0+"%2C"+y0+"%2C"+x1+"%2C"+y1+"&"+timestring+"&width=1&height=1&srs=EPSG%3A4326&format=image%2Fpng";
-            InputStream inputStream;
-            boolean ssl = !WeatherSettings.isTLSdisabled(context);
+            String urlString = HttpsUrl.build("maps.dwd.de",
+                    "/geoserver/dwd/wms?service=WMS&version=1.1.0&request=GetMap&layers=dwd%3AUVI_Global_"+WeatherSettings.getPrefUVHIMaindisplayType(context)+"&bbox="+x0+"%2C"+y0+"%2C"+x1+"%2C"+y1+"&"+timestring+"&width=1&height=1&srs=EPSG%3A4326&format=image%2Fpng");
             try {
-                if (ssl) {
-                    urlString = "https://" + urlString;
-                    URL url = new URL(urlString);
-                    HttpsURLConnection httpsURLConnection = (HttpsURLConnection) url.openConnection();
-                    inputStream = httpsURLConnection.getInputStream();
-                } else {
-                    urlString = "http://" + urlString;
-                    URL url = new URL(urlString);
-                    PrivateLog.log(context, PrivateLog.UPDATER, PrivateLog.WARN, "Getting pollen areas unencrypted via http");
-                    HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
-                    inputStream = httpURLConnection.getInputStream();
-                }
-                return inputStream;
+                URL url = new URL(urlString);
+                HttpsURLConnection httpsURLConnection = (HttpsURLConnection) url.openConnection();
+                return httpsURLConnection.getInputStream();
             } catch (Exception e){
                 // do nothing
 
