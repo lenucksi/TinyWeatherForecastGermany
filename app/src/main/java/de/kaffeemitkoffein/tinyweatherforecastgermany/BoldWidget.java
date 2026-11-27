@@ -196,10 +196,15 @@ public class BoldWidget extends ClassicWidget {
                 remoteViews.setTextColor(R.id.boldwidget_fc1_min,ThemePicker.getWidgetTextColor(c));
             }
         } else {
+            // TASK-56: these views stay visible with "-" placeholders, so they
+            // must be recoloured for light themes just like the data path.
             remoteViews.setTextViewText(R.id.boldwidget_dayofweek_fc1, NOT_AVAILABLE);
+            remoteViews.setTextColor(R.id.boldwidget_dayofweek_fc1,ThemePicker.getWidgetTextColor(c));
             remoteViews.setImageViewResource(R.id.boldwidget_fc1_weatherconditionicon, R.mipmap.not_available);
             remoteViews.setTextViewText(R.id.boldwidget_fc1_max, NOT_AVAILABLE);
+            remoteViews.setTextColor(R.id.boldwidget_fc1_max,ThemePicker.getWidgetTextColor(c));
             remoteViews.setTextViewText(R.id.boldwidget_fc1_min, NOT_AVAILABLE);
+            remoteViews.setTextColor(R.id.boldwidget_fc1_min,ThemePicker.getWidgetTextColor(c));
         }
         // FORECAST 2nd DAY
         if (currentWeatherInfo.forecast24hourly.size() >= 3) {
@@ -285,10 +290,14 @@ public class BoldWidget extends ClassicWidget {
                     remoteViews.setTextViewText(minTempID, NOT_AVAILABLE);
                 }
             } else {
+                // TASK-56: keep "-" placeholders readable on light backgrounds.
                 remoteViews.setTextViewText(dayOfWeekID, NOT_AVAILABLE);
+                remoteViews.setTextColor(dayOfWeekID,ThemePicker.getWidgetTextColor(c));
                 remoteViews.setImageViewResource(conditionIconID, R.mipmap.not_available);
                 remoteViews.setTextViewText(maxTempID, NOT_AVAILABLE);
+                remoteViews.setTextColor(maxTempID,ThemePicker.getWidgetTextColor(c));
                 remoteViews.setTextViewText(minTempID, NOT_AVAILABLE);
+                remoteViews.setTextColor(minTempID,ThemePicker.getWidgetTextColor(c));
             }
         }
         // set opacity

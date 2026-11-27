@@ -82,6 +82,15 @@ public final class ThemePicker {
     }
 
     public static int getWidgetTextColor(Context context){
+        String themePreference = WeatherSettings.getThemePreference(context);
+        if (WeatherSettings.Theme.SOLARIZED_DARK.equals(themePreference) ||
+                (WeatherSettings.Theme.FOLLOW_DEVICE.equals(themePreference) && isDarkTheme(context))){
+            // TASK-56: Solarized base1 (#93a1a1) clears 4.5:1 against the dark
+            // widget background (#073642); base0 (#839496) drops below it.
+            // Light themes are untouched: their dark text stays on the light
+            // background, so both looks remain readable.
+            return getColor(context,ThemeColor.TEXTLIGHT);
+        }
         return getColor(context,ThemeColor.TEXT);
     }
 
