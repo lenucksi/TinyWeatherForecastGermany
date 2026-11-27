@@ -98,7 +98,6 @@ public class WeatherSettings {
     public static final String PREF_USEGPS = "PREF_usegps";
     public static final String PREF_GPSAUTO = "PREF_gpsauto";
     public static final String PREF_GPSMANUAL = "PREF_gpsmanual";
-    public static final String PREF_DISABLE_TLS = "PREF_disable_tls";
     public static final String PREF_TEXTFORECAST_FILTER = "PREF_textforecast_filter";
     public static final String PREF_RADAR_SHOW = "PREF_radar_show";
     public static final String PREF_ADMINMAP_SHOW="PREF_adminmap_show";
@@ -211,7 +210,6 @@ public class WeatherSettings {
     public static final boolean PREF_USEGPS_DEFAULT = true;
     public static final boolean PREF_GPSAUTO_DEFAULT = false;
     public static final boolean PREF_GPSMANUAL_DEFAULT = false;
-    public static final boolean PREF_DISABLE_TLS_DEFAULT = false;
     public static final boolean PREF_TEXTFORECAST_FILTER_DEFAULT = false;
     public static final boolean PREF_RADAR_SHOW_DEFAULT = true;
     public static final boolean PREF_ADMINMAP_SHOW_DEFAULT=false;
@@ -662,18 +660,6 @@ public class WeatherSettings {
         return isGPSFixOutdated(context,time);
     }
 
-
-    public static boolean isTLSdisabled(Context c){
-        SharedPreferences sharedPreferences = getSharedPreferences(c);
-        return sharedPreferences.getBoolean(PREF_DISABLE_TLS, PREF_DISABLE_TLS_DEFAULT);
-    }
-
-    public static void setDisableTLS(Context c, boolean flag){
-        SharedPreferences sharedPreferences = getSharedPreferences(c);
-        SharedPreferences.Editor pref_editor = sharedPreferences.edit();
-        pref_editor.putBoolean(PREF_DISABLE_TLS, flag);
-        pref_editor.apply();
-    }
 
     public static boolean appReleaseIsUserdebug() {
         return BuildConfig.VERSION_NAME.contains("debug");

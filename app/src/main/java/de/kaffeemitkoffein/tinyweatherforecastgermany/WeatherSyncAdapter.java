@@ -430,12 +430,6 @@ public class WeatherSyncAdapter extends AbstractThreadedSyncAdapter {
                 @Override
                 public void onNegativeResult() {
                     PrivateLog.log(context, PrivateLog.SYNC, PrivateLog.ERR, "Weather update: failed, error.");
-                    if (ssl_exception) {
-                        PrivateLog.log(context, PrivateLog.SYNC, PrivateLog.ERR, "SSL exception detected by service.");
-                        Intent ssl_intent = new Intent();
-                        ssl_intent.setAction(MainActivity.MAINAPP_SSL_ERROR);
-                        context.sendBroadcast(ssl_intent);
-                    }
                     // need to update main app with old data
                     Intent intent = new Intent();
                     intent.setAction(MainActivity.MAINAPP_CUSTOM_REFRESH_ACTION);
