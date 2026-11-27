@@ -29,6 +29,7 @@ import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.Insets;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
@@ -439,7 +440,13 @@ public class MainActivity extends Activity {
                 performingFirstAppLaunch = intent.getBooleanExtra(EXTRA_ISFIRSTAPPLAUNCH,false);
             }
             ThemePicker.SetTheme(this);
-            WeatherSettings.setRotationMode(this);
+            if (followDeviceOrientation(getResources().getConfiguration().smallestScreenWidthDp)){
+                // Tablets/foldables (>=600dp) must be able to rotate; Android 16 ignores
+                // orientation locks on large screens anyway, so do not request one.
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+            } else {
+                WeatherSettings.setRotationMode(this);
+            }
             super.onCreate(savedInstanceState);
             // init area database if needed
             try {
@@ -459,6 +466,7 @@ public class MainActivity extends Activity {
             executor = new LifecycleExecutor(Executors.newSingleThreadScheduledExecutor());
             PrivateLog.log(context,PrivateLog.MAIN,PrivateLog.INFO,"Main activity started.");
             setContentView(R.layout.activity_main);
+            applyEdgeToEdgeInsets();
             registerSyncAdapter(context);
             weatherForecastRunnable = new APIReaders.WeatherForecastRunnable(context, null) {
                 @Override
@@ -2494,6 +2502,49 @@ public class MainActivity extends Activity {
         if (overviewChartImageView!=null){
             overviewChartImageView.setVisibility(View.VISIBLE);
         }
+    }
+
+    /** True for tablets and foldables, where orientation must stay user/device controlled. */
+    static boolean followDeviceOrientation(int smallestScreenWidthDp) {
+        return smallestScreenWidthDp >= 600;
+    }
+
+    /**
+     * With target SDK 36 the system enforces edge-to-edge. Apply system bar (and, when
+     * visible, keyboard) insets as padding to the main screen root so the Holo action bar,
+     * station selector, chart and controls stay clear of the status and navigation bars.
+     * Below API 30 the declared fitsSystemWindows flag keeps the old behaviour.
+     */
+    @TargetApi(Build.VERSION_CODES.R)
+    private void applyEdgeToEdgeInsets() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+            return;
+        }
+        View root = findViewById(R.id.main_layoutholder);
+        if (root == null) {
+            root = findViewById(R.id.main_landscape_mainlinearlayout);
+        }
+        if (root == null) {
+            return;
+        }
+        final int initialLeft = root.getPaddingLeft();
+        final int initialTop = root.getPaddingTop();
+        final int initialRight = root.getPaddingRight();
+        final int initialBottom = root.getPaddingBottom();
+        root.setFitsSystemWindows(false);
+        root.setOnApplyWindowInsetsListener(new View.OnApplyWindowInsetsListener() {
+            @Override
+            public WindowInsets onApplyWindowInsets(View v, WindowInsets windowInsets) {
+                Insets bars = windowInsets.getInsets(WindowInsets.Type.systemBars());
+                Insets ime = windowInsets.getInsets(WindowInsets.Type.ime());
+                v.setPadding(
+                        initialLeft + bars.left,
+                        initialTop + Math.max(bars.top, ime.top),
+                        initialRight + bars.right,
+                        initialBottom + Math.max(bars.bottom, ime.bottom));
+                return windowInsets;
+            }
+        });
     }
 
     /**
