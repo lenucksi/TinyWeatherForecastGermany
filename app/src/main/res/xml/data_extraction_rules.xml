@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ This file is part of TinyWeatherForecastGermany.
+
+ Copyright (c) 2026 Pawel Dube
+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+ Rationale (devices running Android 12 or higher):
+ The same two private data sets are excluded for both transfer types:
+ - files/logs.txt: internal diagnostic log written by PrivateLog;
+ - shared_prefs: all default SharedPreferences (saved station coordinates,
+   Gadgetbridge package name, custom weather server URL and similar settings).
+ Cloud backup additionally requires client-side encryption capabilities.
+ Excluding the whole sharedpref directory also covers preference files added
+ later, so no preference can be backed up without an explicit rule.
+-->
+
+<data-extraction-rules>
+    <cloud-backup disableIfNoEncryptionCapabilities="true">
+        <exclude domain="file" path="logs.txt" />
+        <exclude domain="sharedpref" path="." />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="file" path="logs.txt" />
+        <exclude domain="sharedpref" path="." />
+    </device-transfer>
+    <!--
+      Android 16 QPR2+ cross-platform transfers are a separate mode and are
+      fully enabled when not configured. Apply the same exclusions there.
+    -->
+    <cross-platform-transfer platform="ios">
+        <exclude domain="file" path="logs.txt" />
+        <exclude domain="sharedpref" path="." />
+    </cross-platform-transfer>
+</data-extraction-rules>
