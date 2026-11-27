@@ -540,6 +540,31 @@ public class ClassicWidget extends AppWidgetProvider {
         setClassicWidgetItems(remoteViews,weatherCard,c,false);
     }
 
+    /**
+     * TASK-48: build a complete RemoteViews for an empty weather database. The
+     * regular widget layouts carry demo values ("-°", "HAMBURG INNENSTADT", ...)
+     * as XML defaults; pushing an untouched inflation of those layouts is what
+     * left transparent, placeholder-filled widgets on the home screen. This
+     * dedicated layout shares the themed background with the data path but has
+     * no placeholders at all, and keeps the tap-to-open-app behaviour.
+     */
+    public static RemoteViews getNoDataWidgetViews(Context c){
+        RemoteViews remoteViews = new RemoteViews(c.getPackageName(),R.layout.widget_nodata_layout);
+        int opacity = WeatherSettings.getWidgetOpacity(c);
+        remoteViews.setImageViewResource(android.R.id.background,ThemePicker.getWidgetBackgroundDrawableRessource(c));
+        remoteViews.setInt(android.R.id.background,"setImageAlpha",Math.round(opacity*2.55f));
+        remoteViews.setTextViewText(R.id.widget_nodata_text,c.getResources().getString(R.string.error_no_data));
+        remoteViews.setTextColor(R.id.widget_nodata_text,ThemePicker.getWidgetTextColor(c));
+        Intent intent = new Intent(c, MainActivity.class);
+        int flags = 0;
+        if (Build.VERSION.SDK_INT>=23){
+            flags |= PendingIntent.FLAG_IMMUTABLE;
+        }
+        remoteViews.setOnClickPendingIntent(R.id.widget_nodata_maincontainer,
+                PendingIntent.getActivity(c,0,intent,flags));
+        return remoteViews;
+    }
+
     public void updateWidgetDisplay(Context c, AppWidgetManager awm, int[] widget_instances, int source){
         CurrentWeatherInfo weatherCard = Weather.getCurrentWeatherInfo(c);
         int pid = android.os.Process.myPid();
@@ -581,11 +606,17 @@ public class ClassicWidget extends AppWidgetProvider {
                 setClassicWidgetItems(remoteViews,weatherCard,c);
                 awm.updateAppWidget(widget_instances[i],remoteViews);
             }
-        } else
-        // sync weather if no information is present, however do not loop syncs if widget update was already
-        // triggered by the sync adapter.
-        if (source!=WidgetRefresher.FROM_SYNCADAPTER){
-            ContentResolver.requestSync(MainActivity.getManualSyncRequest(c,WeatherSyncAdapter.UpdateFlags.FLAG_UPDATE_WEATHER));
+        } else {
+            // TASK-48: still publish a fully rendered widget so the launcher never
+            // shows the raw XML placeholders while the database is empty.
+            for (int i=0; i<widget_instances.length; i++){
+                awm.updateAppWidget(widget_instances[i],getNoDataWidgetViews(c));
+            }
+            // sync weather if no information is present, however do not loop syncs if widget update was already
+            // triggered by the sync adapter.
+            if (source!=WidgetRefresher.FROM_SYNCADAPTER){
+                ContentResolver.requestSync(MainActivity.getManualSyncRequest(c,WeatherSyncAdapter.UpdateFlags.FLAG_UPDATE_WEATHER));
+            }
         }
     }
 
