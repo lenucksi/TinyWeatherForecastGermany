@@ -667,7 +667,6 @@ public class APIReaders {
                case "DE": return HttpsUrl.build(WeatherSettings.getWeatherUrl(context),C_PATH+"DE"+C_LAST);
            }
            return HttpsUrl.build(WeatherSettings.getWeatherUrl(context),C_PATH+"EN"+C_LAST);
-           //return "https://kaffeemitkoffein.de/local/Z_CAP_C_EDZW_LATEST_PVW_STATUS_PREMIUMDWD_COMMUNEUNION_DE.zip";
        }
 
        private InputStream getWeatherWarningInputStream() throws IOException {
@@ -1230,8 +1229,6 @@ public class APIReaders {
 
         public TextForecastRunnable(Context context) {
             this.context = context;
-            // HttpsURLConnection httpsURLConnection = (HttpsURLConnection) url.openConnection();
-            // InputStream inputStream = new BufferedInputStream(httpsURLConnection.getInputStream());
         }
 
         //* Override to do something before getting data starts
@@ -1275,9 +1272,6 @@ public class APIReaders {
 
     public static class RadarMNSetGeoserverRunnable implements CancellableTask{
 
-        //private static final String WN_RADAR_URL="//maps.dwd.de/geoserver/dwd/wms?service=WMS&version=1.1.0&request=GetMap&layers=dwd%3AWN-Produkt&bbox=-543.462%2C-4808.645%2C556.538%2C-3608.645&TIMESTAMP&width=1100&height=1200&srs=EPSG%3A1000001&styles=&format=image%2Fpng";
-        //private static final String WN_RADAR_URL="//maps.dwd.de/geoserver/dwd/wms?service=WMS&version=1.1.0&request=GetMap&layers=dwd%3AWN-Produkt&bbox=-543.462%2C-4808.645%2C556.538%2C-3608.645&TIMESTAMP&width=1100&height=1200&srs=EPSG%3A4326&styles=&format=image%2Fpng";
-        //private static final String WN_RADAR_URL="//maps.dwd.de/geoserver/dwd/wms?service=WMS&version=1.1.0&request=GetMap&layers=dwd%3AWN-Produkt,Warngebiete_Bundeslaender&"+RadarMN2.BBOX+"&TIMESTAMP&width="+RadarMN2.getFixedRadarMapWidth()+"&height="+RadarMN2.getFixedRadarMapHeight()+"&srs=EPSG%3A3857&styles=&format=image%2Fpng";
         private String WN_RADAR_URL;
         public static final String RADAR_CACHE_FILENAME_PREFIX    = "radarMN-";
         public static final String RADAR_CACHE_FILENAME_SUFFIX    = ".png";
@@ -1307,7 +1301,6 @@ public class APIReaders {
 
         public RadarMNSetGeoserverRunnable(Context context){
             this.context = context;
-            //WN_RADAR_URL="//maps.dwd.de/geoserver/dwd/wms?service=WMS&version=1.1.0&request=GetMap&layers=dwd%3AWN-Produkt&"+RadarMN2.BBOX+"&TIMESTAMP&width="+RadarMN2.getFixedRadarMapWidth(context)+"&height="+RadarMN2.getFixedRadarMapHeight(context)+"&srs=EPSG%3A3857&styles=&format=image%2Fpng";
             WN_RADAR_URL="//maps.dwd.de/geoserver/dwd/wms?service=WMS&version=1.1.0&request=GetMap&layers=dwd%3ARadar_wn-product_1x1km_ger&"+RadarMN2.BBOX+"&TIMESTAMP&width="+RadarMN2.getFixedRadarMapWidth(context)+"&height="+RadarMN2.getFixedRadarMapHeight(context)+"&srs=EPSG%3A3857&styles=&format=image%2Fpng";
         }
 
@@ -1494,42 +1487,6 @@ public class APIReaders {
             errors++;
         }
 
-        private void multiFetchRadarSetOld(){
-            progress = 0;
-            threadsDone = 0;
-            // use 0 to 24 for full set
-            startTime = roundUTCUpToNextFiveMinutes(Calendar.getInstance().getTimeInMillis());
-            // need to delete if read is incomplete
-            deleteCacheFiles(context);
-            errors = 0;
-            ExecutorService executor = Executors.newFixedThreadPool(4);
-            this.executor = executor;
-            executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    fetchRadarSet(0, 5);
-                }
-            });
-            executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    fetchRadarSet(6, 11);
-                }
-            });
-            executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    fetchRadarSet(12, 18);
-                }
-            });
-            executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    fetchRadarSet(19, 24);
-                }
-            });
-        }
-
         private void multiFetchRadarSet(){
             progress = 0;
             threadsDone = 0;
@@ -1550,32 +1507,6 @@ public class APIReaders {
                     }
                 });
             }
-            /*
-            executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    fetchRadarSet(0, 5);
-                }
-            });
-            executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    fetchRadarSet(6, 11);
-                }
-            });
-            executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    fetchRadarSet(12, 18);
-                }
-            });
-            executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    fetchRadarSet(19, 24);
-                }
-            });
-             */
         }
 
         public void onStart(){
@@ -2178,7 +2109,6 @@ public class APIReaders {
             String x0 = String.format(Locale.US,"%.2f",weatherLocation.longitude-GEOACCURACY_UVI);
             String x1 = String.format(Locale.US,"%.2f",weatherLocation.longitude+GEOACCURACY_UVI);
             String timestring = getLayerImages.getTimeStamp(time);
-            // String urlString ="maps.dwd.de/geoserver/dwd/wms?service=WMS&version=1.1.0&request=GetMap&layers=dwd%3AUVI_Global_CL&bbox="+x0+"%2C"+y0+"%2C"+x1+"%2C"+y1+"&"+timestring+"&width=1&height=1&srs=EPSG%3A4326&format=image%2Fpng";
             String urlString = HttpsUrl.build("maps.dwd.de",
                     "/geoserver/dwd/wms?service=WMS&version=1.1.0&request=GetMap&layers=dwd%3AUVI_Global_"+WeatherSettings.getPrefUVHIMaindisplayType(context)+"&bbox="+x0+"%2C"+y0+"%2C"+x1+"%2C"+y1+"&"+timestring+"&width=1&height=1&srs=EPSG%3A4326&format=image%2Fpng");
             try {
