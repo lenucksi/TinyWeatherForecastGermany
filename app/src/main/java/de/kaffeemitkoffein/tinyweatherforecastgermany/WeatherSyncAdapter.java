@@ -32,7 +32,9 @@ import android.os.Build;
 import android.os.Bundle;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 
 import static android.content.Context.NOTIFICATION_SERVICE;
 
@@ -222,31 +224,101 @@ public class WeatherSyncAdapter extends AbstractThreadedSyncAdapter {
     }
 
 
+    /**
+     * Loads the announcement state from the default SharedPreferences. Keys belong to this
+     * workstream only (WeatherWarning.AlertNotificationState.PREF_KEY_PREFIX), so clearing the
+     * legacy notification database on boot cannot undo it.
+     */
+    static Map<String,String> loadAlertNotificationState(Context context){
+        Map<String,String> state = new HashMap<String,String>();
+        SharedPreferences preferences = WeatherSettings.getSharedPreferences(context);
+        for (Map.Entry<String, ?> entry : preferences.getAll().entrySet()){
+            if ((entry.getKey().startsWith(WeatherWarning.AlertNotificationState.PREF_KEY_PREFIX)) && (entry.getValue() instanceof String)){
+                state.put(entry.getKey(),(String) entry.getValue());
+            }
+        }
+        return state;
+    }
+
+    static void saveAlertNotificationState(Context context, Map<String,String> state){
+        SharedPreferences preferences = WeatherSettings.getSharedPreferences(context);
+        SharedPreferences.Editor editor = preferences.edit();
+        for (String key : preferences.getAll().keySet()){
+            if ((key.startsWith(WeatherWarning.AlertNotificationState.PREF_KEY_PREFIX)) && (!state.containsKey(key))){
+                editor.remove(key);
+            }
+        }
+        for (Map.Entry<String,String> entry : state.entrySet()){
+            editor.putString(entry.getKey(),entry.getValue());
+        }
+        editor.apply();
+    }
+
+    static void clearAlertNotificationState(Context context){
+        SharedPreferences preferences = WeatherSettings.getSharedPreferences(context);
+        SharedPreferences.Editor editor = preferences.edit();
+        for (String key : preferences.getAll().keySet()){
+            if (key.startsWith(WeatherWarning.AlertNotificationState.PREF_KEY_PREFIX)){
+                editor.remove(key);
+            }
+        }
+        editor.apply();
+    }
+
     public static boolean launchWeatherWarningNotifications(Context context, ArrayList<WeatherWarning> warnings, boolean discardAlreadyNotified) {
-        WeatherWarnings.clearNotified(context);
         NotificationManager notificationManager = (NotificationManager) context.getSystemService(NOTIFICATION_SERVICE);
         PrivateLog.log(context, PrivateLog.ALERTS, PrivateLog.INFO, "Checking warnings..." + warnings.size());
         Weather.WeatherLocation weatherLocation = WeatherSettings.getSetStationLocation(context);
         ArrayList<WeatherWarning> locationWarnings = WeatherWarnings.getWarningsForLocation(context, warnings, weatherLocation);
         PrivateLog.log(context, PrivateLog.ALERTS, PrivateLog.INFO, "Checking warnings, found " + locationWarnings.size());
+        // Do not call WeatherWarnings.clearNotified here: expiring the legacy rows was the reason
+        // warnings were announced again on every start (Codeberg #308).
+        long now = Calendar.getInstance().getTimeInMillis();
+        Map<String,String> state = loadAlertNotificationState(context);
+        ArrayList<WeatherWarnings.WarningNotification> legacyNotifications = WeatherWarnings.getNotificationElements(context);
         boolean notified = false;
         for (int i = 0; i < locationWarnings.size(); i++) {
             WeatherWarning warning = locationWarnings.get(i);
             if (warning.getSeverity() >= WeatherSettings.getWarningsNotifySeverity(context)) {
-                if (discardAlreadyNotified || !WeatherWarnings.alreadyNotified(context, warning)) {
-                    int id = WeatherSettings.getUniqueNotificationIdentifier(context);
-                    Notification notification = getWarningNotification(context, notificationManager, warning, Integer.toString(i), id);
-                    notificationManager.notify(id, notification);
-                    notified = true;
-                    WeatherWarnings.addToNotified(context, warning, id);
-                    PrivateLog.log(context, PrivateLog.ALERTS, PrivateLog.INFO, "Notifying " + warning.identifier + " " + warning.headline);
-                } else {
-                    PrivateLog.log(context, PrivateLog.ALERTS, PrivateLog.INFO, "already notified " + locationWarnings.get(i).headline);
+                if (WeatherWarning.AlertNotificationState.isExpired(warning,now)){
+                    PrivateLog.log(context, PrivateLog.ALERTS, PrivateLog.INFO, "Warning expired, not notifying " + warning.identifier + " " + warning.headline);
+                    continue;
                 }
+                String stateKey = WeatherWarning.AlertNotificationState.prefKey(warning);
+                String storedState = state.get(stateKey);
+                if ((!discardAlreadyNotified) && (!WeatherWarning.AlertNotificationState.shouldAnnounce(warning,now,state))){
+                    PrivateLog.log(context, PrivateLog.ALERTS, PrivateLog.INFO, "already notified " + warning.headline);
+                    continue;
+                }
+                Integer legacyId = WeatherWarnings.getNotificationIdFromWeatherWarning(legacyNotifications,warning);
+                if ((!discardAlreadyNotified) && (storedState==null) && (legacyId!=null)){
+                    // Upgrade path: adopt the id of an installation that already announced this
+                    // event, but do not announce it a second time.
+                    WeatherWarning.AlertNotificationState.record(state,warning,legacyId,warning.getApplicableExpires());
+                    PrivateLog.log(context, PrivateLog.ALERTS, PrivateLog.INFO, "Adopted legacy notification state for " + warning.identifier);
+                    continue;
+                }
+                int id;
+                if (storedState!=null){
+                    // Keep the id of the original event, also when a corrupt record is repaired.
+                    id = WeatherWarning.AlertNotificationState.notificationId(storedState);
+                    if (id==WeatherWarning.AlertNotificationState.INVALID_NOTIFICATION_ID){
+                        id = WeatherSettings.getUniqueNotificationIdentifier(context);
+                    }
+                } else {
+                    id = WeatherSettings.getUniqueNotificationIdentifier(context);
+                }
+                Notification notification = getWarningNotification(context, notificationManager, warning, Integer.toString(i), id);
+                notificationManager.notify(id, notification);
+                notified = true;
+                WeatherWarnings.addToNotified(context, warning, id);
+                WeatherWarning.AlertNotificationState.record(state,warning,id,warning.getApplicableExpires());
+                PrivateLog.log(context, PrivateLog.ALERTS, PrivateLog.INFO, "Notifying " + warning.identifier + " " + warning.headline);
             } else {
                 PrivateLog.log(context, PrivateLog.ALERTS, PrivateLog.INFO, "Severity too low to notify " + locationWarnings.get(i).headline);
             }
         }
+        saveAlertNotificationState(context,state);
         if (notified) {
             CancelNotificationBroadcastReceiver.setCancelNotificationsAlarm(context);
         }
@@ -275,6 +347,8 @@ public class WeatherSyncAdapter extends AbstractThreadedSyncAdapter {
             notificationManager = (NotificationManager) context.getSystemService(NOTIFICATION_SERVICE);
         }
         cancelDeprecatedWarningNotifications(context,notificationManager);
+        // An explicit "clear notifications" action must also reset the persisted announcements.
+        clearAlertNotificationState(context);
         ArrayList<WeatherWarning> weatherWarnings = WeatherWarnings.getWarningsForLocation(context,null,null);
         launchWeatherWarningNotifications(context,weatherWarnings,false);
     }
