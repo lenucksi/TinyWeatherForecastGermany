@@ -129,7 +129,6 @@
     <string name="preference_gadgetbridge_package_reset_toast">Tá an t-ainm pacáiste gadgetbridge socraithe ar ais go dtí an réamhshocrú.</string>
     <string name="preference_loggingscreen_summary">Socraigh roghanna logála le haghaidh dífhabhtaithe.</string>
     <string name="preference_logging_summary">Gníomhachtaigh logáil. Logs a shábháil GO HÁITIÚIL ar do gléas AGUS NACH bhfuil a sheoladh go huathoibríoch.</string>
-    <string name="preference_ssl_summary">Díchumasaigh criptiú trí https agus sonraí aimsire á vótáil.</string>
     <string name="alertdialog_1_text">D \' fhéadfadh logáil isteach ar logcat faisnéis phríobháideach a sceitheadh chuig aipeanna eile. An bhfuil tú cinnte agus an bhfuil a fhios agat cad atá á dhéanamh agat\?</string>
     <string name="alertdialog_2_toast">Logáil isteach go Logcat díghníomhachtaithe.</string>
     <string name="alertdialog_1_title">Rabhadh</string>
@@ -143,7 +142,6 @@
     <string name="preference_loggingactivity_summary">Seol agus / nó glan na logs.</string>
     <string name="preference_intro_title">Intro</string>
     <string name="preference_intro_summary">Tosaigh an iontráil arís.</string>
-    <string name="preference_ssl_title">Díchumasaigh SSL</string>
     <string name="alertdialog_yes">Tá</string>
     <string name="alertdialog_no">Níl</string>
     <string name="alertdialog_ok">CEART GO LEOR</string>
@@ -225,7 +223,6 @@
     <string name="textforecasttype_maritime_mediterranian">An Mheánmhuir Mhuirí</string>
     <string name="textforecasttype_maritime_north_and_baltic">Muirí Thuaidh - &amp; Muir Bhailt</string>
     <string name="textforecasttype_maritime_german_north_and_baltic">Muirí Gearmáinis Thuaidh - &amp; Muir Bhailt</string>
-    <string name="connerror_title">Eagrán TLS</string>
     <string name="georeceive_error">Earráid: ní féidir geo-chomhordanáidí a léamh.</string>
     <string name="geoinput_reflocation_time">Am:</string>
     <string name="geoinput_reflocation_latitude">Domhanleithead:</string>
@@ -285,7 +282,6 @@
     <string name="alertdialog_2_text">Logálann an aip seo chuig logcat faoi láthair. Beidh logáil isteach logcat a bheith faoi mhíchumas, ós rud é nach bhfuil an ghné seo beartaithe le haghaidh scaoileadh oifigiúil.</string>
     <string name="logging_comment_hint">Is féidir leat a chur a comment leis an logs chun cabhrú le teacht ar an earráid-le do thoil a mhíniú, cad a tharla:</string>
     <string name="feedback_mail_text">Nuair a sheoltar tuairisc faoi fhabht, cóipeáil agus greamaigh logaí, le do thoil, más féidir.</string>
-    <string name="connerror_message">Ní raibh an aip in ann nasc criptithe a bhunú le freastalaí sonraí oscailte dwd trí https. Díchumasaigh criptiú\?</string>
     <string name="geoinput_rationale">Is féidir leis an aip seirbhísí suímh do ghléis a úsáid chun an stáisiún aimsire is gaire duit a aimsiú. Nó is féidir leat stáisiún aimsire a chuardach tú féin, comhordanáidí a chur isteach de láimh, nó suíomh a roinnt ó aip léarscáileanna. Más mian leat don aip seo do shuíomh a chuardach, tá an cead suímh ag teastáil.</string>
     <string name="geoinput_wrongformat">Níl formáid bhailí ag an gcomhordú. Is féidir leat nótaí cosúil le +53.12345 a úsáid le haghaidh céimeanna, nó -44.22: 12.12345 chun céimeanna agus miontuairiscí nó 33.12.12345 a chur isteach chun céimeanna, nóiméad agus soicind a chur isteach. Bain triail eile as.</string>
     <string name="logging_button_copy">Cóipeáil Logchomhaid go Dtí an Ghearrthaisce</string>

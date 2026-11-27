@@ -188,8 +188,6 @@
     <string name="preference_loggingactivity_summary">A naplók elküldése és/vagy törlése.</string>
     <string name="preference_intro_title">Bevezető</string>
     <string name="preference_intro_summary">A bevezető újrakezdése.</string>
-    <string name="preference_ssl_title">SSL letiltása</string>
-    <string name="preference_ssl_summary">A https titkosítás letiltása az időjárási adatok lekérdezésekor.</string>
     <string name="alertdialog_no">Nem</string>
     <string name="alertdialog_ok">OK</string>
     <string name="alertdialog_1_title">Figyelmeztetés</string>
@@ -307,8 +305,6 @@
     <string name="geoinput_reflocation_latitude">Szélesség:</string>
     <string name="geoinput_reflocation_time">Idő:</string>
     <string name="georeceive_error">Hiba: nem sikerült beolvasni a földrajzi koordinátákat.</string>
-    <string name="connerror_title">TLS probléma</string>
-    <string name="connerror_message">Az alkalmazás nem tudott titkosított kapcsolatot létesíteni a DWD nyílt adatkiszolgálójával https-en keresztül. Letiltja a titkosítást\?</string>
     <string name="textforecasttype_maritime_german_north_and_baltic">Tengeri, német Északi- és Balti-tenger</string>
     <string name="textforecasttype_maritime_north_and_baltic">Tengeri, Északi- és Balti-tenger</string>
     <string name="textforecasttype_maritime_mediterranian">Tengeri, Földközi-tenger</string>

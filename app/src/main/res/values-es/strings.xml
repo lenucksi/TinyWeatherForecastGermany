@@ -149,8 +149,6 @@
     <string name="preference_loggingactivity_summary">Enviar y/o borrar los registros.</string>
     <string name="preference_intro_title">Intro</string>
     <string name="preference_intro_summary">Iniciar de nuevo la introducción.</string>
-    <string name="preference_ssl_title">Desactivar SSL</string>
-    <string name="preference_ssl_summary">Desactivar el cifrado a través de https al sondear los datos meteorológicos.</string>
     <string name="alertdialog_yes">Sí</string>
     <string name="alertdialog_no">No</string>
     <string name="alertdialog_ok">Aceptar</string>
@@ -232,8 +230,6 @@
     <string name="geoinput_reflocation_latitude">Latitud:</string>
     <string name="geoinput_reflocation_time">Hora:</string>
     <string name="georeceive_error">Error: no se pueden leer las coordenadas geográficas.</string>
-    <string name="connerror_title">Problema de TLS</string>
-    <string name="connerror_message">La aplicación no ha podido establecer una conexión cifrada con el servidor de datos abiertos DWD a través de https. ¿Desactivar la encriptación\?</string>
     <string name="textforecasttype_maritime_german_north_and_baltic">Marítimo de Alemania del Norte y del Báltico</string>
     <string name="textforecasttype_maritime_north_and_baltic">Marítimo del Norte y Báltico</string>
     <string name="textforecasttype_maritime_mediterranian">Mar Mediterráneo marítimo</string>

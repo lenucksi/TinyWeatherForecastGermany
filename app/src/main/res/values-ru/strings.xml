@@ -159,8 +159,6 @@
     <string name="preference_loggingactivity_summary">Отправить и/или очистить журналы.</string>
     <string name="preference_intro_title">Вступление</string>
     <string name="preference_intro_summary">Начните вступление снова.</string>
-    <string name="preference_ssl_title">Отключить SSL</string>
-    <string name="preference_ssl_summary">Отключите шифрование по протоколу https при опросе данных о погоде.</string>
     <string name="preference_reset_title">Перезапустить</string>
     <string name="preference_reset_summary">Установите все настройки на значения по умолчанию.</string>
     <string name="alertdialog_3_title">Сбросить настройки</string>
@@ -247,8 +245,6 @@
     <string name="geoinput_reflocation_latitude">Широта:</string>
     <string name="geoinput_reflocation_time">Время:</string>
     <string name="georeceive_error">Ошибка: невозможно прочитать геокоординаты.</string>
-    <string name="connerror_title">Проблема TLS</string>
-    <string name="connerror_message">Приложение не смогло установить зашифрованное соединение с сервером открытых данных DWD по протоколу https. Отключить шифрование\?</string>
     <string name="textforecasttype_maritime_german_north_and_baltic">Приморское Немецкое Северное и Балтийское моря</string>
     <string name="textforecasttype_maritime_north_and_baltic">Морское Северное и Балтийское море</string>
     <string name="textforecasttype_maritime_mediterranian">Морское Средиземное море</string>
