@@ -9,7 +9,6 @@
     <string name="station_does_not_exist">Het ingevoerde station bestaat niet. Maak een keuze uit de voorgestelde stations.</string>
     <string name="weathercode_SHOWERS_OF_RAIN_AND_SNOW_MIXED_SLIGHT">afwisselende lichte regen- en sneeuwbuien</string>
     <string name="weathercode_MODERATE_DRIZZLE_NOT_FREEZING_CONTINUOUS">aanhoudend matige motregen</string>
-    <string name="connerror_title">Tls-probleem</string>
     <string name="georeceive_error">Foutmelding: de geocoördinaten kunnen niet worden uitgelezen.</string>
     <string name="geoinput_noprovider">Er zijn geen geschikte locatiediensten gevonden. Schakel locatiediensten in en probeer het opnieuw.</string>
     <string name="geoinput_rationale">De app kan de locatiediensten van je apparaat gebruiken om het dichtstbijzijnde weerstation te vinden. Je kunt ook zelf naar een weerstation zoeken, de coördinaten handmatig invoeren of een locatie delen vanuit een kaart-app. Als je wilt dat deze app jouw locatie zoekt, is de locatie-toestemming vereist.</string>
@@ -129,8 +128,6 @@
     <string name="preference_loggingactivity_title">Logboeken beheren</string>
     <string name="preference_loggingactivity_summary">Verstuur en/of wis de logboeken.</string>
     <string name="preference_intro_summary">Start de instelhulp opnieuw.</string>
-    <string name="preference_ssl_title">Ssl uitschakelen</string>
-    <string name="preference_ssl_summary">Schakel https-versleuteling uit bij het verzamelen van weersgegevens.</string>
     <string name="alertdialog_yes">Ja</string>
     <string name="alertdialog_no">Nee</string>
     <string name="alertdialog_ok">Oké</string>
@@ -211,7 +208,6 @@
     <string name="warnings_update">De waarschuwingen zijn bijgewerkt.</string>
     <string name="warnings_until">tot</string>
     <string name="welcome_skip">OVERSLAAN</string>
-    <string name="connerror_message">De app was niet in staat om een versleutelde verbinding met de DWD-server met behulp van https tot stand te brengen. Wil je versleuteling uitschakelen\?</string>
     <string name="radar_rain1">weinig</string>
     <string name="radar_rain2">licht</string>
     <string name="radar_rain3">sterk</string>

@@ -135,7 +135,6 @@
     <string name="preference_loggingactivity_summary">Kirim dan/atau hapus catatan.</string>
     <string name="preference_intro_title">P</string>
     <string name="preference_intro_summary">Ulangi pengantaran.</string>
-    <string name="preference_ssl_title">Nonaktifkan SSL</string>
     <string name="alertdialog_yes">Ya</string>
     <string name="alertdialog_no">Tidak</string>
     <string name="alertdialog_ok">Oke</string>
@@ -216,7 +215,6 @@
     <string name="geoinput_reflocation_longitude">Bujur:</string>
     <string name="geoinput_reflocation_latitude">Lintang:</string>
     <string name="geoinput_reflocation_time">Waktu:</string>
-    <string name="connerror_title">Masalah TLS</string>
     <string name="textforecasttype_maritime_north_and_baltic">Maritim Jerman Utara &amp; Laut Baltik</string>
     <string name="textforecasttype_maritime_mediterranian">Laut Mediterania Maritim</string>
     <string name="textforecasttype_maritime_german_north_and_baltic">Maritim Jerman Utara &amp; Laut Baltik</string>
@@ -278,7 +276,6 @@
     <string name="preference_loggingscreen_summary">Siapkan opsi catatan untuk pengawakutuan.</string>
     <string name="preference_logging_summary">Aktifkan pencatatan. Catatan hanya disimpan secara LOKAL di perangkat Anda dan TIDAK dikirim secara otomatis.</string>
     <string name="preference_log_to_logcat_summary">Masukkan catatan ke catatan sistem di perangkat. Peringatan: ini mungkin membocorkan privasi, aplikasi lain dapat mengakses catatan sistem.</string>
-    <string name="preference_ssl_summary">Nonaktifkan enkripsi pada HTTPS ketika mendapatkan data cuaca.</string>
     <string name="alertdialog_1_text">Mencatat ke logcat mungkin membocorkan informasi pribadi ke aplikasi lain. Apakah Anda yakin dan apakah Anda tahu apa yang Anda sedang lakukan\?</string>
     <string name="alertdialog_2_toast">Pencatatan ke Logcat dinonaktifkan.</string>
     <string name="logging_comment_hint">Anda dapat menambahkan komentar pada catatan untuk menemukan kesalahan — mohon jelaskan apa yang terjadi:</string>
@@ -294,7 +291,6 @@
     <string name="geoinput_intro">Masukkan bujur dan lintang secara manual untuk menentukan stasiun cuaca berikut atau gunakan layanan lokasi perangkat Anda untuk mencarinya.</string>
     <string name="geoinput_wrongformat">Koordinat tidak memiliki format yang absah. Anda dapat menggunakan anotasi seperti +53.12345 untuk derajat, atau -44.22:12.12345 untuk memasukkan derajat dan menit, atau 33.12.12345 untuk memasukkan derajat, menit, dan detik. Mohon coba lagi.</string>
     <string name="georeceive_error">Kesalahan: tidak dapat membaca koordinat geografis.</string>
-    <string name="connerror_message">Aplikasi tidak dapat membuat koneksi terenkripsi dengan server data terbuka DWD pada HTTPS. Nonaktifkan enkripsi\?</string>
     <string name="service_notification_text0">Mendapatkan prakiraan cuaca baru…</string>
     <string name="welcome_s3_text4">Bilah prakiraan menampilkan awan dalam abu-abu dan hujan dalam biru.</string>
     <string name="preference_display_overviewchart_days_title">Hari</string>

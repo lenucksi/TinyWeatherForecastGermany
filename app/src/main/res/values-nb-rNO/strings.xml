@@ -76,7 +76,6 @@
     <string name="geoinput_search">Start søk</string>
     <string name="geoinput_cancel">Avbryt</string>
     <string name="geoinput_reflocation_time">Tid:</string>
-    <string name="connerror_title">TLS-problem</string>
     <string name="textforecasttype_medium_other">Andre</string>
     <string name="radar_rain2">lett</string>
     <string name="radar_rain4">ekstremt</string>
@@ -113,7 +112,6 @@
     <string name="preference_loggingscreen_title">Avlusing</string>
     <string name="preference_loggingscreen_summary">Sett opp loggingsvalg for avlusing.</string>
     <string name="preference_loggingactivity_title">Håndter logger</string>
-    <string name="preference_ssl_title">Skru av SSL</string>
     <string name="alertdialog_1_title">Advarsel</string>
     <string name="logging_button_back">Tilbake</string>
     <string name="logging_button_clear">Tøm loggføring</string>
@@ -203,7 +201,6 @@
     <string name="preference_logging_summary">Aktiver logging. Loggene lagres LOKALT på enheten og sendes IKKE automatisk.</string>
     <string name="preference_log_to_logcat_title">Logg for å Logcat</string>
     <string name="preference_log_to_logcat_summary">Sett logger inn i systemet logge deg på enheten. Forsiktig: dette kan være et privatliv lekkasje, andre apper får tilgang til systemloggen.</string>
-    <string name="preference_ssl_summary">Deaktivere kryptering over https når polling weather-data.</string>
     <string name="alertdialog_1_text">Logging for å logcat kan lekke privat informasjon om andre apper. Er du sikker på og vet du hva du gjør\?</string>
     <string name="alertdialog_2_title">logcat</string>
     <string name="alertdialog_2_toast">Logging for å Logcat er deaktivert.</string>
@@ -222,7 +219,6 @@
     <string name="geoinput_reflocation_title">Referanse beliggenhet er:</string>
     <string name="georeceive_error">Feil: kan ikke lese geo-koordinater.</string>
     <string name="geoinput_reflocation_longitude">Lengdegrad:</string>
-    <string name="connerror_message">Appen var ikke i stand til å opprette en kryptert tilkobling med DWD åpne data server over https. Deaktivere kryptering\?</string>
     <string name="textforecasttype_maritime_german_north_and_baltic">Maritime Tyske Nord- &amp; Østersjøen</string>
     <string name="textforecasttype_maritime_north_and_baltic">Maritime Nord- &amp; Østersjøen</string>
     <string name="textforecasttype_short_term">Vær Kort Sikt</string>

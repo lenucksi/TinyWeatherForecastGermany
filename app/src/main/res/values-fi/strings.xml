@@ -49,7 +49,6 @@
     <string name="preference_setalarm_notice">HUOMAUTUS: tämä ei ole tällä hetkellä käytettävissä, koska käytössä oleva Gadgetbridge-tuki pakottaa automaattiset päivitykset joka tapauksessa.</string>
     <string name="preference_gadgetbridge_packagename_summary">Voit asettaa tässä oman paketin nimen, esimerkiksi jos käytät Gadgetbridgen haarautunutta versiota. Poista nimi palataksesi oletuspaketin nimeen.</string>
     <string name="preference_logging_summary">Aktivoi kirjaus. Lokit tallennetaan PAIKALLISESTI laitteellesi ja ovat EI lähetetä automaattisesti.</string>
-    <string name="preference_ssl_summary">Poista salaus https:n kautta käytöstä säätietoja kysyttäessä.</string>
     <string name="alertdialog_2_text">Tämä sovellus kirjautuu tällä hetkellä logcatiin. Loggaaminen logcatiin poistetaan käytöstä, koska tätä ominaisuutta ei ole tarkoitettu virallisiin julkaisuihin.</string>
     <string name="geoinput_select">Valitse jokin seuraavista sääasemista:</string>
     <string name="logging_comment_hint">Voit lisätä lokiin kommentin, joka auttaa löytämään virheen - selitä, mitä tapahtui:</string>
@@ -133,12 +132,10 @@
     <string name="geoinput_noprovider">Sopivaa sijaintipalvelua ei löytynyt. Ota sijaintipalvelut käyttöön ja yritä uudelleen.</string>
     <string name="geoinput_reflocation_longitude">Pituuspiiri:</string>
     <string name="geoinput_reflocation_title">Vertailupaikka on:</string>
-    <string name="connerror_message">Sovellus ei pystynyt muodostamaan salattua yhteyttä DWD:n avoimen datapalvelimen kanssa https-yhteyden kautta. Poista salaus käytöstä\?</string>
     <string name="textforecasttype_maritime_german_north_and_baltic">Saksan Pohjan- ja Itämeri</string>
     <string name="textforecasttype_maritime_north_and_baltic">Pohjan- ja Itämeri</string>
     <string name="textforecasttype_maritime_mediterranian">Merellinen Välimeri</string>
     <string name="textforecasttype_maritime_warning">Merellinen varoitus</string>
-    <string name="connerror_title">TLS-ongelma</string>
     <string name="georeceive_error">Virhe: Geokoordinaatteja ei pystytä lukemaan.</string>
     <string name="geoinput_reflocation_time">Aika:</string>
     <string name="geoinput_reflocation_latitude">Leveysaste:</string>
@@ -252,7 +249,6 @@
     <string name="preference_loggingactivity_summary">Lähetä ja/tai tyhjennä lokit.</string>
     <string name="preference_intro_title">Intron</string>
     <string name="preference_intro_summary">Aloita intron esittely uudelleen.</string>
-    <string name="preference_ssl_title">Poista SSL käytöstä</string>
     <string name="alertdialog_yes">Kyllä</string>
     <string name="alertdialog_no">Ei</string>
     <string name="alertdialog_ok">OKEI</string>

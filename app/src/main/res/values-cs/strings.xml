@@ -17,8 +17,6 @@
     <string name="geoinput_reflocation_latitude">Zeměpisná šířka :</string>
     <string name="geoinput_reflocation_time">Čas:</string>
     <string name="georeceive_error">Chyba: nelze načíst zeměpisné souřadnice.</string>
-    <string name="connerror_title">Problém s TLS</string>
-    <string name="connerror_message">Aplikaci se nepodařilo navázat šifrované spojení s otevřeným datovým serverem DWD přes protokol https. Vypnout šifrování\?</string>
     <string name="textforecasttype_maritime_german_north_and_baltic">Německé severní a Baltské moře</string>
     <string name="textforecasttype_maritime_north_and_baltic">Německé severní a Baltské moře</string>
     <string name="textforecasttype_maritime_mediterranian">Mořské Středozemní moře</string>
@@ -156,8 +154,6 @@
     <string name="preference_intro_title">Úvod</string>
     <string name="preference_intro_summary">Znovu spustit intro.</string>
     <string name="feedback_mail_subject">Zpětná vazba: TinyWeatherForecastGermany</string>
-    <string name="preference_ssl_title">Zakázat SSL</string>
-    <string name="preference_ssl_summary">Zakázat šifrování přes https při zjišťování údajů o počasí.</string>
     <string name="alertdialog_yes">Ano</string>
     <string name="alertdialog_no">Ne</string>
     <string name="alertdialog_ok">Ok</string>

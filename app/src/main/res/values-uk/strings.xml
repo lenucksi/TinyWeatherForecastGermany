@@ -79,7 +79,6 @@
     <string name="preference_opacity_summary">Виберіть, наскільки прозорим має бути віджет на головному екрані.</string>
     <string name="preference_gadgetbridge_serve_title">Увімкнути</string>
     <string name="preference_gadgetbridge_packagename_title">Назва пакунка</string>
-    <string name="preference_ssl_title">Вимкнути SSL</string>
     <string name="alertdialog_yes">Так</string>
     <string name="alertdialog_no">Ні</string>
     <string name="alertdialog_ok">Гаразд</string>
@@ -115,7 +114,6 @@
     <string name="geoinput_reflocation_longitude">Довгота:</string>
     <string name="geoinput_reflocation_time">Час:</string>
     <string name="georeceive_error">Помилка: не вдалося зчитати геокоординати.</string>
-    <string name="connerror_title">Проблема TLS</string>
     <string name="welcome_setupnote">Ви можете змінити це пізніше в параметрах.</string>
     <string name="welcome_s4_viewmodel">Показувати детальний прогноз погоди.</string>
     <string name="widget_transparency_default">90</string>
@@ -201,7 +199,6 @@
     <string name="preference_loggingactivity_summary">Надіслати і/або очистити журнали.</string>
     <string name="preference_intro_title">Вступ</string>
     <string name="preference_intro_summary">Розпочати вступ ще раз.</string>
-    <string name="preference_ssl_summary">Вимкнути шифрування поверх https під час опитування погодних даних.</string>
     <string name="alertdialog_1_title">Увага</string>
     <string name="preference_log_to_logcat_title">Запис у Logcat</string>
     <string name="logging_button_clear">Очистити журнали</string>
@@ -274,7 +271,6 @@
     <string name="geoinput_intro">Введіть довготу та широту вручну, щоб визначити наступні метеостанції, або скористайтеся службами визначення місцезнаходження вашого пристрою для їхнього пошуку.</string>
     <string name="geoinput_gps">Використовуйте служби визначення місцезнаходження пристрою, щоб визначити своє поточне місцезнаходження.</string>
     <string name="geoinput_noprovider">Не знайдено відповідної служби визначення місцезнаходження. Увімкніть служби локації та повторіть спробу.</string>
-    <string name="connerror_message">Не вдалося встановити зашифроване з’єднання із сервером відкритих даних DWD через https. Вимкнути шифрування?</string>
     <string name="textforecasttype_maritime_german_north_and_baltic">Приморське німецьке Північне та Балтійське моря</string>
     <string name="warning_stationreset_text">Щоб виправити помилку, Вашу станцію та вибрані станції скинуто до типових.</string>
     <string name="geoinput_wrongformat">Координата не має правильний формат. Ви можете використовувати анотації, як-от +53.12345 для градусів, або -44.22:12.12345 для введення градусів і хвилин або 33.12.12345 для введення градусів, хвилин і секунд. Будь ласка, спробуйте ще раз.</string>
