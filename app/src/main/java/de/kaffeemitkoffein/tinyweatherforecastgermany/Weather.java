@@ -1843,6 +1843,52 @@ public final class Weather {
         return c1.getTimeInMillis();
     }
 
+    /**
+     * Returns the instant that is {@code hours} local clock hours before {@code time}.
+     *
+     * Subtracting a fixed number of milliseconds from an epoch value is not the
+     * same as going back local hours across a daylight-saving transition: a local
+     * day can be 23 or 25 hours long (issue #187). Calendar.add() works on wall
+     * clock fields and therefore keeps the local hour labels stable.
+     *
+     * In a time zone without daylight saving this is identical to
+     * {@code time - hours * 60 * 60 * 1000}.
+     */
+    public static long getLocalHourBefore(long time, int hours){
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(time);
+        calendar.add(Calendar.HOUR_OF_DAY,-hours);
+        return calendar.getTimeInMillis();
+    }
+
+    /**
+     * Returns the index of the hourly forecast entry whose instant is closest to
+     * {@code target}, or -1 if there is no hourly data.
+     *
+     * Entries are compared as instants (epoch milliseconds). Local clock labels
+     * are deliberately not compared: they repeat or skip hours at DST changes.
+     */
+    public static int getClosestHourlyPosition(List<WeatherInfo> hourly, long target){
+        if (hourly==null){
+            return -1;
+        }
+        int best = -1;
+        long bestDelta = Long.MAX_VALUE;
+        for (int i=0; i<hourly.size(); i++){
+            WeatherInfo item = hourly.get(i);
+            if (item==null){
+                continue;
+            }
+            long timestamp = item.getTimestamp();
+            long delta = (timestamp>=target) ? (timestamp-target) : (target-timestamp);
+            if (delta<bestDelta){
+                bestDelta = delta;
+                best = i;
+            }
+        }
+        return best;
+    }
+
     private static long getVisibleDuration(WeatherLocation weatherLocation, long rise, long set, long nextSet){
         // set is always after rise.
         // However, the Astromomy class gives set & rise of the same day.

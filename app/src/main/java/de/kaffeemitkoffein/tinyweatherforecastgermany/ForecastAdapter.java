@@ -868,49 +868,47 @@ public View getView(int i, View view, ViewGroup viewGroup) {
             textView_uvHazardIndexType.setVisibility(View.GONE);
         }
     }
-    // hourly forecast bar, display only if forecast is 6h
+    // hourly forecast bar, display only if forecast is 6h or 24h
     if (((weatherInfo.getForecastType() == Weather.WeatherInfo.ForecastType.HOURS_6) || (weatherInfo.getForecastType() == Weather.WeatherInfo.ForecastType.HOURS_24)) && (display_bar) && (imageView_forecastBar!=null)){
         setVisibility(imageView_forecastBar, View.VISIBLE);
-        // calculate offset
-        //int start  = getLastHourlyForecast();
-        int currentPosition = getHourlyPositionFrom6h(i);
-        int offsetPosition = currentPosition - 5;
-        int count = 6;
-        int increment = 1;
-        if (offsetPosition<0){
-            count = 6 - (-offsetPosition/increment);
-            offsetPosition = currentPosition - (count-1)*increment;;
-        }
-        if (weatherInfo.getForecastType() == Weather.WeatherInfo.ForecastType.HOURS_24){
-            currentPosition = getHourlyPositionFrom24h(i);
-            offsetPosition  = currentPosition - 20 ;
-            count = 6;
-            increment = 4;
-            if (offsetPosition<0){
-                count = 5 -(-offsetPosition/increment);
-                offsetPosition = currentPosition - (count-1)*increment;
-            }
-        }
-        // construct arraylist with 0-6 items
+        // Select the hourly cells by LOCAL clock time relative to the end of the
+        // block. Index arithmetic ("currentPosition - 20", "+ j*4") assumes a
+        // fixed number of hourly entries per day; across a DST change a local day
+        // has 23 or 25 hours, which collapsed the daily bar to one repeated 03:00
+        // cell and produced duplicate headings (issue #187).
+        final boolean isDailyBar = (weatherInfo.getForecastType() == Weather.WeatherInfo.ForecastType.HOURS_24);
+        final int stepHours = isDailyBar ? 4 : 1;
+        final int hoursBack = isDailyBar ? 20 : 5;
+        final long blockEnd = weatherInfo.getTimestamp();
         final ArrayList<Weather.WeatherInfo> baritems = new ArrayList<>();
-        for (int j=0; (j<count) && (offsetPosition+(j*increment))<weatherForecasts_hourly.size(); j++){
-            baritems.add(weatherForecasts_hourly.get(offsetPosition+(j*increment)));
+        for (int j=0; j<6; j++){
+            long target = Weather.getLocalHourBefore(blockEnd, hoursBack - (j*stepHours));
+            int position = Weather.getClosestHourlyPosition(weatherForecasts_hourly, target);
+            if (position<0){
+                continue;
+            }
+            Weather.WeatherInfo item = weatherForecasts_hourly.get(position);
+            if ((!baritems.isEmpty()) && (baritems.get(baritems.size()-1).getTimestamp()==item.getTimestamp())){
+                // never display the same instant twice (local labels repeat at DST)
+                continue;
+            }
+            baritems.add(item);
             // if more than 1 hour intervals, replace the displayed condition with the most significant from
             // this interval if possible
-            if (increment>1){
+            if (stepHours>1){
                 ArrayList<Integer> previousConditions = new ArrayList<Integer>();
-                for (int k=0; k<increment; k++){
-                    int position = offsetPosition + j*increment - k;
-                    if ((position>0) && (position<weatherForecasts_hourly.size())){
-                        Weather.WeatherInfo weatherInfo1 = weatherForecasts_hourly.get(position);
-                        if (weatherInfo1.hasCondition()){
-                            previousConditions.add(weatherInfo1.getCondition());
+                for (int k=0; k<stepHours; k++){
+                    int p = position - k;
+                    if ((p>=0) && (p<weatherForecasts_hourly.size())){
+                        Weather.WeatherInfo hourlyItem = weatherForecasts_hourly.get(p);
+                        if (hourlyItem.hasCondition()){
+                            previousConditions.add(hourlyItem.getCondition());
                         }
                     }
-                };
+                }
                 Integer newCondition = CurrentWeatherInfo.getMostSignificantCondition(previousConditions);
                 if (newCondition!=null){
-                    baritems.get(j).setConditionCode(newCondition);
+                    item.setConditionCode(newCondition);
                 }
             }
         }
@@ -1122,81 +1120,9 @@ private static TextView getTextView(View view, int pos, TextView[] labels, ViewH
     return labels[pos];
 }
 
-private int get24BarStart(int currentPosition) {
-    long target = weatherForecasts.get(currentPosition).getTimestamp() - 20 * 60 * 60 * 1000;  // one day
-    int position = weatherForecasts_hourly.size() - 1;
-    while ((weatherForecasts_hourly.get(position).getTimestamp() > target) && position > 0) {
-        position--;
-    }
-    return position;
-}
-
-    private int getHourlyPositionFrom24h(int currentPosition) {
-        int position = weatherForecasts_hourly.size() - 1;
-        while ((weatherForecasts_hourly.get(position).getTimestamp() > weatherForecasts.get(currentPosition).getTimestamp()) && position > 0) {
-            position--;
-        }
-        return position;
-    }
-
-    private int get24PositionOLD(int start, int position24h){
-        int currentPosition = start;
-        // calculates corresponding position in hourly forecasts that corresponds to 24-hourly forecast.
-        while (weatherForecasts_hourly.get(currentPosition).getTimestamp()<weatherForecasts.get(position24h).getTimestamp()){
-            currentPosition++;
-        }
-        if (currentPosition-24>=0){
-            return start;
-        }
-        int i =-1;
-        Calendar calendar;
-        do {
-            i++;
-            calendar = Calendar.getInstance();
-            calendar.setTime(new Date(weatherForecasts_hourly.get(i).getTimestamp()));
-        } while ((calendar.get(Calendar.HOUR_OF_DAY)%4!=0) && (i<weatherForecasts_hourly.size()-1));
-        return i;
-    }
-
-    private int get24BarItemCount(int pos){
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(new Date(weatherForecasts_hourly.get(pos).getTimestamp()));
-        switch (calendar.get(Calendar.HOUR_OF_DAY)){
-            case 4: return 6;
-            case 8: return 5;
-            case 12: return 4;
-            case 16: return 3;
-            case 20: return 2;
-            default: return 1;
-        }
-    }
-
-private int getLastHourlyForecast(){
-    int position = weatherForecasts.size()-1;
-    while ((weatherForecasts.get(position).getForecastType()!=Weather.WeatherInfo.ForecastType.ONE_HOUR) && (position>0)){
-        position--;
-    }
-    return position;
-}
-
-private int getHourlyOffset(int start, int position6h){
-    int position = start;
-    // calculates corresponding position in hourly forecasts that corresponds to 6-hourly forecasts.
-    while (weatherForecasts_hourly.get(position).getTimestamp()<weatherForecasts.get(position6h).getTimestamp()){
-        position++;
-    }
-    return position - 6; // display 6 hours before
-}
-
-    private int getHourlyPositionFrom6h(int position6h){
-        int position = 0;
-        // calculates corresponding position in hourly forecasts that corresponds to 6-hourly forecasts.
-        while (weatherForecasts_hourly.get(position).getTimestamp()<weatherForecasts.get(position6h).getTimestamp() && position<weatherForecasts_hourly.size()-1){
-            position++;
-        }
-        return position;
-    }
-
+// Hourly bar cells are selected by local clock time via Weather.getLocalHourBefore()
+// and Weather.getClosestHourlyPosition(). The former index-based helpers were removed:
+// they assumed a fixed number of hourly entries per local day and broke at DST (#187).
 
 public static String formatDistanceNumberToString(double d){
     DecimalFormat decimalFormat = new DecimalFormat();
