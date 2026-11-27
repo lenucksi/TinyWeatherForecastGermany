@@ -106,7 +106,12 @@ along with Tiny Weather Forecast Germany. If not, see <https://www.gnu.org/licen
 The full license text is in [COPYING](COPYING); vendored components are listed in [NOTICE](NOTICE).
 
 This fork uses AGPLv3-or-later consistently because the vendored Gadgetbridge
-`WeatherSpec` class is AGPLv3-or-later and is kept upstream-verbatim.
+`WeatherSpec` class is AGPLv3-or-later and is kept upstream-verbatim. No clean-room
+replacement of that class is planned: keeping the verbatim copy preserves the required
+upstream copyright/authorship notices, avoids field-level drift in the Gadgetbridge v4
+weather format, and costs less than maintaining a divergent implementation. See
+[docs/licensing.md](docs/licensing.md) for the full licensing record, the vendored-source
+header audit and the F-Droid metadata value.
 
 ## Credits
 
