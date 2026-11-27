@@ -181,10 +181,14 @@ public class MainScreenAccessibilityTest {
     @Test
     public void keyboardFocusOrderIsDeclaredOnMainScreens() throws Exception {
         assertFocus("layout/activity_main.xml", "stations_spinner", "nextFocusForward", "@id/main_reset_favorites");
-        assertFocus("layout/activity_main.xml", "main_reset_favorites", "nextFocusForward", "@id/main_overview_chart");
-        assertFocus("layout/activity_main.xml", "main_overview_chart", "nextFocusForward", "@id/main_overviewchart_legend");
-        assertFocus("layout/activity_main.xml", "main_overviewchart_legend", "nextFocusForward", "@id/main_listview");
-        assertFocus("layout-w600dp-land/activity_main.xml", "main_overviewchart_legend", "nextFocusRight", "@id/main_listview");
+        // TASK-61: the legend info icon now lives beside the X in the control row, so
+        // keyboard focus follows the visual order: X -> info -> chart -> list.
+        assertFocus("layout/activity_main.xml", "main_reset_favorites", "nextFocusForward", "@id/main_overviewchart_legend");
+        assertFocus("layout/activity_main.xml", "main_overviewchart_legend", "nextFocusForward", "@id/main_overview_chart");
+        assertFocus("layout/activity_main.xml", "main_overview_chart", "nextFocusForward", "@id/main_listview");
+        assertFocus("layout-w600dp-land/activity_main.xml", "main_reset_favorites", "nextFocusForward", "@id/main_overviewchart_legend");
+        assertFocus("layout-w600dp-land/activity_main.xml", "main_overviewchart_legend", "nextFocusRight", "@id/main_overview_chart");
+        assertFocus("layout-w600dp-land/activity_main.xml", "main_overview_chart", "nextFocusRight", "@id/main_listview");
         assertFocus("layout/actionbar.xml", "actionbar_textview", "nextFocusForward", "@id/actionbar_search_icon");
         assertFocus("layout/actionbar.xml", "actionbar_search_icon", "nextFocusForward", "@id/actionbar_textview");
         assertFocus("layout/activity_overviewchart_legend.xml", "legend_scrollview", "nextFocusForward", "@id/legend_button_back");

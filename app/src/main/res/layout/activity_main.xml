@@ -24,8 +24,7 @@
     android:id="@+id/main_layoutholder"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?attr/colorPrimary"
-    android:fitsSystemWindows="true">
+    android:background="?attr/colorPrimary">
 
     <!-- Progress holders are overlaid on top of the main content so that showing
          them transiently never shifts the station selector/chart down. -->
@@ -213,10 +212,29 @@
                            android:focusable="true"
                            android:layout_gravity="center"
                            android:gravity="center"
-                           android:nextFocusForward="@id/main_overview_chart"
-                           android:nextFocusDown="@id/main_overview_chart"
+                           android:nextFocusForward="@id/main_overviewchart_legend"
+                           android:nextFocusDown="@id/main_overviewchart_legend"
                            android:tint="?attr/colorText"
                            android:src="?attr/ic_highlight_off"/>
+
+                <!-- Legend info sits next to the reset-favorites X, never over chart data.
+                     48dp touch target, 16dp internal padding keeps the glyph small/legible. -->
+                <ImageView android:id="@+id/main_overviewchart_legend"
+                           android:layout_width="48dp"
+                           android:layout_height="48dp"
+                           android:minWidth="48dp"
+                           android:minHeight="48dp"
+                           android:padding="16dp"
+                           android:focusable="true"
+                           android:layout_gravity="center"
+                           android:gravity="center"
+                           android:nextFocusUp="@id/main_reset_favorites"
+                           android:nextFocusForward="@id/main_overview_chart"
+                           android:nextFocusDown="@id/main_overview_chart"
+                           android:background="@null"
+                           android:tint="?attr/colorText"
+                           android:src="?attr/ic_info_outline"
+                           android:contentDescription="@string/legend_open"/>
             </LinearLayout>
 
             <ImageView android:contentDescription="@string/legend_open"
@@ -225,35 +243,17 @@
                     android:layout_height="80dp"
                     android:layout_below="@id/main_spinner_linearlayout"
                     android:focusable="true"
-                    android:nextFocusUp="@id/main_reset_favorites"
-                    android:nextFocusForward="@id/main_overviewchart_legend"
-                    android:nextFocusDown="@id/main_overviewchart_legend"
-                    android:background="?attr/colorPrimaryDark"/>
-
-            <ImageView
-                    android:id="@+id/main_overviewchart_legend"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:layout_alignTop="@id/main_overview_chart"
-                    android:layout_alignRight="@id/main_overview_chart"
-                    android:layout_marginTop="2dp"
-                    android:layout_marginRight="2dp"
-                    android:padding="12dp"
-                    android:focusable="true"
-                    android:nextFocusUp="@id/main_reset_favorites"
+                    android:nextFocusUp="@id/main_overviewchart_legend"
                     android:nextFocusForward="@id/main_listview"
                     android:nextFocusDown="@id/main_listview"
-                    android:background="@null"
-                    android:tint="?attr/colorText"
-                    android:src="?attr/ic_info_outline"
-                    android:contentDescription="@string/legend_open"/>
+                    android:background="?attr/colorPrimaryDark"/>
 
         </RelativeLayout>
 
         <ListView android:id="@+id/main_listview"
                   android:layout_width="match_parent"
                   android:layout_height="wrap_content"
-                  android:nextFocusUp="@id/main_overviewchart_legend"
+                  android:nextFocusUp="@id/main_overview_chart"
                   android:divider="?attr/colorPrimaryLight"
                   android:dividerHeight="0dp"
                   android:layout_below="@id/main_top_container"
