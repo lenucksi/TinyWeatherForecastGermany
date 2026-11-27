@@ -18,12 +18,14 @@
 -->
 
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
-                    android:minWidth="285dp"
-                    android:minResizeWidth="209dp"
+                    android:minWidth="220dp"
+                    android:minResizeWidth="180dp"
                     android:minHeight="123dp"
-                    android:minResizeHeight="53dp"
+                    android:minResizeHeight="90dp"
+                    android:maxResizeWidth="520dp"
+                    android:maxResizeHeight="300dp"
                     android:targetCellWidth="3"
-                    android:targetCellHeight="1"
+                    android:targetCellHeight="2"
                     android:layout_height="match_parent"
                     android:layout_width="match_parent"
                     android:updatePeriodMillis="1800000"
@@ -35,8 +37,4 @@
                     android:widgetCategory="home_screen">
 </appwidget-provider>
 
-        <!--
-        Removed max-size values:
-                    android:maxResizeWidth="520dp"
-                    android:maxResizeHeight="263dp"
-        -->
+        <!-- TASK-26: two-cell default; a one-cell chart clipped the note. -->

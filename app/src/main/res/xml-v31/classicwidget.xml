@@ -18,10 +18,12 @@
 -->
 
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
-    android:minWidth="285dp"
-    android:minResizeWidth="285dp"
+    android:minWidth="250dp"
+    android:minResizeWidth="180dp"
     android:minHeight="90dp"
-    android:minResizeHeight="40dp"
+    android:minResizeHeight="90dp"
+    android:maxResizeWidth="520dp"
+    android:maxResizeHeight="320dp"
     android:targetCellWidth="4"
     android:targetCellHeight="2"
     android:layout_height="match_parent"
@@ -35,8 +37,5 @@
     android:widgetCategory="home_screen">
 </appwidget-provider>
 
-        <!--
-         Removed max-size values:
-    android:maxResizeWidth="520dp"
-    android:maxResizeWidth="520dp"
-         -->
+        <!-- TASK-26: min width/height are now below the default so horizontal
+             and vertical resizing both work on Android 12+ launchers. -->

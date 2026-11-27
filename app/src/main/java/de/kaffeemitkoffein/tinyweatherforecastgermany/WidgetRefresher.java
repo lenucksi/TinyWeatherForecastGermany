@@ -63,9 +63,11 @@ public class WidgetRefresher {
     }
 
     public static void refreshChartWidget(Context context, int source){
-        // update clock widget
+        // update chart widget (TASK-26: use the chart provider's own action,
+        // not the clock provider's, even though both actions currently share
+        // the same string constant).
         Intent intent = new Intent(context,ChartWidget.class);
-        intent.setAction(ClockWidget.WIDGET_CUSTOM_REFRESH_ACTION);
+        intent.setAction(ChartWidget.WIDGET_CUSTOM_REFRESH_ACTION);
         intent.putExtra(EXTRA_SOURCE,source);
         context.sendBroadcast(intent);
     }

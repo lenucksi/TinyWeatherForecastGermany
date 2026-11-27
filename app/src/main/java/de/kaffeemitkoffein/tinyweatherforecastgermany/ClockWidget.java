@@ -75,15 +75,17 @@ public class ClockWidget extends ClassicWidget {
     }
 
     private void adjustClockFontSize(Context context, WidgetDimensionManager widgetDimensionManager, final RemoteViews remoteViews) {
-        // clock layout takes 50% of widget height
-        //float height_max = widgetDimensionManager.getFontHeightInSP(widgetDimensionManager.getWidgetHeight() * (float) 0.36);
+        // TASK-26: honour the system font scale up to the point where the clock
+        // would leave its frame. The old px/scaledDensity calculation cancelled
+        // the user's font-size setting out completely.
         float clockSize = WeatherSettings.getClockSize(context)/100f;
-        float height_max = widgetDimensionManager.getFontHeightInSP(widgetDimensionManager.getWidgetHeight() * clockSize);
-        if (height_max == 0) {
-            height_max = (float) 64;
-        }
-        PrivateLog.log(context,PrivateLog.WIDGET,PrivateLog.INFO,"Setting clock font size to :"+height_max+" sp (setting: "+clockSize+").");
-        remoteViews.setTextViewTextSize(R.id.clockwidget_clock, TypedValue.COMPLEX_UNIT_SP, height_max);
+        float framePx = widgetDimensionManager.getWidgetHeight() * clockSize;
+        float density = context.getResources().getDisplayMetrics().density;
+        float baseSp = framePx / density;
+        float fontScale = widgetDimensionManager.getFontScale();
+        float fontSizeSp = WidgetSizing.textSizeSpForFrame(baseSp,Math.round(framePx),density,fontScale);
+        PrivateLog.log(context,PrivateLog.WIDGET,PrivateLog.INFO,"Setting clock font size to :"+fontSizeSp+" sp (setting: "+clockSize+", scale: "+fontScale+").");
+        remoteViews.setTextViewTextSize(R.id.clockwidget_clock, TypedValue.COMPLEX_UNIT_SP, fontSizeSp);
     }
 
     private void adaptIconColorsToTheme(Context context, final RemoteViews remoteViews){

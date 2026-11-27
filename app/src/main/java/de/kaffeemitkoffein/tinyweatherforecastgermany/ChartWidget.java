@@ -93,19 +93,17 @@ public class ChartWidget extends ClassicWidget{
         // confirm if determined widget size is plausible, fall back to defaults if necessary
         int[] widgetSize = DeviceTweaks.confirmPlausibleWidgetSize(context,DeviceTweaks.Widget.CLASSIC,width,height);
         width = widgetSize[0]; height = widgetSize[1];
-        // measure DWD note and adapt the target bitmap size
+        // TASK-26: measure the *same* note the layout renders, including the
+        // 8dp margins on both sides, and keep the bitmap height positive.
         if (WeatherSettings.showDWDNote(context)){
-            float fontScale = context.getResources().getConfiguration().fontScale;
             float textSizeInPixels = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP,7,context.getResources().getDisplayMetrics());
             Paint noteTextPaint = new Paint();
             noteTextPaint.setTextSize(textSizeInPixels);
-            String noteString = context.getResources().getString(R.string.dwd_notice);
+            String noteString = context.getResources().getString(R.string.dwd_notice_app);
             float noteWidth = noteTextPaint.measureText(noteString);
-            int lines = Math.round(noteWidth/width);
-            if (noteWidth%width>0){
-                lines++;
-            }
-            height = Math.round(height - lines*textSizeInPixels);
+            int marginPx = Math.round(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,16,context.getResources().getDisplayMetrics()));
+            int lines = WidgetSizing.noteLines(noteWidth,width-marginPx);
+            height = Math.max(1,Math.round(height - lines*textSizeInPixels*1.2f));
         }
         PrivateLog.log(context,PrivateLog.WIDGET,PrivateLog.INFO,"Chartwidget bitmap size is "+width+" x "+height);
         Bitmap bitmap = ForecastBitmap.getOverviewChart(context,width,height,currentWeatherInfo.forecast1hourly,locationWarnings);
