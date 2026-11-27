@@ -25,6 +25,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
+import java.util.ArrayList;
 
 public class WeatherContentProvider extends ContentProvider {
 
@@ -787,17 +788,149 @@ public class WeatherContentProvider extends ContentProvider {
             setWriteAheadLoggingEnabled(true);
         }
 
+        /**
+         * Returns true when the table already has the given column. All table and
+         * column names come from the constants above, so interpolating them into
+         * the PRAGMA statement is safe.
+         */
+        private static boolean hasColumn(SQLiteDatabase db, String tableName, String columnName) {
+            Cursor cursor = db.rawQuery("PRAGMA table_info(" + tableName + ")", null);
+            try {
+                int nameColumn = cursor.getColumnIndexOrThrow("name");
+                while (cursor.moveToNext()) {
+                    if (columnName.equals(cursor.getString(nameColumn))) {
+                        return true;
+                    }
+                }
+                return false;
+            } finally {
+                cursor.close();
+            }
+        }
+
+        /**
+         * SQLite cannot add a column twice. The guard also makes the migration
+         * safe for databases that were partially upgraded by an older build.
+         */
+        private static void addColumnIfMissing(SQLiteDatabase db, String tableName, String columnName, String type) {
+            if (!hasColumn(db, tableName, columnName)) {
+                db.execSQL("ALTER TABLE " + tableName + " ADD COLUMN " + columnName + " " + type);
+            }
+        }
+
+        /**
+         * New serialized-array columns use the empty string for "no data", the
+         * same value WeatherContentManager.serializeString() writes for an empty
+         * array. Backfilling avoids null arrays when cached forecasts are read.
+         */
+        private static void backfillEmptyText(SQLiteDatabase db, String tableName, String columnName) {
+            db.execSQL("UPDATE " + tableName + " SET " + columnName + " = '' WHERE " + columnName + " IS NULL");
+        }
+
+        /**
+         * Recomputes centroids for cached areas from the polygons already stored
+         * in the database, using the same calculation as Areas.AreaDatabaseCreator.
+         * This keeps the areas cache usable instead of forcing a re-download of
+         * areas.txt after the centroid columns were introduced in version 6.
+         */
+        private static void backfillAreaCentroids(SQLiteDatabase db) {
+            Cursor cursor = db.query(TABLE_NAME_AREAS,
+                    new String[]{KEY_AREAS_id, KEY_AREAS_polygonstring},
+                    KEY_AREAS_centroid_latitude + " IS NULL OR " + KEY_AREAS_centroid_longitude + " IS NULL",
+                    null, null, null, null);
+            try {
+                while (cursor.moveToNext()) {
+                    String polygonString = cursor.getString(1);
+                    if (polygonString == null || polygonString.length() == 0) {
+                        continue;
+                    }
+                    try {
+                        ArrayList<Polygon> polygons = Polygon.getPolygonArraylistFromString(polygonString);
+                        if (polygons.isEmpty()) {
+                            continue;
+                        }
+                        double longitude = 0;
+                        double latitude = 0;
+                        for (int i = 0; i < polygons.size(); i++) {
+                            longitude += polygons.get(i).getPolygonXCentroid();
+                            latitude += polygons.get(i).getPolygonYCentroid();
+                        }
+                        ContentValues values = new ContentValues();
+                        values.put(KEY_AREAS_centroid_longitude, longitude / polygons.size());
+                        values.put(KEY_AREAS_centroid_latitude, latitude / polygons.size());
+                        db.update(TABLE_NAME_AREAS, values, KEY_AREAS_id + " = ?",
+                                new String[]{String.valueOf(cursor.getLong(0))});
+                    } catch (RuntimeException e) {
+                        // A single malformed polygon must not abort the whole
+                        // upgrade; a later data refresh can repair that row.
+                    }
+                }
+            } finally {
+                cursor.close();
+            }
+        }
+
+        private static void migrateToVersion3(SQLiteDatabase db) {
+            addColumnIfMissing(db, TABLE_NAME_FORECASTS, KEY_FORECASTS_RR1, "TEXT");
+            addColumnIfMissing(db, TABLE_NAME_FORECASTS, KEY_FORECASTS_Neff, "TEXT");
+            addColumnIfMissing(db, TABLE_NAME_FORECASTS, KEY_FORECASTS_RadS1, "TEXT");
+            backfillEmptyText(db, TABLE_NAME_FORECASTS, KEY_FORECASTS_RR1);
+            backfillEmptyText(db, TABLE_NAME_FORECASTS, KEY_FORECASTS_Neff);
+            backfillEmptyText(db, TABLE_NAME_FORECASTS, KEY_FORECASTS_RadS1);
+        }
+
+        private static void migrateToVersion4(SQLiteDatabase db) {
+            // The current CREATE statements already contain columns added by
+            // later versions; addColumnIfMissing keeps those steps idempotent.
+            db.execSQL(SQL_COMMAND_CREATE_TABLE_POLLENAREAS);
+            db.execSQL(SQL_COMMAND_CREATE_TABLE_POLLEN);
+        }
+
+        private static void migrateToVersion5(SQLiteDatabase db) {
+            addColumnIfMissing(db, TABLE_NAME_FORECASTS, KEY_FORECASTS_UVHazardIndex, "INTEGER");
+        }
+
+        private static void migrateToVersion6(SQLiteDatabase db) {
+            addColumnIfMissing(db, TABLE_NAME_FORECASTS, KEY_FORECASTS_description_alternate, "TEXT");
+            backfillEmptyText(db, TABLE_NAME_FORECASTS, KEY_FORECASTS_description_alternate);
+            addColumnIfMissing(db, TABLE_NAME_AREAS, KEY_AREAS_centroid_latitude, "REAL");
+            addColumnIfMissing(db, TABLE_NAME_AREAS, KEY_AREAS_centroid_longitude, "REAL");
+            backfillAreaCentroids(db);
+        }
+
+        private static void migrateToVersion7(SQLiteDatabase db) {
+            addColumnIfMissing(db, TABLE_NAME_POLLENAREAS, KEY_POLLENAREA_description, "TEXT");
+            backfillEmptyText(db, TABLE_NAME_POLLENAREAS, KEY_POLLENAREA_description);
+            db.execSQL(SQL_COMMAND_CREATE_TABLE_DATA);
+        }
+
+        /**
+         * Upgrades are incremental: every version step has a defined migration
+         * and only the schema change of that step is applied. Cached forecasts,
+         * warnings, texts, areas and pollen data stay in place; no table is
+         * dropped. SQLiteOpenHelper runs this inside a transaction, so a failed
+         * step rolls back instead of leaving a half-migrated database.
+         */
         @Override
-        public void onUpgrade(SQLiteDatabase sqLiteDatabase, int oldVersion, int newVersion) {
-            // drop data & re-create tables
-            sqLiteDatabase.execSQL(SQL_COMMAND_DROP_TABLE_FORECASTS);
-            sqLiteDatabase.execSQL(SQL_COMMAND_DROP_TABLE_WARNINGS);
-            sqLiteDatabase.execSQL(SQL_COMMAND_DROP_TABLE_TEXTS);
-            sqLiteDatabase.execSQL(SQL_COMMAND_DROP_TABLE_AREAS);
-            sqLiteDatabase.execSQL(SQL_COMMAND_DROP_TABLE_POLLENAREAS);
-            sqLiteDatabase.execSQL(SQL_COMMAND_DROP_TABLE_POLLEN);
-            sqLiteDatabase.execSQL(SQL_COMMAND_DROP_TABLE_DATA);
-            onCreate(sqLiteDatabase);
+        public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+            // CREATE TABLE IF NOT EXISTS adds tables introduced in later
+            // versions (pollen, data) without touching pre-existing tables.
+            onCreate(db);
+            for (int version = oldVersion + 1; version <= newVersion; version++) {
+                switch (version) {
+                    case 1:
+                    case 2:
+                        // Baseline schema; version 2 only wired up the provider.
+                        break;
+                    case 3: migrateToVersion3(db); break;
+                    case 4: migrateToVersion4(db); break;
+                    case 5: migrateToVersion5(db); break;
+                    case 6: migrateToVersion6(db); break;
+                    case 7: migrateToVersion7(db); break;
+                    default:
+                        throw new IllegalStateException("No migration defined for database version " + version);
+                }
+            }
         }
 
         @Override
