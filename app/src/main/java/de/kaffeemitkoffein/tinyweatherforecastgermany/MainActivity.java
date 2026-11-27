@@ -477,6 +477,7 @@ public class MainActivity extends Activity {
             executor = new LifecycleExecutor(Executors.newSingleThreadScheduledExecutor());
             PrivateLog.log(context,PrivateLog.MAIN,PrivateLog.INFO,"Main activity started.");
             setContentView(R.layout.activity_main);
+            logInsetInstrumentation("before-apply", null, null);
             applyEdgeToEdgeInsets();
             registerSyncAdapter(context);
             weatherForecastRunnable = new APIReaders.WeatherForecastRunnable(context, null) {
@@ -1101,10 +1102,75 @@ public class MainActivity extends Activity {
         }
     }
 
+    /**
+     * TASK-61: draw the overview chart on every weather display pass instead of only
+     * from displayAdapter(). A plain onResume() with unchanged data and the recreate()
+     * after a view/detail setting change both leave the adapter untouched, so the
+     * chart used to stay empty until the user switched stations and back.
+     */
+    private void scheduleOverviewChartRedraw(final CurrentWeatherInfo card){
+        if ((card==null) || (weatherList==null)){
+            return;
+        }
+        weatherList.post(new Runnable() {
+            @Override
+            public void run() {
+                executor.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                if (!isFinishing() && !isDestroyed()) {
+                                    displayOverviewChart(card);
+                                }
+                            }
+                        });
+                    }
+                });
+            }
+        });
+    }
+
+    /**
+     * TASK-61: some MOSMIX/DMO stations (e.g. SAN JOSE INT. 72388) carry trailing
+     * hourly rows with no values. ForecastBitmap.getOverviewChart() rejects the list
+     * when its last row is empty, which left the previous station's bitmap on screen.
+     * Drop only those empty trailing rows and retry before giving up.
+     */
+    private Bitmap getOverviewChartBitmap(int width, int height, CurrentWeatherInfo card){
+        Bitmap bitmap = ForecastBitmap.getOverviewChart(context,width,height,card.forecast1hourly,localWarnings);
+        if ((bitmap==null) && (card.forecast1hourly!=null) && (card.forecast1hourly.size()>=3)){
+            ArrayList<Weather.WeatherInfo> usable = new ArrayList<Weather.WeatherInfo>(card.forecast1hourly);
+            while (usable.size()>=3){
+                Weather.WeatherInfo last = usable.get(usable.size()-1);
+                if (last.hasTemperature() || last.hasClouds() || last.hasPrecipitation() || last.hasProbPrecipitation()){
+                    break;
+                }
+                usable.remove(usable.size()-1);
+            }
+            if (usable.size()>=3){
+                bitmap = ForecastBitmap.getOverviewChart(context,width,height,usable,localWarnings);
+                PrivateLog.log(context,PrivateLog.MAIN,PrivateLog.INFO,
+                        "Overview chart retry after dropping "+(card.forecast1hourly.size()-usable.size())+
+                                " empty trailing hours, bitmap="+(bitmap!=null));
+            }
+        }
+        return bitmap;
+    }
+
     private void displayOverviewChart(final CurrentWeatherInfo currentWeatherInfo){
         final ImageView overviewChartImageView = (ImageView) findViewById(R.id.main_overview_chart);
         final View main_leftcontainer = findViewById(R.id.main_leftcontainer);
         final boolean isLandscape = (main_leftcontainer!=null);
+        if (currentWeatherInfo==null){
+            PrivateLog.log(context,PrivateLog.MAIN,PrivateLog.INFO,"Overview chart skipped: no current weather info.");
+            return;
+        }
+        final boolean showOverviewChart = WeatherSettings.displayOverviewChart(context);
+        PrivateLog.log(context,PrivateLog.MAIN,PrivateLog.INFO,
+                "Overview chart display setting="+showOverviewChart+" landscape="+isLandscape+
+                        " forecast1hourly="+currentWeatherInfo.forecast1hourly.size());
         if (overviewChartImageView!=null){
             // Issue #304: long-press (or the info icon) opens the illustrated legend.
             overviewChartImageView.setContentDescription(getResources().getString(R.string.legend_open));
@@ -1126,8 +1192,11 @@ public class MainActivity extends Activity {
             }
             DisplayMetrics displayMetrics = new DisplayMetrics();
             getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-            if (WeatherSettings.displayOverviewChart(context)){
+            if (showOverviewChart){
                 overviewChartImageView.setVisibility(View.VISIBLE);
+            } else {
+                overviewChartImageView.setVisibility(View.GONE);
+                return;
             }
             if (!isLandscape){
                 ImageView overviewChartView = (ImageView) findViewById(R.id.main_overview_chart);
@@ -1140,10 +1209,18 @@ public class MainActivity extends Activity {
                     int overviewChartHeightPixels = Math.round(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,overviewChartHeightDP,displayMetrics));
                     overviewChartLayoutParams.height = overviewChartHeightPixels;
                     overviewChartView.setLayoutParams(overviewChartLayoutParams);
-                    Bitmap overViewChartBitmap = ForecastBitmap.getOverviewChart(context,displayMetrics.widthPixels,overviewChartHeightPixels,currentWeatherInfo.forecast1hourly,localWarnings);
+                    Bitmap overViewChartBitmap = getOverviewChartBitmap(displayMetrics.widthPixels,overviewChartHeightPixels,currentWeatherInfo);
                     if (overViewChartBitmap!=null){
                         overviewChartImageView.setImageBitmap(overViewChartBitmap);
                         OverviewChartLegend.setLiveChartBitmap(overViewChartBitmap);
+                        PrivateLog.log(context,PrivateLog.MAIN,PrivateLog.INFO,
+                                "setLiveChartBitmap: updated, forecast1hourly="+currentWeatherInfo.forecast1hourly.size());
+                    } else {
+                        overviewChartImageView.setImageBitmap(null);
+                        PrivateLog.log(context,PrivateLog.MAIN,PrivateLog.INFO,
+                                "setLiveChartBitmap skipped: bitmap==null, forecast1hourly="+currentWeatherInfo.forecast1hourly.size()+
+                                        " view="+overviewChartView.getWidth()+"x"+overviewChartView.getHeight()+
+                                        " requested="+displayMetrics.widthPixels+"x"+overviewChartHeightPixels);
                     }
                 } else {
                     overviewChartImageView.setVisibility(View.GONE);
@@ -1154,15 +1231,27 @@ public class MainActivity extends Activity {
                     @Override
                     public void run() {
                         overviewChartImageView.measure(0,0);
-                        final Bitmap overViewChartBitmap = ForecastBitmap.getOverviewChart(context,overviewChartImageView.getWidth(),overviewChartImageView.getHeight(),currentWeatherInfo.forecast1hourly,localWarnings);
+                        final Bitmap overViewChartBitmap = getOverviewChartBitmap(overviewChartImageView.getWidth(),overviewChartImageView.getHeight(),currentWeatherInfo);
                         if (overViewChartBitmap!=null){
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
                                     overviewChartImageView.setImageBitmap(overViewChartBitmap);
                                     OverviewChartLegend.setLiveChartBitmap(overViewChartBitmap);
+                                    PrivateLog.log(context,PrivateLog.MAIN,PrivateLog.INFO,
+                                            "setLiveChartBitmap: updated (landscape), forecast1hourly="+currentWeatherInfo.forecast1hourly.size());
                                 }
                             });
+                        } else {
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    overviewChartImageView.setImageBitmap(null);
+                                }
+                            });
+                            PrivateLog.log(context,PrivateLog.MAIN,PrivateLog.INFO,
+                                    "setLiveChartBitmap skipped (landscape): bitmap==null, forecast1hourly="+currentWeatherInfo.forecast1hourly.size()+
+                                            " view="+overviewChartImageView.getWidth()+"x"+overviewChartImageView.getHeight());
                         }
                     }
                 });
@@ -1300,6 +1389,10 @@ public class MainActivity extends Activity {
                 });
             }
         }
+        // TASK-61: the chart must follow the data on *every* display pass. Keeping this
+        // inside displayAdapter() missed first load, plain onResume and the VIEWS-flag
+        // recreate (where unchanged data leaves the adapter intact).
+        scheduleOverviewChartRedraw(weatherCard);
     }
 
     private void displayAdapter(final CurrentWeatherInfo weatherCard){
@@ -1315,23 +1408,8 @@ public class MainActivity extends Activity {
             }
             weatherList.setOnItemLongClickListener(weatherItemLongClickListener);
             weatherList.setOnItemClickListener(weatherItemDoubleClickListener);
-            // display overview chart after adapter and queue it
-            weatherList.post(new Runnable() {
-                @Override
-                public void run() {
-                    executor.execute(new Runnable() {
-                        @Override
-                        public void run() {
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    displayOverviewChart(weatherCard);
-                                }
-                            });
-                        }
-                    });
-                }
-            });
+            // The overview chart is redrawn by displayWeatherForecast() on every pass;
+            // do not duplicate it here (TASK-61).
             hideMainappProgress();
             hideNoData();
         } else {
@@ -2556,7 +2634,8 @@ public class MainActivity extends Activity {
      * With target SDK 36 the system enforces edge-to-edge. Apply system bar (and, when
      * visible, keyboard) insets as padding to the main screen root so the Holo action bar,
      * station selector, chart and controls stay clear of the status and navigation bars.
-     * Below API 30 the declared fitsSystemWindows flag keeps the old behaviour.
+     * The app-wide theme flag is disabled for this subtree so the insets are applied
+     * exactly once (TASK-61).
      */
     @TargetApi(Build.VERSION_CODES.R)
     private void applyEdgeToEdgeInsets() {
@@ -2574,20 +2653,60 @@ public class MainActivity extends Activity {
         final int initialTop = root.getPaddingTop();
         final int initialRight = root.getPaddingRight();
         final int initialBottom = root.getPaddingBottom();
-        root.setFitsSystemWindows(false);
+        // The Holo themes declare fitsSystemWindows=true app-wide, so every child that
+        // receives the unconsumed insets would add the bars as padding as well. Disable
+        // that flag for the whole subtree: the root listener below is the only place
+        // where system/IME insets are applied, which keeps the padding idempotent.
+        clearFitsSystemWindows(root);
         root.setOnApplyWindowInsetsListener(new View.OnApplyWindowInsetsListener() {
             @Override
             public WindowInsets onApplyWindowInsets(View v, WindowInsets windowInsets) {
                 Insets bars = windowInsets.getInsets(WindowInsets.Type.systemBars());
                 Insets ime = windowInsets.getInsets(WindowInsets.Type.ime());
+                logInsetInstrumentation("before-set", bars, ime);
                 v.setPadding(
                         initialLeft + bars.left,
                         initialTop + Math.max(bars.top, ime.top),
                         initialRight + bars.right,
                         initialBottom + Math.max(bars.bottom, ime.bottom));
+                logInsetInstrumentation("after-set", bars, ime);
+                v.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        logInsetInstrumentation("after-layout", bars, ime);
+                    }
+                });
                 return windowInsets;
             }
         });
+    }
+
+    private static void clearFitsSystemWindows(View view) {
+        view.setFitsSystemWindows(false);
+        if (view instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) view;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                clearFitsSystemWindows(group.getChildAt(i));
+            }
+        }
+    }
+
+    /** Device instrumentation for TASK-61: record the raw and applied top insets. */
+    private void logInsetInstrumentation(String phase, Insets bars, Insets ime) {
+        View root = findViewById(R.id.main_layoutholder);
+        if (root == null) {
+            root = findViewById(R.id.main_landscape_mainlinearlayout);
+        }
+        View mainLayout = findViewById(R.id.main_layout);
+        View topContainer = findViewById(R.id.main_top_container);
+        PrivateLog.log(context, PrivateLog.MAIN, PrivateLog.INFO,
+                "insets[" + phase + "] root.paddingTop=" + (root == null ? -1 : root.getPaddingTop()) +
+                        " bars.top=" + (bars == null ? -1 : bars.top) +
+                        " ime.top=" + (ime == null ? -1 : ime.top) +
+                        " main_layout.top=" + (mainLayout == null ? -1 : mainLayout.getTop()) +
+                        " main_layout.paddingTop=" + (mainLayout == null ? -1 : mainLayout.getPaddingTop()) +
+                        " main_top_container.top=" + (topContainer == null ? -1 : topContainer.getTop()) +
+                        " main_top_container.paddingTop=" + (topContainer == null ? -1 : topContainer.getPaddingTop()));
     }
 
     /**

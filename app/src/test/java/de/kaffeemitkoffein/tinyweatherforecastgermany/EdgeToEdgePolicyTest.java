@@ -53,13 +53,20 @@ public class EdgeToEdgePolicyTest {
     }
 
     @Test
-    public void mainLayoutsDeclareSystemWindowsFitting() throws Exception {
+    public void mainLayoutRootsDoNotDeclareSystemWindowsFitting() throws Exception {
+        // TASK-61: the Holo themes set android:fitsSystemWindows=true app-wide. With the
+        // manual OnApplyWindowInsetsListener this double-applied the top inset (root and
+        // main_layout both padded 247px), producing an empty band above "Region". The
+        // roots must not add a second declaration; MainActivity clears the inherited flag.
         for (String layout : new String[]{
                 "src/main/res/layout/activity_main.xml",
                 "src/main/res/layout-w600dp-land/activity_main.xml"}) {
-            assertTrue(layout + " must keep its fitsSystemWindows fallback",
+            assertFalse(layout + " must not re-declare fitsSystemWindows",
                     read(layout).contains("fitsSystemWindows=\"true\""));
         }
+        String activity = read("src/main/java/de/kaffeemitkoffein/tinyweatherforecastgermany/MainActivity.java");
+        assertTrue("inherited fitsSystemWindows must be cleared in code",
+                activity.contains("clearFitsSystemWindows(root)"));
     }
 
     @Test
