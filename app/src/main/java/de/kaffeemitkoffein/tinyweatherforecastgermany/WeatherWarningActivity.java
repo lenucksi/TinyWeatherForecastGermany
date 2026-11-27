@@ -51,6 +51,11 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.maplibre.android.MapLibre;
 import org.maplibre.android.WellKnownTileServer;
+import org.maplibre.android.annotations.IconFactory;
+import org.maplibre.android.annotations.Marker;
+import org.maplibre.android.annotations.MarkerOptions;
+import org.maplibre.android.annotations.Polyline;
+import org.maplibre.android.annotations.PolylineOptions;
 import org.maplibre.android.camera.CameraPosition;
 import org.maplibre.android.camera.CameraUpdateFactory;
 import org.maplibre.android.geometry.LatLng;
@@ -95,6 +100,9 @@ public class WeatherWarningActivity extends Activity {
     // TASK-53: vector warning layers. The native map is only touched after its style loaded.
     MapLibreMap mapLibreMap;
     boolean vectorWarningStyleReady;
+    // TASK-55: vector-only station pin and wind-distance arcs.
+    Marker vectorPinMarker;
+    ArrayList<Polyline> vectorWindPolylines = new ArrayList<Polyline>();
     RelativeLayout map_collapsed_container;
     LinearLayout warningactivityMapinfoContainer;
     boolean deviceIsLandscape;
@@ -787,6 +795,8 @@ public class WeatherWarningActivity extends Activity {
                 if (useVectorMap){
                     // Same warning data as the legacy path, but rendered as GeoJSON layers.
                     applyVectorWarningLayers();
+                    // TASK-55: refresh pin/wind when the station location changes.
+                    applyVectorOverlays();
                 } else {
                     displayMap();
                 }
@@ -2039,6 +2049,114 @@ public class WeatherWarningActivity extends Activity {
     }
 
     /**
+     * TASK-55: station pin and wind-distance arcs on the vector map. Both use WGS84
+     * coordinates from WeatherSettings/RadarMN2.getDestinationCoordinates - no hand pixel
+     * correction from the legacy static map is applied here.
+     */
+    private void applyVectorOverlays(){
+        if ((!useVectorMap) || (mapLibreMap==null) || (!vectorWarningStyleReady)){
+            return;
+        }
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                applyVectorPin();
+                applyVectorWind();
+            }
+        });
+    }
+
+    /** Places the station pin at the exact geo position of the configured station. */
+    private void applyVectorPin(){
+        if ((mapLibreMap==null) || (ownLocation==null)){
+            return;
+        }
+        if (vectorPinMarker!=null){
+            mapLibreMap.removeMarker(vectorPinMarker);
+            vectorPinMarker=null;
+        }
+        float pinSize = WeatherSettings.getMapPinSize(context)/2f;
+        int pinSizePixels = Math.max(1,Math.round(18*getResources().getDisplayMetrics().density*pinSize));
+        Bitmap pinSource = BitmapFactory.decodeResource(getResources(),R.mipmap.pin);
+        if (pinSource==null){
+            return;
+        }
+        Bitmap pinBitmap = Bitmap.createScaledBitmap(pinSource,pinSizePixels,pinSizePixels,false);
+        // MapLibre anchors marker icons at their centre. Pad the bitmap downwards so the
+        // pin tip (bottom of the original sprite) lands on the station coordinate.
+        Bitmap anchored = Bitmap.createBitmap(pinSizePixels,pinSizePixels*2,Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(anchored);
+        canvas.drawBitmap(pinBitmap,0,0,null);
+        vectorPinMarker = mapLibreMap.addMarker(new MarkerOptions()
+                .position(new LatLng(ownLocation.latitude,ownLocation.longitude))
+                .icon(IconFactory.getInstance(context).fromBitmap(anchored)));
+    }
+
+    /** Rebuilds the wind-distance arcs as geo-referenced MapLibre polylines. */
+    private void applyVectorWind(){
+        if (mapLibreMap==null){
+            return;
+        }
+        for (Polyline line : vectorWindPolylines){
+            mapLibreMap.removePolyline(line);
+        }
+        vectorWindPolylines.clear();
+        if ((ownLocation==null) || (!WeatherSettings.displayWindDistance(context))){
+            return;
+        }
+        CurrentWeatherInfo currentWeatherInfo = Weather.getCurrentWeatherInfo(context);
+        if (currentWeatherInfo==null){
+            // No forecast cached yet: skip the optional overlay instead of crashing the map.
+            return;
+        }
+        int windPathTime = WeatherSettings.getWindDistanceHours(context)*60;
+        int arcSize = WeatherSettings.getWindDistanceArc(context)/2;
+        ArrayList<Weather.WindData> windDataList = currentWeatherInfo.getWindForecast(windPathTime/60+1);
+        final int windPathLength = windPathTime/15;
+        final double ARCSTEPS = 15;
+        double distance = 0;
+        double[] previous = new double[]{ownLocation.longitude,ownLocation.latitude};
+        for (int i=1; i<=windPathLength; i++){
+            int windDataIndex = WarningUiDataGuard.windDataIndex(i/4,windDataList==null ? 0 : windDataList.size());
+            if (windDataIndex<0){
+                // Forecast is shorter than the configured wind path; skip this segment.
+                continue;
+            }
+            Weather.WindData windData = windDataList.get(windDataIndex);
+            double windDirection = windData.getDirection()+180;
+            if (windDirection>360){
+                windDirection = windDirection - 360;
+            }
+            double windSpeed = windData.getSpeedKmh();
+            distance = distance + windSpeed/4;
+            double[] target = RadarMN2.getDestinationCoordinates(ownLocation.longitude,ownLocation.latitude,windDirection,distance);
+            addVectorWindLine(previous,target,(i%4==0) ? 2.5f : 1.3f);
+            previous = target;
+            double[] arcPoint = RadarMN2.getDestinationCoordinates(ownLocation.longitude,ownLocation.latitude,windDirection-arcSize,distance);
+            for (double arcAngle=windDirection-arcSize+ARCSTEPS; arcAngle<=windDirection+arcSize; arcAngle=arcAngle+ARCSTEPS){
+                double[] next = RadarMN2.getDestinationCoordinates(ownLocation.longitude,ownLocation.latitude,arcAngle,distance);
+                addVectorWindLine(arcPoint,next,1f);
+                arcPoint = next;
+            }
+        }
+    }
+
+    private void addVectorWindLine(double[] from, double[] to, float width){
+        try {
+            Polyline line = mapLibreMap.addPolyline(new PolylineOptions()
+                    .add(new LatLng(from[1],from[0]),new LatLng(to[1],to[0]))
+                    .color(Color.BLACK)
+                    .alpha(0.8f)
+                    .width(width));
+            if (line!=null){
+                vectorWindPolylines.add(line);
+            }
+        } catch (Exception e){
+            // A malformed forecast point must not take the map down.
+        }
+    }
+
+    /**
      * TASK-52: initialise the MapLibre MapView declared in both warning-map layouts.
      * The style is loaded from OpenFreeMap over HTTPS; the legacy static map is not touched.
      */
@@ -2082,6 +2200,8 @@ public class WeatherWarningActivity extends Activity {
                             // TASK-54: install the radar source/layer from a cached frame if
                             // one is already available; the timer updates it as frames arrive.
                             applyVectorRadarFrame(nextRainSlide);
+                            // TASK-55: station pin and wind arcs after the style is ready.
+                            applyVectorOverlays();
                         }
                     });
                     map.moveCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder()
