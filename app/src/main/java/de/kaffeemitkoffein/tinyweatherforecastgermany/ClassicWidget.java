@@ -45,7 +45,7 @@ import java.util.*;
 
 public class ClassicWidget extends AppWidgetProvider {
 
-    public static final String WIDGET_CUSTOM_REFRESH_ACTION     = "de.kaffeemitkoffein.feinstaubwidget.WIDGET_CUSTOM_ACTION_REFRESH";
+    public static final String WIDGET_CUSTOM_REFRESH_ACTION     = "de.kaffeemitkoffein.tinyweatherforecastgermany.WIDGET_CUSTOM_ACTION_REFRESH";
     public static final String NOT_AVAILABLE = "-";
 
     /**
@@ -583,7 +583,6 @@ public class ClassicWidget extends AppWidgetProvider {
         Calendar calendar = Calendar.getInstance();
         calendar.setTimeInMillis(weatherInfo.getTimestamp());
         calendar.add(Calendar.DAY_OF_WEEK,-1);
-        //String weekday = simpleDateFormat.format(new Date(weatherInfo.getTimestamp()));
         String weekday = simpleDateFormat.format(new Date(calendar.getTimeInMillis()));
         Paint paint_weekday = new Paint();
         paint_weekday.setColor(ThemePicker.getWidgetTextColor(context));
