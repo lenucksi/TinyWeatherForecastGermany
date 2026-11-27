@@ -119,11 +119,14 @@ public final class OverviewChartLegend {
     }
 
     private static int getDaytimeAlpha(Context context) {
-        String theme = WeatherSettings.getThemePreference(context);
-        if (WeatherSettings.Theme.LIGHT.equals(theme)) {
+        // Use the resolved theme, not the raw preference: ForecastBitmap.getOverviewChart()
+        // compares ThemePicker.GetTheme() against these style ids, which also covers
+        // FOLLOW_DEVICE (the default) where the preference itself is neither LIGHT nor SOLARIZED.
+        int theme = ThemePicker.GetTheme(context);
+        if (theme == R.style.AppTheme_Light) {
             return 50;
         }
-        if (WeatherSettings.Theme.SOLARIZED.equals(theme)) {
+        if (theme == R.style.AppTheme_Solarized) {
             return 125;
         }
         return 25;

@@ -284,7 +284,7 @@
     <string name="legend_sample_caption">Aktuell angezeigte Übersichtskarte</string>
     <string name="legend_open">Legende zur Übersichtskarte öffnen</string>
     <string name="legend_temp_above">Orangene Linie: Temperatur über 0 °C</string>
-    <string name="legend_temp_below">Blaue Linie: Temperatur unter 0 °C</string>
+    <string name="legend_temp_below">Cyan-Linie: Temperatur unter 0 °C</string>
     <string name="legend_clouds">Graue Fläche: Bewölkung (in Prozent)</string>
     <string name="legend_rain_prob">Blaue Fläche: Niederschlagswahrscheinlichkeit (in Prozent)</string>
     <string name="legend_rain_amount">Cyan Balken: Niederschlagsmenge (in mm)</string>
