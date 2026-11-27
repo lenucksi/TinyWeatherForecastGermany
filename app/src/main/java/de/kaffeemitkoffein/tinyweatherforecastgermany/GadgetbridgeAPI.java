@@ -35,6 +35,104 @@ public class GadgetbridgeAPI {
     private GadgetbridgeAPI(){
     }
 
+    /**
+     * Builds the hourly list handed to Gadgetbridge. Kept separate from the
+     * broadcast code so the "at least one hourly forecast" guarantee of issue
+     * #307 can be checked with a JVM test, without a device or emulator.
+     */
+    static ArrayList<WeatherSpec.Hourly> buildHourlyForecast(CurrentWeatherInfo weatherCard) {
+        ArrayList<WeatherSpec.Hourly> result = new ArrayList<WeatherSpec.Hourly>();
+        if ((weatherCard==null) || (weatherCard.forecast1hourly==null)){
+            return result;
+        }
+        ArrayList<Weather.WeatherInfo> forecasts = weatherCard.forecast1hourly;
+        long currentTimestamp = (weatherCard.currentWeather==null)?0:weatherCard.currentWeather.getTimestamp();
+        int first = firstHourlyForecastIndex(forecasts,currentTimestamp);
+        for (int i=first; i<forecasts.size(); i++){
+            Weather.WeatherInfo weatherInfo = forecasts.get(i);
+            if (weatherInfo==null){
+                continue;
+            }
+            WeatherSpec.Hourly hourly = new WeatherSpec.Hourly();
+            hourly.timestamp = (int) (weatherInfo.getTimestamp()/1000);
+            if (weatherInfo.hasTemperature()){
+                hourly.temp = weatherInfo.getTemperatureInt();
+            }
+            if (weatherInfo.hasCondition()){
+                hourly.conditionCode = WeatherCodeContract.translateToOpenWeatherCode(weatherInfo.getCondition());
+            }
+            if (weatherInfo.hasRH()){
+                hourly.humidity = weatherInfo.getRHInt();
+            }
+            if (weatherInfo.hasWindSpeed()){
+                hourly.windSpeed = weatherInfo.getWindSpeedInKmhInt();
+            }
+            if (weatherInfo.hasWindDirection()){
+                hourly.windDirection = weatherInfo.getWindDirectionInt();
+            }
+            if (weatherInfo.hasUvHazardIndex()){
+                hourly.uvIndex = weatherInfo.getUvHazardIndex();
+            }
+            if (weatherInfo.hasProbPrecipitation()){
+                hourly.precipProbability = weatherInfo.getProbPrecipitation();
+            }
+            result.add(hourly);
+        }
+        return result;
+    }
+
+    /**
+     * Index of the first hourly value to serve. The old code always started at
+     * 1, assuming entry 0 duplicated the current weather. That assumption only
+     * holds when entry 0 really is the current hour. When the cached forecast
+     * starts at a later hour (stale data, see issue #307) dropping entry 0 made
+     * watches that require a complete hourly series show no weather at all.
+     *
+     * @param hourly 1h forecast values, oldest first
+     * @param currentWeatherTimestamp timestamp of the current weather value
+     * @return 1 when entry 0 is the current hour and another entry remains,
+     *         otherwise 0. Never points past the end of the list.
+     */
+    static int firstHourlyForecastIndex(ArrayList<Weather.WeatherInfo> hourly, long currentWeatherTimestamp) {
+        if ((hourly==null) || (hourly.isEmpty())){
+            return 0;
+        }
+        Weather.WeatherInfo first = hourly.get(0);
+        if ((first==null) || (!isCurrentHour(first.getTimestamp(),currentWeatherTimestamp))){
+            return 0;
+        }
+        // Keep a single current-hour value instead of sending an empty list:
+        // some watches display no weather at all for an empty hourly forecast.
+        if (hourly.size()<2){
+            return 0;
+        }
+        return 1;
+    }
+
+    /**
+     * Whether a forecast timestamp describes the same local hour as the
+     * current weather. Equal timestamps cover the normal DWD case (both values
+     * come from the same timestep); the calendar comparison also covers a
+     * current weather value with minute precision. A later hour that happens
+     * to have the same wall-clock hour number (DST fall-back) is not the
+     * current hour and is therefore kept in the forecast.
+     */
+    static boolean isCurrentHour(long timestamp, long currentWeatherTimestamp) {
+        if (timestamp==currentWeatherTimestamp){
+            return true;
+        }
+        if ((timestamp<=0) || (currentWeatherTimestamp<=0) || (timestamp>currentWeatherTimestamp)){
+            return false;
+        }
+        Calendar forecastCalendar = Calendar.getInstance();
+        forecastCalendar.setTimeInMillis(timestamp);
+        Calendar currentCalendar = Calendar.getInstance();
+        currentCalendar.setTimeInMillis(currentWeatherTimestamp);
+        return (forecastCalendar.get(Calendar.YEAR)==currentCalendar.get(Calendar.YEAR)) &&
+               (forecastCalendar.get(Calendar.DAY_OF_YEAR)==currentCalendar.get(Calendar.DAY_OF_YEAR)) &&
+               (forecastCalendar.get(Calendar.HOUR_OF_DAY)==currentCalendar.get(Calendar.HOUR_OF_DAY));
+    }
+
     private static void sendWeatherData(Context context, CurrentWeatherInfo weatherCard){
         WeatherSpec weatherSpec;
         if (weatherCard==null){
@@ -100,35 +198,9 @@ public class GadgetbridgeAPI {
             weatherSpec.longitude = (float) weatherCard.weatherLocation.longitude;
             weatherSpec.isCurrentLocation = -1;
 
-            // build the forecast instance, ingore 1st entry (current day)
-            weatherSpec.hourly = new ArrayList<WeatherSpec.Hourly>();
-            for (int i=1; i<weatherCard.forecast1hourly.size(); i++){
-                WeatherSpec.Hourly hourly = new WeatherSpec.Hourly();
-                Weather.WeatherInfo weatherInfo = weatherCard.forecast1hourly.get(i);
-                hourly.timestamp = (int) (weatherInfo.getTimestamp()/1000);
-                if (weatherInfo.hasTemperature()){
-                    hourly.temp = weatherInfo.getTemperatureInt();
-                }
-                if (weatherInfo.hasCondition()){
-                    hourly.conditionCode = WeatherCodeContract.translateToOpenWeatherCode(weatherInfo.getCondition());
-                }
-                if (weatherInfo.hasRH()){
-                    hourly.humidity = weatherInfo.getRHInt();
-                }
-                if (weatherInfo.hasWindSpeed()){
-                    hourly.windSpeed = weatherInfo.getWindSpeedInKmhInt();
-                }
-                if (weatherInfo.hasWindDirection()){
-                    hourly.windDirection = weatherInfo.getWindDirectionInt();
-                }
-                if (weatherInfo.hasUvHazardIndex()){
-                    hourly.uvIndex = weatherInfo.getUvHazardIndex();
-                }
-                if (weatherInfo.hasProbPrecipitation()){
-                    hourly.precipProbability = weatherInfo.getProbPrecipitation();
-                }
-                weatherSpec.hourly.add(hourly);
-            }
+            // build the hourly forecast; the first value is only dropped when
+            // it is the current hour (issue #307)
+            weatherSpec.hourly = buildHourlyForecast(weatherCard);
             // build the forecast instance, ingore 1st entry (current day)
             weatherSpec.forecasts = new ArrayList<WeatherSpec.Daily>();
             for (int i=1; i<weatherCard.forecast24hourly.size(); i++){
@@ -186,6 +258,8 @@ public class GadgetbridgeAPI {
             PrivateLog.log(context,PrivateLog.GB,PrivateLog.INFO,"Pressure           : "+weatherSpec.pressure);
             PrivateLog.log(context,PrivateLog.GB,PrivateLog.INFO,"Visibility         : "+weatherSpec.visibility);
             PrivateLog.log(context,PrivateLog.GB,PrivateLog.INFO,"Moon phase in °    : "+weatherSpec.moonPhase);
+            // Documents the #307 check: the served spec must contain at least one hourly value.
+            PrivateLog.log(context,PrivateLog.GB,PrivateLog.INFO,"Hourly forecasts   : "+weatherSpec.hourly.size());
             PrivateLog.log(context,PrivateLog.GB,PrivateLog.INFO,"Forecasts:");
             for (int i=0; i<weatherSpec.forecasts.size(); i++){
                 PrivateLog.log(context,PrivateLog.GB,PrivateLog.INFO,"Forecast #"+i+": Tmin: "+(weatherSpec.forecasts.get(i).minTemp)+" Tmax: "+(weatherSpec.forecasts.get(i).maxTemp)+" Cond.: "+weatherSpec.forecasts.get(i).conditionCode+" RH: "+weatherSpec.forecasts.get(i).humidity+" mp: "+weatherSpec.forecasts.get(i).moonPhase+"°");
