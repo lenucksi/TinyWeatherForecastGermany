@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ This file is part of TinyWeatherForecastGermany.
+
+ Copyright (c) 2026 Pawel Dube
+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+ Rationale (devices running Android 11 or lower):
+ PrivateLog writes diagnostics to the app's internal files directory as
+ logs.txt. The default SharedPreferences hold user-specific settings such as
+ saved station coordinates, the Gadgetbridge package name and a custom weather
+ server URL. Neither belongs in a cloud backup or a device-to-device transfer;
+ both are cheap to recreate after a restore. "sharedpref" path "." covers the
+ whole directory, including any preference file added in the future.
+-->
+
+<full-backup-content>
+    <exclude domain="file" path="logs.txt" />
+    <exclude domain="sharedpref" path="." />
+</full-backup-content>
