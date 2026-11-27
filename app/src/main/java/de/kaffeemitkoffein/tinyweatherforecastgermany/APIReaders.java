@@ -388,6 +388,15 @@ public class APIReaders {
     }
 
     /**
+     * A background job whose owner can stop it when the owning UI element is destroyed.
+     * Implementations must route the cancellation into their TASK-31 {@link Cancellation}
+     * token so in-flight HTTPS requests are disconnected as well as the worker interrupted.
+     */
+    public interface CancellableTask extends Runnable {
+        void cancel();
+    }
+
+    /**
      * Per-job cancellation token. Cancelling disconnects all currently open connections of
      * that job and prevents further attempts; the network layer also honours thread interrupts
      * so callers that stop an executor without a token still cancel in-flight requests.
@@ -432,7 +441,7 @@ public class APIReaders {
         }
     }
 
-   public static class WeatherWarningsRunnable implements Runnable {
+   public static class WeatherWarningsRunnable implements CancellableTask {
 
        public Context context;
        public Weather.WeatherLocation weatherLocation;
@@ -754,7 +763,7 @@ public class APIReaders {
        }
    }
 
-    public static class WeatherForecastRunnable implements Runnable {
+    public static class WeatherForecastRunnable implements CancellableTask {
 
         private Context context;
         private ArrayList<Weather.WeatherLocation> weatherLocations;
@@ -1157,7 +1166,7 @@ public class APIReaders {
         }
     }
 
-    public static class TextForecastRunnable implements Runnable {
+    public static class TextForecastRunnable implements CancellableTask {
 
         private Context context;
         private final Cancellation cancellation = new Cancellation();
@@ -1264,7 +1273,7 @@ public class APIReaders {
         }
     }
 
-    public static class RadarMNSetGeoserverRunnable implements Runnable{
+    public static class RadarMNSetGeoserverRunnable implements CancellableTask{
 
         //private static final String WN_RADAR_URL="//maps.dwd.de/geoserver/dwd/wms?service=WMS&version=1.1.0&request=GetMap&layers=dwd%3AWN-Produkt&bbox=-543.462%2C-4808.645%2C556.538%2C-3608.645&TIMESTAMP&width=1100&height=1200&srs=EPSG%3A1000001&styles=&format=image%2Fpng";
         //private static final String WN_RADAR_URL="//maps.dwd.de/geoserver/dwd/wms?service=WMS&version=1.1.0&request=GetMap&layers=dwd%3AWN-Produkt&bbox=-543.462%2C-4808.645%2C556.538%2C-3608.645&TIMESTAMP&width=1100&height=1200&srs=EPSG%3A4326&styles=&format=image%2Fpng";
@@ -1601,7 +1610,7 @@ public class APIReaders {
         }
     }
 
-    public static class getLayerImages implements Runnable{
+    public static class getLayerImages implements CancellableTask{
 
         private Context context;
         private final ArrayList<WeatherLayer> layers;
@@ -1777,25 +1786,27 @@ public class APIReaders {
         }
     }
 
-    public static class PollenReader implements Runnable{
+    public static class PollenReader implements CancellableTask{
 
-        private static Context context;
-        private static final Cancellation CANCELLATION = new Cancellation();
+        // Instance-owned: a static Context leaked the Activity and a static token let one
+        // instance cancel another instance's in-flight request.
+        private final Context context;
+        private final Cancellation cancellation = new Cancellation();
 
         public PollenReader(Context context){
             this.context = context;
         }
 
         public void cancel() {
-            CANCELLATION.cancel();
+            cancellation.cancel();
         }
 
-        public static InputStream getPollenStream() {
+        public InputStream getPollenStream() {
             String urlString = HttpsUrl.build(WeatherSettings.getWeatherUrl(context),
                     "/climate_environment/health/alerts/s31fg.json");
             try {
                 URL url = new URL(urlString);
-                return Http.get(url, CANCELLATION);
+                return Http.get(url, cancellation);
             } catch (MalformedURLException e){
                 PrivateLog.log(context,PrivateLog.UPDATER,PrivateLog.FATAL,"Malformed pollen url: "+e.getMessage());
             } catch (IOException e) {
@@ -1905,31 +1916,32 @@ public class APIReaders {
 
         @Override
         public void run() {
-            CANCELLATION.reset();
+            cancellation.reset();
             onStart();
             onFinished(readPollenData());
         }
     }
 
-    public static class PollenAreaReader implements Runnable {
+    public static class PollenAreaReader implements CancellableTask {
 
-        private static Context context;
-        private static final Cancellation CANCELLATION = new Cancellation();
+        // Instance-owned for the same reason as PollenReader.
+        private final Context context;
+        private final Cancellation cancellation = new Cancellation();
 
         public PollenAreaReader(Context context) {
             this.context = context;
         }
 
         public void cancel() {
-            CANCELLATION.cancel();
+            cancellation.cancel();
         }
 
-        public static InputStream getPollenAreaStream() {
+        public InputStream getPollenAreaStream() {
             String urlString = HttpsUrl.build("maps.dwd.de",
                     "/geoserver/dwd/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=dwd%3APollenfluggebiete&outputFormat=application%2Fjson");
             try {
                 URL url = new URL(urlString);
-                return Http.get(url, CANCELLATION);
+                return Http.get(url, cancellation);
             } catch (MalformedURLException e) {
                 PrivateLog.log(context, PrivateLog.UPDATER, PrivateLog.FATAL, "Malformed pollen area url: " + e.getMessage());
             } catch (IOException e) {
@@ -2009,13 +2021,13 @@ public class APIReaders {
 
         @Override
         public void run() {
-            CANCELLATION.reset();
+            cancellation.reset();
             readPollenAreas();
             onFinished();
         }
     }
 
-    public static class WarnAreasReader implements Runnable {
+    public static class WarnAreasReader implements CancellableTask {
 
         private Context context;
         ArrayList<Areas.Area> areas;
@@ -2141,7 +2153,7 @@ public class APIReaders {
         }
     }
 
-    public static class GetUvIndexForLocation implements Runnable{
+    public static class GetUvIndexForLocation implements CancellableTask{
 
     public final static double GEOACCURACY_UVI = 0.01d;
     private Context context;

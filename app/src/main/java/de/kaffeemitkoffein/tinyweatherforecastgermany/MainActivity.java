@@ -97,7 +97,8 @@ public class MainActivity extends Activity {
     private AlertDialog whatsNewDialog;
     private boolean whatsNewDialogVisible=false;
 
-    ScheduledExecutorService executor;
+    /** Owned by this activity instance; shut down in onDestroy(). */
+    LifecycleExecutor executor;
 
     ArrayList<WeatherWarning> localWarnings;
 
@@ -379,10 +380,19 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onDestroy() {
-        super.onDestroy();
+        // Stop background work before the activity (and its Context) can be collected.
+        if (executor!=null){
+            executor.shutdown();
+        }
+        if (weatherList!=null){
+            weatherList.removeCallbacks(null);
+        }
         PrivateLog.log(getApplicationContext(),PrivateLog.MAIN, PrivateLog.INFO,"app instance destroyed.");
         cancelAnyOpenDialogs();
-        getApplication().unregisterActivityLifecycleCallbacks(weatherLocationManager);
+        if (weatherLocationManager!=null){
+            getApplication().unregisterActivityLifecycleCallbacks(weatherLocationManager);
+        }
+        super.onDestroy();
     }
 
     private void cancelAnyOpenDialogs(){
@@ -446,7 +456,7 @@ public class MainActivity extends Activity {
                 // ignore
             }
             thisActivity = this;
-            executor = Executors.newSingleThreadScheduledExecutor();
+            executor = new LifecycleExecutor(Executors.newSingleThreadScheduledExecutor());
             PrivateLog.log(context,PrivateLog.MAIN,PrivateLog.INFO,"Main activity started.");
             setContentView(R.layout.activity_main);
             registerSyncAdapter(context);
@@ -2483,6 +2493,67 @@ public class MainActivity extends Activity {
         final ImageView overviewChartImageView = (ImageView) findViewById(R.id.main_overview_chart);
         if (overviewChartImageView!=null){
             overviewChartImageView.setVisibility(View.VISIBLE);
+        }
+    }
+
+    /**
+     * Lifecycle-aware owner for all background work of one MainActivity instance.
+     *
+     * <p>Every submitted job that implements {@link APIReaders.CancellableTask} is tracked,
+     * so onDestroy() can cancel its TASK-31 HTTPS token before the worker thread is
+     * interrupted. Submissions after shutdown are dropped: no callback can run after the
+     * activity owning this executor has been destroyed.</p>
+     */
+    static final class LifecycleExecutor implements java.util.concurrent.Executor {
+        private final ScheduledExecutorService delegate;
+        private final java.util.List<APIReaders.CancellableTask> tasks =
+                java.util.Collections.synchronizedList(new java.util.ArrayList<APIReaders.CancellableTask>());
+        private volatile boolean shutdown;
+
+        LifecycleExecutor(ScheduledExecutorService delegate) {
+            this.delegate = delegate;
+        }
+
+        private void track(Runnable command) {
+            if (command instanceof APIReaders.CancellableTask) {
+                tasks.add((APIReaders.CancellableTask) command);
+            }
+        }
+
+        @Override
+        public void execute(Runnable command) {
+            if (shutdown) {
+                return;
+            }
+            track(command);
+            delegate.execute(command);
+        }
+
+        java.util.concurrent.ScheduledFuture<?> schedule(Runnable command, long delay, TimeUnit unit) {
+            if (shutdown) {
+                return null;
+            }
+            track(command);
+            return delegate.schedule(command, delay, unit);
+        }
+
+        void shutdown() {
+            shutdown = true;
+            synchronized (tasks) {
+                for (APIReaders.CancellableTask task : tasks) {
+                    try {
+                        task.cancel();
+                    } catch (RuntimeException ignored) {
+                        // One broken token must not prevent the others from being cancelled.
+                    }
+                }
+                tasks.clear();
+            }
+            delegate.shutdownNow();
+        }
+
+        boolean isShutdown() {
+            return shutdown;
         }
     }
 

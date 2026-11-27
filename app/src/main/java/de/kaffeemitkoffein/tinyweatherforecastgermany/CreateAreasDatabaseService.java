@@ -24,13 +24,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.IBinder;
 
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class CreateAreasDatabaseService extends Service {
 
     private Context context;
-    private Executor executor;
+    /** One executor per service instance, created in onCreate() and stopped in onDestroy(). */
+    private ExecutorService executor;
 
     @Override
     public void onCreate(){
@@ -92,14 +93,20 @@ public class CreateAreasDatabaseService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startID){
-        executor = Executors.newSingleThreadExecutor();
-        executor.execute(createAreaDatabaseRunnable);
-        executor.execute(stopService);
+        // Do not create a second executor here: it orphaned the onCreate() executor and
+        // kept two worker threads alive for the lifetime of one service instance.
+        if (executor!=null && !executor.isShutdown()){
+            executor.execute(createAreaDatabaseRunnable);
+            executor.execute(stopService);
+        }
         return START_NOT_STICKY;
     }
 
     @Override
     public void onDestroy() {
+        if (executor!=null){
+            executor.shutdownNow();
+        }
         super.onDestroy();
     }
 
