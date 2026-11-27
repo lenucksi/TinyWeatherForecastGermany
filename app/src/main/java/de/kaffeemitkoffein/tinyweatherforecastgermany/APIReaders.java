@@ -420,6 +420,148 @@ public class APIReaders {
                 }
             }, cancellation);
         }
+
+        private static void release(Cancellation cancellation, HttpsURLConnection connection) {
+            if (cancellation != null) {
+                cancellation.unregister(connection);
+            }
+            connection.disconnect();
+        }
+
+        /** Body of a conditional GET. The stream is null when the server answered 304. */
+        public static final class ConditionalResponse {
+            public final InputStream stream;
+            public final String etag;
+            public final boolean notModified;
+
+            private ConditionalResponse(InputStream stream, String etag, boolean notModified) {
+                this.stream = stream;
+                this.etag = etag;
+                this.notModified = notModified;
+            }
+        }
+
+        /**
+         * Conditional GET for the CAP warning ZIP: same allowlisted HTTPS, timeouts, bounded
+         * retries and cancellation as {@link #get(URL, Cancellation)}, plus If-None-Match on the
+         * request and the ETag on the response. A 304 has no body and is returned, not retried.
+         */
+        public static ConditionalResponse getConditional(final URL url, final String ifNoneMatch,
+                                                         final Cancellation cancellation) throws IOException {
+            return withRetry(() -> {
+                final HttpsURLConnection connection = open(url);
+                if (cancellation != null) {
+                    cancellation.register(connection);
+                }
+                String validator = CapCache.normalizeEtag(ifNoneMatch);
+                if (validator != null) {
+                    connection.setRequestProperty(CapCache.HEADER_IF_NONE_MATCH, validator);
+                }
+                final int code;
+                final String etag;
+                try {
+                    code = connection.getResponseCode();
+                    etag = CapCache.etagToStore(code,
+                            connection.getHeaderField(CapCache.HEADER_ETAG), ifNoneMatch);
+                } catch (IOException e) {
+                    release(cancellation, connection);
+                    throw e;
+                }
+                if (CapCache.isNotModified(code)) {
+                    // 304 responses carry no body, so nothing can keep the connection open.
+                    release(cancellation, connection);
+                    return new ConditionalResponse(null, etag, true);
+                }
+                if (code < 200 || code >= 300) {
+                    release(cancellation, connection);
+                    throw new IOException("Unexpected HTTP response code " + code);
+                }
+                try {
+                    InputStream body = new BufferedInputStream(connection.getInputStream());
+                    InputStream stream = new FilterInputStream(body) {
+                        @Override
+                        public void close() throws IOException {
+                            try {
+                                super.close();
+                            } finally {
+                                release(cancellation, connection);
+                            }
+                        }
+                    };
+                    return new ConditionalResponse(stream, etag, false);
+                } catch (IOException e) {
+                    release(cancellation, connection);
+                    throw e;
+                }
+            }, cancellation);
+        }
+    }
+
+    /**
+     * TASK-50: ETag state for the CAP ZIP poll. An ETag is a cache validator, not weather data,
+     * so it is kept in the app preferences instead of changing the database schema. The value
+     * handling is pure Java and unit-testable; only load/save need a Context.
+     */
+    public static final class CapCache {
+        public static final String PREF_CAP_ETAG = "PREF_warning_cap_etag";
+        public static final String HEADER_IF_NONE_MATCH = "If-None-Match";
+        public static final String HEADER_ETAG = "ETag";
+        public static final int HTTP_NOT_MODIFIED = 304;
+        private static final int MAX_ETAG_LENGTH = 128;
+
+        private CapCache() {
+        }
+
+        /** Keeps the validator verbatim (quotes included) but never allows a header injection. */
+        public static String normalizeEtag(String value) {
+            if (value == null) {
+                return null;
+            }
+            String result = value.trim();
+            if (result.isEmpty() || result.length() > MAX_ETAG_LENGTH) {
+                return null;
+            }
+            for (int i = 0; i < result.length(); i++) {
+                char c = result.charAt(i);
+                if (c < 0x21 || c > 0x7e) {
+                    return null;
+                }
+            }
+            return result;
+        }
+
+        public static boolean isNotModified(int responseCode) {
+            return responseCode == HTTP_NOT_MODIFIED;
+        }
+
+        /**
+         * A 304 keeps the previous validator (or the one repeated by the server); a 200 without
+         * an ETag clears it so the next poll is unconditional again.
+         */
+        public static String etagToStore(int responseCode, String responseEtag, String storedEtag) {
+            String fromResponse = normalizeEtag(responseEtag);
+            if (isNotModified(responseCode)) {
+                return fromResponse != null ? fromResponse : normalizeEtag(storedEtag);
+            }
+            return fromResponse;
+        }
+
+        public static String loadEtag(Context context) {
+            if (context == null) {
+                return null;
+            }
+            return normalizeEtag(WeatherSettings.getSharedPreferences(context)
+                    .getString(PREF_CAP_ETAG, ""));
+        }
+
+        public static void saveEtag(Context context, String etag) {
+            if (context == null) {
+                return;
+            }
+            String value = normalizeEtag(etag);
+            WeatherSettings.getSharedPreferences(context).edit()
+                    .putString(PREF_CAP_ETAG, value == null ? "" : value).apply();
+        }
     }
 
     /**
@@ -485,6 +627,8 @@ public class APIReaders {
 
        // all polling times should be the same per poll to allow for logic checking if outdated
        private long pollingTime = Calendar.getInstance().getTimeInMillis();
+       // TASK-50: set when the CAP ZIP answered 304 Not Modified; the DB must stay untouched.
+       private boolean notModified = false;
 
        public WeatherWarningsRunnable(Context context) {
            this.context = context;
@@ -510,7 +654,7 @@ public class APIReaders {
            return 0;
        }
 
-       private String getValue(Element element, String tag){
+       private static String getValue(Element element, String tag){
            NodeList nl2 = element.getElementsByTagName(tag);
            if (nl2.getLength()>0){
                return nl2.item(0).getTextContent();
@@ -644,7 +788,18 @@ public class APIReaders {
                }
            }
 
-           nl = document.getElementsByTagName("area");
+           parseAreas(document,warning);
+
+           return warning;
+       }
+
+       /**
+        * TASK-50: CAP area parsing. areaDesc is collected for every area, including areas that
+        * carry a polygon; before this fix those areas had no name at all in the warning list.
+        * Package-visible and static so a JVM unit test can exercise it with a CAP fixture.
+        */
+       static void parseAreas(Document document, WeatherWarning warning) {
+           NodeList nl = document.getElementsByTagName("area");
            warning.polygons = new ArrayList<String>();
            warning.excluded_polygons = new ArrayList<String>();
            warning.area_names = new ArrayList<String>();
@@ -653,11 +808,15 @@ public class APIReaders {
                Node node = nl.item(n);
                if (node.getNodeType() == Node.ELEMENT_NODE){
                    Element element = (Element) node;
+                   // A polygon area usually repeats the same generic description; keep one copy.
+                   String areaDesc = getValue(element,"areaDesc");
+                   if ((areaDesc!=null) && (!areaDesc.isEmpty()) && (!warning.area_names.contains(areaDesc))){
+                       warning.area_names.add(areaDesc);
+                   }
                    String polygon = getValue(element,"polygon");
                    if (polygon!=null){
                        warning.polygons.add(polygon);
                    } else {
-                       warning.area_names.add(getValue(element,"areaDesc"));
                        NodeList subnodelist = element.getElementsByTagName("geocode");
                        for (int mm=0; mm<subnodelist.getLength(); mm++){
                            Node subnode = subnodelist.item(mm);
@@ -681,8 +840,6 @@ public class APIReaders {
                    }
                }
            }
-
-           return warning;
        }
 
        @SuppressWarnings("deprecation")
@@ -713,7 +870,10 @@ public class APIReaders {
                    throw new IOException("Disallowed weather data host; not requesting warnings.");
                }
                URL url = new URL(urlString);
-               return Http.get(url, cancellation);
+               Http.ConditionalResponse response = Http.getConditional(url, CapCache.loadEtag(context), cancellation);
+               notModified = response.notModified;
+               CapCache.saveEtag(context, response.etag);
+               return response.stream;
            } catch (MalformedURLException e){
                PrivateLog.log(context,PrivateLog.DATA,PrivateLog.ERR,"Malformed URL for DWD resource:"+e.getMessage());
                throw e;
@@ -724,9 +884,15 @@ public class APIReaders {
        }
 
        public ArrayList<WeatherWarning> doInBackground() {
+           notModified = false;
            ArrayList<WeatherWarning> warnings = new ArrayList<WeatherWarning>();
            try {
-               InputStream inputStream = new BufferedInputStream(getWeatherWarningInputStream());
+               InputStream responseStream = getWeatherWarningInputStream();
+               if (responseStream == null) {
+                   // 304 Not Modified: the ZIP has no body and the database must be kept.
+                   return warnings;
+               }
+               InputStream inputStream = new BufferedInputStream(responseStream);
                ZipInputStream zipInputStream = new ZipInputStream(inputStream);
                // iterate through the warnings; each warning is a file
                int warnings_counter = 0;
@@ -778,6 +944,13 @@ public class APIReaders {
        }
 
        private void onPostExecute(ArrayList<WeatherWarning> warnings) {
+           if (notModified){
+               // 304: do not clean or rewrite the warning table; only the caller refreshes
+               // lastUpdate and the views. Hand back the cached rows for those callbacks.
+               PrivateLog.log(context,PrivateLog.DATA,PrivateLog.INFO,"CAP ZIP unchanged (304), warning database kept.");
+               ArrayList<WeatherWarning> cached = WeatherWarnings.getCurrentWarnings(context,false);
+               onPositiveResult(cached==null ? new ArrayList<WeatherWarning>() : cached);
+           } else
            if (warnings!=null){
                WeatherWarnings.cleanWeatherWarningsDatabase(context);
                WeatherWarnings.writeWarningsToDatabase(context,warnings);
