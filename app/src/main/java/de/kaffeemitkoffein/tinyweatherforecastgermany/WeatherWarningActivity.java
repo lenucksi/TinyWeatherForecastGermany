@@ -116,7 +116,7 @@ public class WeatherWarningActivity extends Activity {
         public void onReceive(Context c, Intent intent) {
             if (intent!=null){
                 // update warning display if warnings have been updated
-                if (intent.getAction().equals(WEATHER_WARNINGS_UPDATE)) {
+                if (WEATHER_WARNINGS_UPDATE.equals(intent.getAction())) {
                     weatherWarnings = WeatherWarnings.getCurrentWarnings(getApplicationContext(),true);
                     displayWarnings();
                     updateActionBarLabels();
@@ -126,7 +126,7 @@ public class WeatherWarningActivity extends Activity {
                     // gets result if update was successful, currently not used
                     boolean updateResult = intent.getBooleanExtra(WEATHER_WARNINGS_UPDATE_RESULT,false);
                 }
-                if (intent.getAction().equals(MainActivity.MAINAPP_HIDE_PROGRESS)){
+                if (MainActivity.MAINAPP_HIDE_PROGRESS.equals(intent.getAction())){
                     forceWeatherUpdateFlag = false;
                     hideProgressBar();
                 }
@@ -383,7 +383,9 @@ public class WeatherWarningActivity extends Activity {
         scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
         // action bar layout
         actionBar = getActionBar();
-        actionBar.setDisplayOptions(ActionBar.DISPLAY_SHOW_HOME|ActionBar.DISPLAY_HOME_AS_UP|ActionBar.DISPLAY_SHOW_TITLE);
+        if (actionBar!=null){
+            actionBar.setDisplayOptions(ActionBar.DISPLAY_SHOW_HOME|ActionBar.DISPLAY_HOME_AS_UP|ActionBar.DISPLAY_SHOW_TITLE);
+        }
         mapcontainer = (RelativeLayout) findViewById(R.id.warningactivity_mapcontainer);
         map_collapsed_container = (RelativeLayout) findViewById(R.id.warningactivity_map_collapsed_container);
         warningactivity_map_collapsed = (ImageView) findViewById(R.id.warningactivity_map_collapsed);
@@ -604,6 +606,9 @@ public class WeatherWarningActivity extends Activity {
     public void updateActionBarLabels(){
         final SimpleDateFormat simpleDateFormat = Weather.getSimpleDateFormat(Weather.SimpleDateFormats.DATEYEARTIME);
         String update = simpleDateFormat.format(DataStorage.Updates.getLastUpdate(context,WeatherSettings.Updates.Category.WARNINGS));
+        if (actionBar==null){
+            return;
+        }
         if (weatherWarnings!=null){
             actionBar.setSubtitle(update+" ("+weatherWarnings.size()+")");
         } else {
@@ -612,20 +617,25 @@ public class WeatherWarningActivity extends Activity {
     }
 
     private void displayWarnings(){
-        if (weatherWarnings!=null){
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    updateActionBarLabels();
-                }
-            });
-            TextView noWarnings = (TextView) findViewById(R.id.warningactivity_no_warnings);
+        // getCurrentWarnings() can return null on a database error. Normalise once so that
+        // neither the adapter nor the map can dereference a null list (issue #285).
+        weatherWarnings = WarningUiDataGuard.sanitized(weatherWarnings);
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                updateActionBarLabels();
+            }
+        });
+        TextView noWarnings = (TextView) findViewById(R.id.warningactivity_no_warnings);
+        if (noWarnings!=null){
             if (weatherWarnings.size()==0){
                 noWarnings.setVisibility(View.VISIBLE);
             } else {
                 noWarnings.setVisibility(View.GONE);
             }
-            TextView warningsDeprecated = (TextView) findViewById(R.id.warningactivity_warnings_deprecated);
+        }
+        TextView warningsDeprecated = (TextView) findViewById(R.id.warningactivity_warnings_deprecated);
+        if (warningsDeprecated!=null){
             if (DataStorage.Updates.isSyncDue(context,WeatherSettings.Updates.Category.WARNINGS)){
                 warningsDeprecated.setVisibility(View.VISIBLE);
             } else {
@@ -635,29 +645,30 @@ public class WeatherWarningActivity extends Activity {
         WeatherWarnings.getWarningsForLocationRunnable getWarningsForLocationRunnable = new WeatherWarnings.getWarningsForLocationRunnable(getApplicationContext(),null,null) {
             @Override
             public void onResult(ArrayList<WeatherWarning> result) {
-                localWarnings = result;
+                localWarnings = WarningUiDataGuard.sanitized(result);
+                final ArrayList<WeatherWarning> safeWarnings = WarningUiDataGuard.sanitized(weatherWarnings);
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         weatherList = (ListView) findViewById(R.id.warningactivity_listview);
-                        weatherWarningAdapter = new WeatherWarningAdapter(getBaseContext(),weatherWarnings,scheduledExecutorService);
+                        weatherWarningAdapter = new WeatherWarningAdapter(getBaseContext(),safeWarnings,scheduledExecutorService);
                         weatherWarningAdapter.setLocalWarnings(localWarnings);
-                        weatherList.setAdapter(weatherWarningAdapter);
-                        weatherList.setSelection(WeatherWarnings.getFirstWarningPosition(weatherWarnings,localWarnings));
-                        weatherList.invalidate();
+                        if (weatherList!=null){
+                            weatherList.setAdapter(weatherWarningAdapter);
+                            weatherList.setSelection(WarningUiDataGuard.firstWarningPosition(safeWarnings,localWarnings));
+                            weatherList.invalidate();
+                        }
                     }
                 });
             }
         };
         scheduledExecutorService.execute(getWarningsForLocationRunnable);
-        if (weatherWarnings!=null){
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    displayMap();
-                }
-            });
-        }
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                displayMap();
+            }
+        });
     }
 
     public static class PlotPoint{
@@ -791,8 +802,11 @@ public class WeatherWarningActivity extends Activity {
     private Bitmap loadBitmapMap(int res_id){
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inJustDecodeBounds = true;
-        Bitmap bitmap = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(getResources(),res_id),RadarMN2.getFixedRadarMapWidth(context),RadarMN2.getFixedRadarMapHeight(context),false);
-        return bitmap;
+        Bitmap source = BitmapFactory.decodeResource(getResources(),res_id);
+        if (source==null){
+            return null;
+        }
+        return Bitmap.createScaledBitmap(source,RadarMN2.getFixedRadarMapWidth(context),RadarMN2.getFixedRadarMapHeight(context),false);
     }
 
     private void showRainSlideProgressBar(){
@@ -909,6 +923,11 @@ public class WeatherWarningActivity extends Activity {
     }
 
     private void drawMapBitmap(){
+        // The map may be drawn before the warning data/zoom view were created (e.g. from a
+        // broadcast or a location callback). Nothing can be painted without these objects.
+        if (germanyBitmap==null || warningsBitmap==null || mapZoomable==null){
+            return;
+        }
         visibleBitmap = germanyBitmap.copy(Bitmap.Config.ARGB_8888,true);
         Canvas canvas = new Canvas(visibleBitmap);
         final Paint cp = new Paint();
@@ -1011,6 +1030,10 @@ public class WeatherWarningActivity extends Activity {
         float positionY = (float) mercatorProjectionTile.getYPixel(ownLocation.latitude);
         // testing enhanced wind arrow
         CurrentWeatherInfo currentWeatherInfo = Weather.getCurrentWeatherInfo(context);
+        if (currentWeatherInfo==null){
+            // No forecast cached yet: skip the optional overlay instead of crashing the map.
+            return;
+        }
         ArrayList<Weather.WindData> windDataList = currentWeatherInfo.getWindForecast(windPathTime/60+1);
         final int windPathLength = windPathTime/15; // number of arcs drawn, corresponding to 15 mins rain progress
         final double ARCSTEPS = 15;
@@ -1026,7 +1049,12 @@ public class WeatherWarningActivity extends Activity {
             } else {
                 windLinePaint.setPathEffect(dashPathEffect);
             }
-            Weather.WindData windData = windDataList.get(i/4);
+            int windDataIndex = WarningUiDataGuard.windDataIndex(i/4, windDataList==null ? 0 : windDataList.size());
+            if (windDataIndex<0){
+                // Forecast is shorter than the configured wind path; skip this segment.
+                continue;
+            }
+            Weather.WindData windData = windDataList.get(windDataIndex);
             double windDirection = windData.getDirection()+180;
             if (windDirection>360){
                 windDirection = windDirection - 360;
@@ -1060,6 +1088,10 @@ public class WeatherWarningActivity extends Activity {
     }
 
     private boolean hideMap(){
+        // The collapsed-container view only exists in the portrait layout.
+        if (germany==null || mapcontainer==null || map_collapsed_container==null || weatherList==null){
+            return false;
+        }
         cancelRainSlides = true;
         germany.setVisibility(View.GONE);
         germany.invalidate();
@@ -1084,6 +1116,9 @@ public class WeatherWarningActivity extends Activity {
     }
 
     private boolean showMap(){
+        if (germany==null || mapcontainer==null || weatherList==null){
+            return false;
+        }
         germany.setVisibility(View.VISIBLE);
         mapcontainer.setVisibility(View.VISIBLE);
         LinearLayout.LayoutParams rllp = (LinearLayout.LayoutParams) mapcontainer.getLayoutParams();
@@ -1091,12 +1126,14 @@ public class WeatherWarningActivity extends Activity {
         rllp.weight=18;
         mapcontainer.setLayoutParams(rllp);
         mapcontainer.invalidate();
-        LinearLayout.LayoutParams mclp = (LinearLayout.LayoutParams) map_collapsed_container.getLayoutParams();
-        mclp.height=0;
-        mclp.weight=0;
-        map_collapsed_container.setLayoutParams(mclp);
-        map_collapsed_container.invalidate();
-        map_collapsed_container.setVisibility(View.GONE);
+        if (map_collapsed_container!=null){
+            LinearLayout.LayoutParams mclp = (LinearLayout.LayoutParams) map_collapsed_container.getLayoutParams();
+            mclp.height=0;
+            mclp.weight=0;
+            map_collapsed_container.setLayoutParams(mclp);
+            map_collapsed_container.invalidate();
+            map_collapsed_container.setVisibility(View.GONE);
+        }
         LinearLayout.LayoutParams lop = (LinearLayout.LayoutParams) weatherList.getLayoutParams();
         lop.height=0;
         lop.weight=11;
@@ -1111,7 +1148,13 @@ public class WeatherWarningActivity extends Activity {
     }
     
     private void displayMap(){
+        if (germany==null || pinPoint==null || weatherWarnings==null){
+            return;
+        }
         germanyBitmap = loadBitmapMap(WeatherIcons.getIconResource(getApplicationContext(),WeatherIcons.GERMANY));
+        if (germanyBitmap==null){
+            return;
+        }
         warningsBitmap = Bitmap.createBitmap(germanyBitmap.getWidth(),germanyBitmap.getHeight(), Bitmap.Config.ARGB_8888);
         warningsBitmap.eraseColor(Color.TRANSPARENT);
         radarBitmap = Bitmap.createBitmap(germanyBitmap.getWidth(),germanyBitmap.getHeight(), Bitmap.Config.ARGB_8888);
@@ -1121,12 +1164,16 @@ public class WeatherWarningActivity extends Activity {
         polygoncache = new ArrayList<Polygon>();
         excluded_polygoncache = new ArrayList<Polygon>();
         final Canvas canvas = new Canvas(warningsBitmap);
-        ArrayList<WeatherWarning> drawWarnings = (ArrayList<WeatherWarning>) weatherWarnings.clone();
+        ArrayList<WeatherWarning> drawWarnings = WarningUiDataGuard.sanitized(new ArrayList<WeatherWarning>(weatherWarnings));
         Collections.sort(drawWarnings);
         Collections.reverse(drawWarnings);
         for (int warning_counter=0; warning_counter<drawWarnings.size(); warning_counter++){
             WeatherWarning warning = drawWarnings.get(warning_counter);
-            for (int polygon_counter=0; polygon_counter<warning.polygonlist.size(); polygon_counter++){
+            // A warning whose polygons were never initialised must not abort the whole map.
+            if (warning.polygonlist==null){
+                warning.initPolygons(context);
+            }
+            for (int polygon_counter=0; (warning.polygonlist!=null) && (polygon_counter<warning.polygonlist.size()); polygon_counter++){
                 float[] polygonX = warning.polygonlist.get(polygon_counter).polygonX;
                 float[] polygonY = warning.polygonlist.get(polygon_counter).polygonY;
                 // add polygon to cache
@@ -1147,7 +1194,7 @@ public class WeatherWarningActivity extends Activity {
                 }
             }
             // draw black excluded polygons after other polygons were drawn
-            for (int polygon_counter=0; polygon_counter<warning.excluded_polygonlist.size(); polygon_counter++){
+            for (int polygon_counter=0; (warning.excluded_polygonlist!=null) && (polygon_counter<warning.excluded_polygonlist.size()); polygon_counter++){
                 float[] polygonX = warning.excluded_polygonlist.get(polygon_counter).polygonX;
                 float[] polygonY = warning.excluded_polygonlist.get(polygon_counter).polygonY;
                 // add excluded-polygon to cache
@@ -1170,7 +1217,8 @@ public class WeatherWarningActivity extends Activity {
         }
         float pinSize = WeatherSettings.getMapPinSize(context)/2f;
         int pinSizePixels = Math.round(18*this.getApplicationContext().getResources().getDisplayMetrics().density*pinSize);
-        Bitmap pinBitmap = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(getResources(),R.mipmap.pin),pinSizePixels,pinSizePixels,false);
+        Bitmap pinSource = BitmapFactory.decodeResource(getResources(),R.mipmap.pin);
+        Bitmap pinBitmap = (pinSource==null) ? null : Bitmap.createScaledBitmap(pinSource,pinSizePixels,pinSizePixels,false);
         float pinX = pinPoint.x; float pinY = pinPoint.y;
         // drawAdvancedWindStencil(canvas,145,300);
         drawWindIcon();
@@ -1219,7 +1267,7 @@ public class WeatherWarningActivity extends Activity {
         }
         drawMapBitmap();
         // add the pin sprite
-        if (pinSize>0){
+        if ((pinSize>0) && (pinBitmap!=null)){
             mapZoomable.addSpite(pinBitmap,pinX,pinY-pinBitmap.getHeight(),ZoomableImageView.SPRITEFIXPOINT.BOTTOM_LEFT,null);
             //
         }
@@ -1323,6 +1371,9 @@ public class WeatherWarningActivity extends Activity {
     }
 
     private void jumpListViewToSelection(Polygon polygon){
+        if (weatherWarnings==null){
+            return;
+        }
         int position=0;
         while (position<weatherWarnings.size()){
             if (weatherWarnings.get(position).identifier.equals(polygon.identifier_link)){
