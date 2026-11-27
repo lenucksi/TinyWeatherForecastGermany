@@ -196,6 +196,26 @@ public class RadarMN2 {
     // this is the bbox corresponding to the specs above
     public static final String BBOX = "bbox=493000.00%2C5861000.00%2C1791000.00%2C7470000.00";
 
+    /*
+     * TASK-54: exact corner coordinates of the radar composite in EPSG:4326, derived from
+     * the DWD BBOX above in EPSG:3857 (Web Mercator, R = 6378137 m):
+     *   lon = x / R * 180/PI
+     *   lat = 90 - 2*atan(exp(-y/R)) in degrees
+     * These are used ONLY by the vector MapLibre ImageSource, which georeferences the raw
+     * cached PNG directly. The hand pixel corrections in getXPixel()/getYPixel() above only
+     * compensated the old JPEG static basemap and must NOT be applied here.
+     */
+    public static final double RADAR_WEST_LONGITUDE  = 4.4286943507d;   // bbox x=493000
+    public static final double RADAR_EAST_LONGITUDE  = 16.0888267386d;  // bbox x=1791000
+    public static final double RADAR_SOUTH_LATITUDE  = 46.5009904176d;  // bbox y=5861000
+    public static final double RADAR_NORTH_LATITUDE  = 55.5533028792d;  // bbox y=7470000
+
+    /** Order matches MapLibre LatLngQuad: west/north, east/north, east/south, west/south. */
+    public static double[] getRadarVectorBounds(){
+        return new double[]{RADAR_WEST_LONGITUDE,RADAR_NORTH_LATITUDE,
+                RADAR_EAST_LONGITUDE,RADAR_SOUTH_LATITUDE};
+    }
+
     public static int[] getPixels(Context context){
         return new int[getFixedRadarMapWidth(context)*getFixedRadarMapHeight(context)];
     }
