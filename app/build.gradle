@@ -57,6 +57,37 @@ android {
         buildConfig true
     }
 
+    testOptions {
+        // Robolectric builds its shadow runtime from the merged Android
+        // resources, so unit tests must see them (raw files, layouts, manifest).
+        unitTests.includeAndroidResources = true
+        // Robolectric 4.16 on JDK 21 reflects into bootstrap classes. Without
+        // these opens the tests fail with InaccessibleObjectException before
+        // any assertion runs (documented in Robolectric's JDK 17+ setup).
+        unitTests.all {
+            jvmArgs '--add-opens=java.base/java.lang=ALL-UNNAMED',
+                    '--add-opens=java.base/java.lang.invoke=ALL-UNNAMED',
+                    '--add-opens=java.base/java.lang.reflect=ALL-UNNAMED',
+                    '--add-opens=java.base/java.io=ALL-UNNAMED',
+                    '--add-opens=java.base/java.net=ALL-UNNAMED',
+                    '--add-opens=java.base/java.nio=ALL-UNNAMED',
+                    '--add-opens=java.base/java.util=ALL-UNNAMED',
+                    '--add-opens=java.base/java.util.concurrent=ALL-UNNAMED',
+                    '--add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED',
+                    '--add-opens=java.base/sun.nio.ch=ALL-UNNAMED',
+                    '--add-opens=java.base/sun.nio.cs=ALL-UNNAMED',
+                    '--add-opens=java.base/sun.security.action=ALL-UNNAMED',
+                    '--add-opens=java.base/sun.util.calendar=ALL-UNNAMED'
+        }
+    }
+
+    // TASK-16: the 439 pre-existing findings are frozen in this baseline.
+    // abortOnError stays on, so every *new* finding still fails lintDebug in CI.
+    lint {
+        baseline = file('lint-baseline.xml')
+        abortOnError = true
+    }
+
     buildTypes {
         release {
             minifyEnabled true
@@ -84,4 +115,76 @@ dependencies {
     // Gadgetbridge's WeatherSpec (AGPLv3) uses androidx.annotation.Nullable,
     // which has CLASS retention - javac only, no runtime dependency needed.
     compileOnly 'androidx.annotation:annotation:1.9.1'
+
+    // TASK-16: JVM test foundation. The presence of testImplementation also
+    // enables the (otherwise guarded) unit-test step in the CI workflow.
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.robolectric:robolectric:4.16'
+}
+
+// Robolectric 4.16 resolves AndroidX Test 3.7.0/1.8.0, whose manifests raise
+// minSdk to 21. This app still supports API 19 (TASK-14 is not merged), so the
+// unit-test manifest merge fails unless we pin the last minSdk-19 releases.
+// Scoped to test configurations; production dependencies are unaffected.
+configurations.matching { it.name.toLowerCase().contains('test') }.all {
+    resolutionStrategy {
+        force 'androidx.test:monitor:1.7.2'
+        force 'androidx.test.espresso:espresso-idling-resource:3.6.1'
+    }
+}
+
+// Robolectric normally downloads android-all-instrumented jars from Maven
+// Central at *test runtime*, which is outside Gradle's dependency verification
+// and was hitting HTTP 429 in CI. Resolve them as normal Gradle artifacts
+// instead (so strict verification covers them) and point Robolectric at a
+// local copy. Versions correspond to the SDKs pinned by the tests: 26, 28,
+// 33 and 36.
+// Maven Central repeatedly answered HTTP 429 for Robolectric artifacts in CI
+// (including the ~250 MB android-all SDK jars downloaded by the test setup).
+// Fetch the whole org.robolectric group from Google's read-through mirror of
+// Maven Central; the content filter keeps every other dependency on the
+// repositories declared in the root build. Strict sha256 verification in
+// gradle/verification-metadata.xml still applies to every artifact.
+repositories {
+    exclusiveContent {
+        forRepository {
+            maven {
+                url = uri('https://maven-central.storage-download.googleapis.com/maven2')
+            }
+        }
+        filter {
+            includeGroup('org.robolectric')
+        }
+    }
+}
+
+// One configuration per SDK: Gradle would otherwise resolve a single version
+// of the android-all-instrumented module for the whole configuration.
+configurations {
+    robolectricApi26
+    robolectricApi28
+    robolectricApi33
+    robolectricApi36
+}
+
+dependencies {
+    robolectricApi26 'org.robolectric:android-all-instrumented:8.0.0_r4-robolectric-r1-i7'
+    robolectricApi28 'org.robolectric:android-all-instrumented:9-robolectric-4913185-2-i7'
+    robolectricApi33 'org.robolectric:android-all-instrumented:13-robolectric-9030017-i7'
+    robolectricApi36 'org.robolectric:android-all-instrumented:16-robolectric-13921718-i7'
+}
+
+def robolectricSdkDir = layout.buildDirectory.dir('robolectric-android-all')
+
+tasks.register('prepareRobolectricAndroidAll', Copy) {
+    from configurations.robolectricApi26
+    from configurations.robolectricApi28
+    from configurations.robolectricApi33
+    from configurations.robolectricApi36
+    into robolectricSdkDir
+}
+
+tasks.withType(Test).configureEach {
+    dependsOn tasks.named('prepareRobolectricAndroidAll')
+    systemProperty 'robolectric.dependency.dir', robolectricSdkDir.get().asFile.absolutePath
 }
