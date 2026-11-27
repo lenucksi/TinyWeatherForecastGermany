@@ -978,6 +978,17 @@
     </issue>
 
     <issue
+        id="NewerVersionAvailable"
+        message="A newer version of org.robolectric:android-all-instrumented than 16-robolectric-13921718-i7 is available: 16-robolectric-13921718-2-i7"
+        errorLine1="    robolectricApi36 &apos;org.robolectric:android-all-instrumented:16-robolectric-13921718-i7&apos;"
+        errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle"
+            line="174"
+            column="22"/>
+    </issue>
+
+    <issue
         id="SourceLockedOrientationActivity"
         message="You should not lock orientation of your activities, so that you can support a good user experience for any device or orientation"
         errorLine1="            activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);"

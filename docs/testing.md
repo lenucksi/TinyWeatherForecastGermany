@@ -17,6 +17,17 @@ DWD is required.
   fail with `InaccessibleObjectException` before any assertion runs.
 - The presence of a `testImplementation` line enables the previously guarded
   unit-test step in `.github/workflows/build.yml`.
+- AndroidX Test is pinned to `monitor:1.7.2` /
+  `espresso-idling-resource:3.6.1` for test configurations: Robolectric 4.16's
+  defaults raise `minSdk` to 21, which breaks the test manifest merge while
+  this app still supports API 19.
+- Robolectric's four `android-all-instrumented` jars (SDK 26/28/33/36) are
+  resolved as ordinary Gradle dependencies into `app/build/robolectric-android-all`
+  and handed to Robolectric via `robolectric.dependency.dir`. They are no
+  longer downloaded at test runtime, so tests are deterministic and the jars
+  are covered by strict dependency verification. A content-restricted mirror
+  (Google's read-through mirror of Maven Central, `org.robolectric` group only)
+  avoids Maven Central HTTP 429 throttling in CI.
 
 `gradle/verification-metadata.xml` is in strict mode. **Any dependency change
 must be followed by regenerating it** (see below), or CI fails with a

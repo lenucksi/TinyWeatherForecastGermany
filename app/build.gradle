@@ -132,3 +132,59 @@ configurations.matching { it.name.toLowerCase().contains('test') }.all {
         force 'androidx.test.espresso:espresso-idling-resource:3.6.1'
     }
 }
+
+// Robolectric normally downloads android-all-instrumented jars from Maven
+// Central at *test runtime*, which is outside Gradle's dependency verification
+// and was hitting HTTP 429 in CI. Resolve them as normal Gradle artifacts
+// instead (so strict verification covers them) and point Robolectric at a
+// local copy. Versions correspond to the SDKs pinned by the tests: 26, 28,
+// 33 and 36.
+// Maven Central repeatedly answered HTTP 429 for Robolectric artifacts in CI
+// (including the ~250 MB android-all SDK jars downloaded by the test setup).
+// Fetch the whole org.robolectric group from Google's read-through mirror of
+// Maven Central; the content filter keeps every other dependency on the
+// repositories declared in the root build. Strict sha256 verification in
+// gradle/verification-metadata.xml still applies to every artifact.
+repositories {
+    exclusiveContent {
+        forRepository {
+            maven {
+                url = uri('https://maven-central.storage-download.googleapis.com/maven2')
+            }
+        }
+        filter {
+            includeGroup('org.robolectric')
+        }
+    }
+}
+
+// One configuration per SDK: Gradle would otherwise resolve a single version
+// of the android-all-instrumented module for the whole configuration.
+configurations {
+    robolectricApi26
+    robolectricApi28
+    robolectricApi33
+    robolectricApi36
+}
+
+dependencies {
+    robolectricApi26 'org.robolectric:android-all-instrumented:8.0.0_r4-robolectric-r1-i7'
+    robolectricApi28 'org.robolectric:android-all-instrumented:9-robolectric-4913185-2-i7'
+    robolectricApi33 'org.robolectric:android-all-instrumented:13-robolectric-9030017-i7'
+    robolectricApi36 'org.robolectric:android-all-instrumented:16-robolectric-13921718-i7'
+}
+
+def robolectricSdkDir = layout.buildDirectory.dir('robolectric-android-all')
+
+tasks.register('prepareRobolectricAndroidAll', Copy) {
+    from configurations.robolectricApi26
+    from configurations.robolectricApi28
+    from configurations.robolectricApi33
+    from configurations.robolectricApi36
+    into robolectricSdkDir
+}
+
+tasks.withType(Test).configureEach {
+    dependsOn tasks.named('prepareRobolectricAndroidAll')
+    systemProperty 'robolectric.dependency.dir', robolectricSdkDir.get().asFile.absolutePath
+}
