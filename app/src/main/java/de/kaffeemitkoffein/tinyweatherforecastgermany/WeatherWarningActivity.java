@@ -46,6 +46,9 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.*;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.maplibre.android.MapLibre;
 import org.maplibre.android.WellKnownTileServer;
 import org.maplibre.android.camera.CameraPosition;
@@ -54,6 +57,12 @@ import org.maplibre.android.geometry.LatLng;
 import org.maplibre.android.maps.MapLibreMap;
 import org.maplibre.android.maps.MapView;
 import org.maplibre.android.maps.OnMapReadyCallback;
+import org.maplibre.android.maps.Style;
+import org.maplibre.android.style.expressions.Expression;
+import org.maplibre.android.style.layers.FillLayer;
+import org.maplibre.android.style.layers.LineLayer;
+import org.maplibre.android.style.layers.PropertyFactory;
+import org.maplibre.android.style.sources.GeoJsonSource;
 
 public class WeatherWarningActivity extends Activity {
 
@@ -80,6 +89,9 @@ public class WeatherWarningActivity extends Activity {
     // TASK-52: optional MapLibre vector basemap; the static map above remains the fallback.
     MapView mapLibreMapView;
     boolean useVectorMap;
+    // TASK-53: vector warning layers. The native map is only touched after its style loaded.
+    MapLibreMap mapLibreMap;
+    boolean vectorWarningStyleReady;
     RelativeLayout map_collapsed_container;
     LinearLayout warningactivityMapinfoContainer;
     boolean deviceIsLandscape;
@@ -118,6 +130,20 @@ public class WeatherWarningActivity extends Activity {
     public final static String SIS_ZOOMMAPSTATEBUNDLE="ZOOMMAPSTATEBUNDLE";
     public final static String SIS_HIDERAIN="HIDERAIN";
     public final static String SIS_HIDEADMIN="HIDEADMIN";
+
+    // TASK-53: stable ids for the vector warning GeoJSON sources and layers.
+    private final static String WARNING_SOURCE_ID="twfg-warning-polygons";
+    private final static String WARNING_FILL_LAYER_ID="twfg-warning-fill";
+    private final static String WARNING_LINE_LAYER_ID="twfg-warning-outline";
+    private final static String EXCLUDED_SOURCE_ID="twfg-excluded-polygons";
+    private final static String EXCLUDED_FILL_LAYER_ID="twfg-excluded-fill";
+    private final static String EXCLUDED_LINE_LAYER_ID="twfg-excluded-outline";
+    // Excluded areas are painted dark and dashed so they read differently from the
+    // coloured warning areas (which use the CAP AREA_COLOR via getWarningColor()).
+    private final static String EXCLUDED_FILL_COLOR="#424242";
+    private final static String EXCLUDED_LINE_COLOR="#000000";
+    private final static Float WARNING_FILL_OPACITY=0.45f;
+    private final static Float EXCLUDED_FILL_OPACITY=0.30f;
 
     public final static long CREDENTIALS_FADE_TIME_DELAY = 7000l;
 
@@ -392,6 +418,8 @@ public class WeatherWarningActivity extends Activity {
             mapLibreMapView.onDestroy();
             mapLibreMapView = null;
         }
+        mapLibreMap = null;
+        vectorWarningStyleReady = false;
         super.onDestroy();
         if (hintPopupWindow!=null){
             if (hintPopupWindow.isShowing()){
@@ -743,7 +771,12 @@ public class WeatherWarningActivity extends Activity {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                displayMap();
+                if (useVectorMap){
+                    // Same warning data as the legacy path, but rendered as GeoJSON layers.
+                    applyVectorWarningLayers();
+                } else {
+                    displayMap();
+                }
             }
         });
     }
@@ -1688,6 +1721,210 @@ public class WeatherWarningActivity extends Activity {
     }
 
     /**
+     * TASK-53: convert the parsed CAP polygons of the current warnings into GeoJSON and push
+     * them into MapLibre. Layers are only installed once the OpenFreeMap style is ready;
+     * before that the callback in {@link #setupVectorMap(Bundle)} installs the latest data.
+     * MapLibre parses the GeoJSON string itself - no external GeoJSON parser is involved.
+     */
+    private void applyVectorWarningLayers(){
+        if (!useVectorMap || mapLibreMap==null || !vectorWarningStyleReady){
+            return;
+        }
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (!useVectorMap || mapLibreMap==null || !vectorWarningStyleReady){
+                    return;
+                }
+                Style style;
+                try {
+                    style = mapLibreMap.getStyle();
+                } catch (Exception e){
+                    return;
+                }
+                if (style==null){
+                    return;
+                }
+                ArrayList<WeatherWarning> safeWarnings = WarningUiDataGuard.sanitized(weatherWarnings);
+                // Populate the tap cache from exactly the same data that is rendered, so a
+                // click resolves to the same warning row as on the legacy static map.
+                refreshVectorPolygonCaches(safeWarnings);
+                String warningGeoJson = WarningGeoJson.featureCollection(safeWarnings,false);
+                String excludedGeoJson = WarningGeoJson.featureCollection(safeWarnings,true);
+                GeoJsonSource warningSource = style.getSourceAs(WARNING_SOURCE_ID);
+                if (warningSource==null){
+                    warningSource = new GeoJsonSource(WARNING_SOURCE_ID,warningGeoJson);
+                    style.addSource(warningSource);
+                } else {
+                    warningSource.setGeoJson(warningGeoJson);
+                }
+                GeoJsonSource excludedSource = style.getSourceAs(EXCLUDED_SOURCE_ID);
+                if (excludedSource==null){
+                    excludedSource = new GeoJsonSource(EXCLUDED_SOURCE_ID,excludedGeoJson);
+                    style.addSource(excludedSource);
+                } else {
+                    excludedSource.setGeoJson(excludedGeoJson);
+                }
+                if (style.getLayer(WARNING_FILL_LAYER_ID)==null){
+                    FillLayer fill = new FillLayer(WARNING_FILL_LAYER_ID,WARNING_SOURCE_ID)
+                            .withProperties(
+                                    PropertyFactory.fillColor(Expression.get(WarningGeoJson.PROPERTY_COLOR)),
+                                    PropertyFactory.fillOpacity(WARNING_FILL_OPACITY));
+                    style.addLayer(fill);
+                }
+                if (style.getLayer(WARNING_LINE_LAYER_ID)==null){
+                    LineLayer outline = new LineLayer(WARNING_LINE_LAYER_ID,WARNING_SOURCE_ID)
+                            .withProperties(
+                                    PropertyFactory.lineColor(Expression.get(WarningGeoJson.PROPERTY_COLOR)),
+                                    PropertyFactory.lineWidth(2f));
+                    style.addLayer(outline);
+                }
+                if (style.getLayer(EXCLUDED_FILL_LAYER_ID)==null){
+                    FillLayer excludedFill = new FillLayer(EXCLUDED_FILL_LAYER_ID,EXCLUDED_SOURCE_ID)
+                            .withProperties(
+                                    PropertyFactory.fillColor(EXCLUDED_FILL_COLOR),
+                                    PropertyFactory.fillOpacity(EXCLUDED_FILL_OPACITY));
+                    style.addLayer(excludedFill);
+                }
+                if (style.getLayer(EXCLUDED_LINE_LAYER_ID)==null){
+                    LineLayer excludedOutline = new LineLayer(EXCLUDED_LINE_LAYER_ID,EXCLUDED_SOURCE_ID)
+                            .withProperties(
+                                    PropertyFactory.lineColor(EXCLUDED_LINE_COLOR),
+                                    PropertyFactory.lineWidth(2f),
+                                    PropertyFactory.lineDasharray(new Float[]{2f,1f}));
+                    style.addLayer(excludedOutline);
+                }
+            }
+        });
+    }
+
+    /** Rebuilds the caches used by {@link #checkForTapInPolygonWarning(float, float)}. */
+    private void refreshVectorPolygonCaches(ArrayList<WeatherWarning> warnings){
+        polygoncache = new ArrayList<Polygon>();
+        excluded_polygoncache = new ArrayList<Polygon>();
+        if (warnings==null){
+            return;
+        }
+        for (WeatherWarning warning : warnings){
+            if (warning==null){
+                continue;
+            }
+            if (warning.polygonlist==null){
+                warning.initPolygons(context);
+            }
+            if (warning.polygonlist!=null){
+                for (Polygon polygon : warning.polygonlist){
+                    if (polygon!=null){
+                        polygoncache.add(new Polygon(polygon.polygonX,polygon.polygonY,warning.identifier));
+                    }
+                }
+            }
+            if (warning.excluded_polygonlist!=null){
+                for (Polygon polygon : warning.excluded_polygonlist){
+                    if (polygon!=null){
+                        excluded_polygoncache.add(new Polygon(polygon.polygonX,polygon.polygonY,warning.identifier));
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * TASK-53: pure conversion from the parsed CAP polygon arrays to a GeoJSON
+     * FeatureCollection string. Kept free of MapLibre types so the geometry, colour and
+     * identifier mapping can be verified by a JVM unit test. MapLibre receives the string
+     * and parses it itself; this class never parses GeoJSON.
+     */
+    static final class WarningGeoJson {
+        static final String PROPERTY_IDENTIFIER="identifier";
+        static final String PROPERTY_COLOR="color";
+        private static final String TYPE="type";
+        private static final String FEATURE="Feature";
+        private static final String FEATURE_COLLECTION="FeatureCollection";
+        private static final String POLYGON="Polygon";
+        private static final String GEOMETRY="geometry";
+        private static final String PROPERTIES="properties";
+        private static final String COORDINATES="coordinates";
+        private static final String FEATURES="features";
+
+        private WarningGeoJson(){
+        }
+
+        /**
+         * @param excluded when true the excluded (cut-out) polygons are exported instead of
+         *                 the warning polygons, so they can use a distinct layer style.
+         */
+        static String featureCollection(ArrayList<WeatherWarning> warnings, boolean excluded){
+            try {
+                return buildFeatureCollection(warnings,excluded);
+            } catch (JSONException e){
+                // Never let malformed warning data break the map layer update.
+                return "{\"type\":\"FeatureCollection\",\"features\":[]}";
+            }
+        }
+
+        private static String buildFeatureCollection(ArrayList<WeatherWarning> warnings, boolean excluded) throws JSONException {
+            JSONArray features = new JSONArray();
+            if (warnings!=null){
+                for (WeatherWarning warning : warnings){
+                    if (warning==null){
+                        continue;
+                    }
+                    ArrayList<Polygon> polygons = excluded ? warning.excluded_polygonlist : warning.polygonlist;
+                    if (polygons==null){
+                        continue;
+                    }
+                    for (Polygon polygon : polygons){
+                        if ((polygon==null) || (polygon.polygonX==null) || (polygon.polygonY==null)){
+                            continue;
+                        }
+                        int vertexCount = Math.min(polygon.polygonX.length,polygon.polygonY.length);
+                        // A GeoJSON linear ring needs at least three distinct positions.
+                        if (vertexCount<3){
+                            continue;
+                        }
+                        JSONArray ring = new JSONArray();
+                        for (int i=0; i<vertexCount; i++){
+                            JSONArray coordinate = new JSONArray();
+                            // Polygon.polygonX is longitude, polygonY is latitude (see Polygon).
+                            coordinate.put((double) polygon.polygonX[i]);
+                            coordinate.put((double) polygon.polygonY[i]);
+                            ring.put(coordinate);
+                        }
+                        // GeoJSON requires the ring to be explicitly closed.
+                        JSONArray closing = new JSONArray();
+                        closing.put((double) polygon.polygonX[0]);
+                        closing.put((double) polygon.polygonY[0]);
+                        ring.put(closing);
+                        JSONArray coordinates = new JSONArray();
+                        coordinates.put(ring);
+                        JSONObject geometry = new JSONObject();
+                        geometry.put(TYPE,POLYGON);
+                        geometry.put(COORDINATES,coordinates);
+                        JSONObject properties = new JSONObject();
+                        properties.put(PROPERTY_IDENTIFIER,warning.identifier==null ? "" : warning.identifier);
+                        // CAP AREA_COLOR is exposed by getWarningColor() as an ARGB int.
+                        properties.put(PROPERTY_COLOR,colorToHex(warning.getWarningColor()));
+                        JSONObject feature = new JSONObject();
+                        feature.put(TYPE,FEATURE);
+                        feature.put(GEOMETRY,geometry);
+                        feature.put(PROPERTIES,properties);
+                        features.put(feature);
+                    }
+                }
+            }
+            JSONObject collection = new JSONObject();
+            collection.put(TYPE,FEATURE_COLLECTION);
+            collection.put(FEATURES,features);
+            return collection.toString();
+        }
+
+        private static String colorToHex(int argb){
+            return String.format(Locale.US,"#%06X",0xFFFFFF & argb);
+        }
+    }
+
+    /**
      * TASK-52: initialise the MapLibre MapView declared in both warning-map layouts.
      * The style is loaded from OpenFreeMap over HTTPS; the legacy static map is not touched.
      */
@@ -1706,8 +1943,30 @@ public class WeatherWarningActivity extends Activity {
                 if (map==null){
                     return;
                 }
+                mapLibreMap = map;
+                // TASK-53: keep the legacy tap-to-warning behaviour. The click coordinates
+                // are tested against the same parsed polygon cache the static map uses.
+                map.addOnMapClickListener(new MapLibreMap.OnMapClickListener() {
+                    @Override
+                    public boolean onMapClick(LatLng point){
+                        if ((!useVectorMap) || (point==null)){
+                            return false;
+                        }
+                        checkForTapInPolygonWarning((float) point.getLongitude(),(float) point.getLatitude());
+                        return true;
+                    }
+                });
                 try {
-                    map.setStyle(VectorMapConfig.OPENFREEMAP_STYLE_URL);
+                    // Style loading is asynchronous: warning sources/layers are added only
+                    // from the OnStyleLoaded callback, never from onMapReady itself.
+                    // Async counterpart of map.setStyle(VectorMapConfig.OPENFREEMAP_STYLE_URL).
+                    map.setStyle(VectorMapConfig.OPENFREEMAP_STYLE_URL,new Style.OnStyleLoaded() {
+                        @Override
+                        public void onStyleLoaded(Style style){
+                            vectorWarningStyleReady = true;
+                            applyVectorWarningLayers();
+                        }
+                    });
                     map.moveCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder()
                             .target(new LatLng(VectorMapConfig.DEFAULT_CENTER_LATITUDE,VectorMapConfig.DEFAULT_CENTER_LONGITUDE))
                             .zoom(VectorMapConfig.DEFAULT_ZOOM)
