@@ -96,6 +96,19 @@ public class SecureXmlParserTest {
     }
 
     @Test
+    public void dtdFixtureIsRejectedThroughReaderOverload() throws Exception {
+        // The reader overload buffers before delegating to parse(String); the DTD screen must
+        // still reject an external-entity attack (CodeQL alert #9, java/xxe).
+        try {
+            APIReaders.SecureXml.parse(new StringReader(fixture("external-entity.xml")));
+            fail("XXE fixture was accepted through the reader overload");
+        } catch (IOException expected) {
+            assertTrue("unexpected message: " + expected.getMessage(),
+                    expected.getMessage().contains("DOCTYPE"));
+        }
+    }
+
+    @Test
     public void hardenedParserFactoryRejectsDoctypeEvenWithoutThePreScreen() throws Exception {
         // Bypass the pre-screen to prove the factory itself is hardened.
         try {
@@ -253,6 +266,43 @@ public class SecureXmlParserTest {
         assertTrue(source.contains("SecureXml.parse(zipfile)"));
         assertTrue(source.contains("SecureXml.parse(new InputStreamReader(zipInputStream"));
         assertFalse("unhardened stream parse still present", source.contains("documentBuilder.parse(zipInputStream)"));
+    }
+
+    /**
+     * TASK-57: CodeQL's java/xxe query cannot follow the hardening through the
+     * setFeatureIfSupported() helper or see the DTD pre-screen, so the single flagged parse
+     * call carries a narrowly scoped suppression. Guard the marker's placement (the comment
+     * must be on the line directly above the alert) and the documented best-effort rationale,
+     * and make sure the fail-closed setFeature implementation from before TASK-47 stays gone.
+     */
+    @Test
+    public void xxeSuppressionIsNarrowAndDocumentsBestEffortHardening() throws IOException {
+        String source = readSource("src/main/java/de/kaffeemitkoffein/tinyweatherforecastgermany/APIReaders.java");
+        String[] lines = source.split("\\r?\\n");
+        int parseLine = -1;
+        for (int i = 0; i < lines.length; i++) {
+            if (lines[i].contains("return newSecureDocumentBuilder().parse(")) {
+                parseLine = i;
+                break;
+            }
+        }
+        assertTrue("hardened parse call not found", parseLine > 0);
+        assertTrue("codeql[java/xxe] must sit directly above the flagged parse call",
+                "// codeql[java/xxe]".equals(lines[parseLine - 1].trim()));
+        StringBuilder justification = new StringBuilder();
+        for (int i = Math.max(0, parseLine - 8); i < parseLine - 1; i++) {
+            justification.append(lines[i]).append('\n');
+        }
+        String note = justification.toString();
+        assertTrue("suppression must justify the builder hardening",
+                note.contains("newSecureDocumentBuilder()"));
+        assertTrue("suppression must mention the DTD pre-screen", note.contains("pre-screen"));
+        assertTrue("suppression must record why best-effort is required",
+                note.contains("best-effort") && note.contains("TASK-47"));
+        assertFalse("fail-closed setFeature implementation reintroduced",
+                source.contains("throw new ParserConfigurationException(\"XML parser cannot disable"));
+        assertTrue("setFeature stays best-effort",
+                source.contains("catch (ParserConfigurationException | IllegalArgumentException unsupported)"));
     }
 
     private static String readSource(String relativePath) throws IOException {
