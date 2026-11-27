@@ -38,13 +38,18 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;
+import java.net.ConnectException;
 import java.net.MalformedURLException;
+import java.net.SocketTimeoutException;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.concurrent.Executor;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.regex.Pattern;
 import java.util.zip.ZipInputStream;
@@ -240,10 +245,199 @@ public class APIReaders {
         }
     }
 
+    /**
+     * TASK-31: one HTTP configuration and one request path for every DWD download. All URLs
+     * reaching this class were built by HttpsUrl (https only, DWD allowlist); redirects are
+     * disabled so a response cannot move the request to an unvalidated host. Retries are
+     * bounded and use capped exponential backoff; a Cancellation can abort a running request.
+     *
+     * Pure Java on purpose: the configuration, backoff and retry logic is unit-testable.
+     */
+    public static final class Http {
+        public static final int CONNECT_TIMEOUT_MS = 10_000;
+        public static final int READ_TIMEOUT_MS = 20_000;
+        public static final int MAX_ATTEMPTS = 3;
+        public static final long BASE_BACKOFF_MS = 200L;
+        public static final long MAX_BACKOFF_MS = 2_000L;
+
+        private Http() {
+        }
+
+        /** Applies the central timeout/security settings to a fresh connection. */
+        public static void configure(HttpsURLConnection connection) {
+            connection.setConnectTimeout(CONNECT_TIMEOUT_MS);
+            connection.setReadTimeout(READ_TIMEOUT_MS);
+            connection.setUseCaches(false);
+            connection.setInstanceFollowRedirects(false);
+        }
+
+        public static HttpsURLConnection open(URL url) throws IOException {
+            if (url == null) {
+                throw new IOException("No URL to request");
+            }
+            if (!"https".equalsIgnoreCase(url.getProtocol())) {
+                throw new IOException("Only https URLs are allowed");
+            }
+            HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
+            configure(connection);
+            return connection;
+        }
+
+        /** Capped exponential backoff: 200 ms, 400 ms, ... never above MAX_BACKOFF_MS. */
+        public static long backoffDelayMs(int retry) {
+            if (retry <= 0) {
+                return 0;
+            }
+            long delay = BASE_BACKOFF_MS;
+            for (int i = 1; i < retry && delay < MAX_BACKOFF_MS; i++) {
+                delay = Math.min(delay * 2, MAX_BACKOFF_MS);
+            }
+            return delay;
+        }
+
+        private static boolean isRetryable(IOException e) {
+            return e instanceof SocketTimeoutException
+                    || e instanceof ConnectException
+                    || e instanceof UnknownHostException
+                    || e instanceof SSLException;
+        }
+
+        private static void throwIfCancelled(Cancellation cancellation) throws IOException {
+            if (cancellation != null && cancellation.isCancelled()) {
+                throw new IOException("Request cancelled");
+            }
+            if (Thread.currentThread().isInterrupted()) {
+                Thread.currentThread().interrupt();
+                throw new IOException("Request interrupted");
+            }
+        }
+
+        /** Bounded retry helper; also used by tests with a fake operation. */
+        public static <T> T withRetry(Callable<T> operation, Cancellation cancellation) throws IOException {
+            if (operation == null) {
+                throw new IOException("No request operation");
+            }
+            IOException last = null;
+            for (int attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+                throwIfCancelled(cancellation);
+                try {
+                    return operation.call();
+                } catch (IOException e) {
+                    last = e;
+                    if (!isRetryable(e)) {
+                        throw e;
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new IOException("Request interrupted", e);
+                } catch (Exception e) {
+                    throw new IOException("Request failed", e);
+                }
+                if (attempt + 1 < MAX_ATTEMPTS) {
+                    long delay = backoffDelayMs(attempt + 1);
+                    if (delay > 0) {
+                        try {
+                            Thread.sleep(delay);
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                            throw new IOException("Request interrupted during backoff", e);
+                        }
+                    }
+                }
+            }
+            throw last;
+        }
+
+        public static InputStream get(URL url) throws IOException {
+            return get(url, null);
+        }
+
+        /** The single download path: timeouts + bounded retries + cancellation. */
+        public static InputStream get(URL url, Cancellation cancellation) throws IOException {
+            return withRetry(() -> {
+                HttpsURLConnection connection = open(url);
+                if (cancellation != null) {
+                    cancellation.register(connection);
+                }
+                try {
+                    InputStream stream = new BufferedInputStream(connection.getInputStream());
+                    // Keep the connection registered until the caller closes the stream so
+                    // cancel() can disconnect a request that is already streaming.
+                    return new FilterInputStream(stream) {
+                        @Override
+                        public void close() throws IOException {
+                            try {
+                                super.close();
+                            } finally {
+                                if (cancellation != null) {
+                                    cancellation.unregister(connection);
+                                }
+                                connection.disconnect();
+                            }
+                        }
+                    };
+                } catch (IOException e) {
+                    if (cancellation != null) {
+                        cancellation.unregister(connection);
+                    }
+                    connection.disconnect();
+                    throw e;
+                }
+            }, cancellation);
+        }
+    }
+
+    /**
+     * Per-job cancellation token. Cancelling disconnects all currently open connections of
+     * that job and prevents further attempts; the network layer also honours thread interrupts
+     * so callers that stop an executor without a token still cancel in-flight requests.
+     */
+    public static final class Cancellation {
+        private final Set<HttpsURLConnection> active =
+                Collections.newSetFromMap(new ConcurrentHashMap<HttpsURLConnection, Boolean>());
+        private volatile boolean cancelled;
+
+        public boolean isCancelled() {
+            return cancelled;
+        }
+
+        public void cancel() {
+            cancelled = true;
+            for (HttpsURLConnection connection : active) {
+                try {
+                    connection.disconnect();
+                } catch (Exception ignored) {
+                    // Best effort: the timeout still bounds the request.
+                }
+            }
+            active.clear();
+        }
+
+        /** Reuse a static-token job for a new run after a previous cancellation. */
+        public void reset() {
+            cancel();
+            cancelled = false;
+        }
+
+        void register(HttpsURLConnection connection) throws IOException {
+            if (cancelled || Thread.currentThread().isInterrupted()) {
+                connection.disconnect();
+                throw new IOException("Request cancelled");
+            }
+            active.add(connection);
+        }
+
+        void unregister(HttpsURLConnection connection) {
+            active.remove(connection);
+        }
+    }
+
    public static class WeatherWarningsRunnable implements Runnable {
 
        public Context context;
        public Weather.WeatherLocation weatherLocation;
+
+       private final Cancellation cancellation = new Cancellation();
 
        // all polling times should be the same per poll to allow for logic checking if outdated
        private long pollingTime = Calendar.getInstance().getTimeInMillis();
@@ -251,6 +445,10 @@ public class APIReaders {
        public WeatherWarningsRunnable(Context context) {
            this.context = context;
            weatherLocation = WeatherSettings.getSetStationLocation(context);
+       }
+
+       public void cancel() {
+           cancellation.cancel();
        }
 
        public long getTimeStampFromString(String source){
@@ -472,8 +670,7 @@ public class APIReaders {
                    throw new IOException("Disallowed weather data host; not requesting warnings.");
                }
                URL url = new URL(urlString);
-               HttpsURLConnection httpsURLConnection = (HttpsURLConnection) url.openConnection();
-               return new BufferedInputStream(httpsURLConnection.getInputStream());
+               return Http.get(url, cancellation);
            } catch (MalformedURLException e){
                PrivateLog.log(context,PrivateLog.DATA,PrivateLog.ERR,"Malformed URL for DWD resource:"+e.getMessage());
                throw e;
@@ -562,6 +759,11 @@ public class APIReaders {
         private Context context;
         private ArrayList<Weather.WeatherLocation> weatherLocations;
         public boolean ssl_exception = false;
+        private final Cancellation cancellation = new Cancellation();
+
+        public void cancel() {
+            cancellation.cancel();
+        }
 
         private String[] seperateValues(String s){
             String[] resultarray = new String[Weather.DATA_SIZE];
@@ -606,8 +808,7 @@ public class APIReaders {
             InputStream inputStream = null;
             try {
                 URL url = new URL(basicUrl);
-                HttpsURLConnection httpsURLConnection = (HttpsURLConnection) url.openConnection();
-                inputStream = httpsURLConnection.getInputStream();
+                inputStream = Http.get(url, cancellation);
             } catch (MalformedURLException e){
                 return null;
             } catch (SSLException e) {
@@ -662,9 +863,7 @@ public class APIReaders {
             // PrivateLog.log(context,Tag.SERVICE2,"URL: "+weather_url);
             URL url = new URL(weather_url);
             try {
-                HttpsURLConnection httpsURLConnection = (HttpsURLConnection) url.openConnection();
-                InputStream inputStream = new BufferedInputStream(httpsURLConnection.getInputStream());
-                return inputStream;
+                return Http.get(url, cancellation);
             } catch (SSLException e){
                 ssl_exception = true;
                 PrivateLog.log(context,PrivateLog.DATA,PrivateLog.ERR,"Error: ssl connection could not be established, but http is not allowed.");
@@ -961,13 +1160,17 @@ public class APIReaders {
     public static class TextForecastRunnable implements Runnable {
 
         private Context context;
+        private final Cancellation cancellation = new Cancellation();
+
+        public void cancel() {
+            cancellation.cancel();
+        }
 
         private ArrayList<String> getTextFromUrl(String url_string){
             try {
                 // Text forecasts are always polled over TLS; a failed handshake fails the poll.
                 URL url = new URL(url_string);
-                HttpsURLConnection httpsURLConnection = (HttpsURLConnection) url.openConnection();
-                InputStream inputStream = new BufferedInputStream(httpsURLConnection.getInputStream());
+                InputStream inputStream = Http.get(url, cancellation);
                 BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.ISO_8859_1));
                 ArrayList<String> resultList = new ArrayList<String>();
                 String line = null;
@@ -1080,7 +1283,18 @@ public class APIReaders {
         int errors = 0;
         int threadsDone = 0;
 
+        private final Cancellation cancellation = new Cancellation();
+        private volatile ExecutorService executor;
+
         private final static int THREADS_USED = 24;
+
+        public void cancel() {
+            cancellation.cancel();
+            ExecutorService current = executor;
+            if (current != null) {
+                current.shutdownNow();
+            }
+        }
 
         public RadarMNSetGeoserverRunnable(Context context){
             this.context = context;
@@ -1161,9 +1375,7 @@ public class APIReaders {
         private InputStream getRadarInputStream(long time) throws IOException {
             URL url = getUrlStringForTime(time);
             try {
-                HttpsURLConnection httpsURLConnection = (HttpsURLConnection) url.openConnection();
-                InputStream inputStream = new BufferedInputStream(httpsURLConnection.getInputStream());
-                return inputStream;
+                return Http.get(url, cancellation);
             } catch (SSLException e){
                 ssl_exception = true;
                 PrivateLog.log(context,PrivateLog.DATA,PrivateLog.ERR,"Error: ssl connection could not be established, but http is not allowed.");
@@ -1237,6 +1449,9 @@ public class APIReaders {
         public void fetchRadarSet(int start, int stop){
             // data available for 2h with 5 min steps => 24 data sets at max
             for (int i=start; i<=stop; i++){
+                if (cancellation.isCancelled() || Thread.currentThread().isInterrupted()){
+                    return;
+                }
                 try {
                     putRadarMapToCache(getRadarInputStream(startTime+i*TIMESTEP_5MINUTES),i);
                     incrementProgress();
@@ -1278,7 +1493,8 @@ public class APIReaders {
             // need to delete if read is incomplete
             deleteCacheFiles(context);
             errors = 0;
-            Executor executor = Executors.newFixedThreadPool(4);
+            ExecutorService executor = Executors.newFixedThreadPool(4);
+            this.executor = executor;
             executor.execute(new Runnable() {
                 @Override
                 public void run() {
@@ -1313,7 +1529,8 @@ public class APIReaders {
             // need to delete if read is incomplete
             deleteCacheFiles(context);
             errors = 0;
-            Executor executor = Executors.newFixedThreadPool(THREADS_USED);
+            ExecutorService executor = Executors.newFixedThreadPool(THREADS_USED);
+            this.executor = executor;
             final int slidesPerThread = DATASET_SIZE / THREADS_USED;
             for (int i=0; i<THREADS_USED; i++){
                 final int thread = i;
@@ -1391,6 +1608,11 @@ public class APIReaders {
         public boolean ssl_exception = false;
         private boolean forceUpdate = false;
         private boolean alreadyToastedForbiddenUpdate = false;
+        private final Cancellation cancellation = new Cancellation();
+
+        public void cancel() {
+            cancellation.cancel();
+        }
 
         public getLayerImages(Context context, final ArrayList<WeatherLayer> layers){
             this.context = context;
@@ -1467,9 +1689,7 @@ public class APIReaders {
         public InputStream getLayerInputStream(WeatherLayer weatherLayer) throws IOException {
             URL url = getGeoServerURL(weatherLayer);
             try {
-                HttpsURLConnection httpsURLConnection = (HttpsURLConnection) url.openConnection();
-                InputStream inputStream = new BufferedInputStream(httpsURLConnection.getInputStream());
-                return inputStream;
+                return Http.get(url, cancellation);
             } catch (SSLException e){
                 ssl_exception = true;
                 PrivateLog.log(context,PrivateLog.DATA,PrivateLog.ERR,"Error: ssl connection could not be established, but http is not allowed.");
@@ -1560,9 +1780,14 @@ public class APIReaders {
     public static class PollenReader implements Runnable{
 
         private static Context context;
+        private static final Cancellation CANCELLATION = new Cancellation();
 
         public PollenReader(Context context){
             this.context = context;
+        }
+
+        public void cancel() {
+            CANCELLATION.cancel();
         }
 
         public static InputStream getPollenStream() {
@@ -1570,8 +1795,7 @@ public class APIReaders {
                     "/climate_environment/health/alerts/s31fg.json");
             try {
                 URL url = new URL(urlString);
-                HttpsURLConnection httpsURLConnection = (HttpsURLConnection) url.openConnection();
-                return httpsURLConnection.getInputStream();
+                return Http.get(url, CANCELLATION);
             } catch (MalformedURLException e){
                 PrivateLog.log(context,PrivateLog.UPDATER,PrivateLog.FATAL,"Malformed pollen url: "+e.getMessage());
             } catch (IOException e) {
@@ -1681,6 +1905,7 @@ public class APIReaders {
 
         @Override
         public void run() {
+            CANCELLATION.reset();
             onStart();
             onFinished(readPollenData());
         }
@@ -1689,9 +1914,14 @@ public class APIReaders {
     public static class PollenAreaReader implements Runnable {
 
         private static Context context;
+        private static final Cancellation CANCELLATION = new Cancellation();
 
         public PollenAreaReader(Context context) {
             this.context = context;
+        }
+
+        public void cancel() {
+            CANCELLATION.cancel();
         }
 
         public static InputStream getPollenAreaStream() {
@@ -1699,8 +1929,7 @@ public class APIReaders {
                     "/geoserver/dwd/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=dwd%3APollenfluggebiete&outputFormat=application%2Fjson");
             try {
                 URL url = new URL(urlString);
-                HttpsURLConnection httpsURLConnection = (HttpsURLConnection) url.openConnection();
-                return httpsURLConnection.getInputStream();
+                return Http.get(url, CANCELLATION);
             } catch (MalformedURLException e) {
                 PrivateLog.log(context, PrivateLog.UPDATER, PrivateLog.FATAL, "Malformed pollen area url: " + e.getMessage());
             } catch (IOException e) {
@@ -1780,6 +2009,7 @@ public class APIReaders {
 
         @Override
         public void run() {
+            CANCELLATION.reset();
             readPollenAreas();
             onFinished();
         }
@@ -1790,6 +2020,7 @@ public class APIReaders {
         private Context context;
         ArrayList<Areas.Area> areas;
         ContentResolver contentResolver;
+        private static final Cancellation CANCELLATION = new Cancellation();
 
         public WarnAreasReader(Context context){
             this.context = context;
@@ -1797,13 +2028,16 @@ public class APIReaders {
             this.contentResolver = context.getApplicationContext().getContentResolver();
         }
 
+        public void cancel() {
+            CANCELLATION.cancel();
+        }
+
         public static InputStream getAreaStream(Context context, String area) {
             String urlString = HttpsUrl.build("maps.dwd.de",
                     "/geoserver/dwd/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=dwd%3A"+area+"&outputFormat=application%2Fjson");
             try {
                 URL url = new URL(urlString);
-                HttpsURLConnection httpsURLConnection = (HttpsURLConnection) url.openConnection();
-                return httpsURLConnection.getInputStream();
+                return Http.get(url, CANCELLATION);
             } catch (MalformedURLException e) {
                 PrivateLog.log(context, PrivateLog.UPDATER, PrivateLog.FATAL, "Malformed pollen area url: " + e.getMessage());
             } catch (IOException e) {
@@ -1897,6 +2131,7 @@ public class APIReaders {
 
         @Override
         public void run() {
+            CANCELLATION.reset();
             doFile("Warngebiete_Binnenseen", Areas.Area.Type.BINNENSEE);
                 doFile("Warngebiete_Bundeslaender", Areas.Area.Type.BINNENSEE);
                 doFile("Warngebiete_Gemeinden", Areas.Area.Type.BINNENSEE);
@@ -1912,6 +2147,11 @@ public class APIReaders {
     private Context context;
     private Weather.WeatherLocation weatherLocation;
     private long[] timeArray;
+    private static final Cancellation CANCELLATION = new Cancellation();
+
+    public void cancel() {
+        CANCELLATION.cancel();
+    }
 
     public GetUvIndexForLocation(Context context, Weather.WeatherLocation weatherLocation, long[] timeArray){
         this.context = context;
@@ -1931,8 +2171,7 @@ public class APIReaders {
                     "/geoserver/dwd/wms?service=WMS&version=1.1.0&request=GetMap&layers=dwd%3AUVI_Global_"+WeatherSettings.getPrefUVHIMaindisplayType(context)+"&bbox="+x0+"%2C"+y0+"%2C"+x1+"%2C"+y1+"&"+timestring+"&width=1&height=1&srs=EPSG%3A4326&format=image%2Fpng");
             try {
                 URL url = new URL(urlString);
-                HttpsURLConnection httpsURLConnection = (HttpsURLConnection) url.openConnection();
-                return httpsURLConnection.getInputStream();
+                return Http.get(url, CANCELLATION);
             } catch (Exception e){
                 // do nothing
 
@@ -1958,6 +2197,7 @@ public class APIReaders {
 
         @Override
         public void run() {
+            CANCELLATION.reset();
             if ((timeArray!=null) && (WeatherSettings.UVHIfetchData(context))){
                 long[] timeResult = new long[timeArray.length];
                 int[] result = new int[timeArray.length];
