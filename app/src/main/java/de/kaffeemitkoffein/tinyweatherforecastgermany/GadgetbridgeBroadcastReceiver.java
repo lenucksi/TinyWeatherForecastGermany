@@ -42,19 +42,27 @@ public class GadgetbridgeBroadcastReceiver  extends BroadcastReceiver{
 
     @Override
     public void onReceive(final Context context, Intent intent) {
-        PrivateLog.log(context, PrivateLog.UPDATER, PrivateLog.INFO, "received a broadcast to update Gadgetbridge.");
-        if (intent != null) {
-            String action = intent.getAction();
-            if (intent.getAction().equals(UPDATE_ACTION)) {
-                if (WeatherSettings.useBackgroundLocation(context)){
-                    WeatherLocationManager.checkForBackgroundLocation(context);
-                }
-                if (WeatherSettings.serveGadgetBridge(context)){
-                    setNextGadgetbridgeUpdateAction(context);
-                }
-                GadgetbridgeAPI.sendWeatherBroadcastIfEnabled(context,null);
-            }
+        if (intent == null) {
+            return;
         }
+        /*
+         * This receiver has to stay exported because Gadgetbridge is a separate app and
+         * sends an implicit, package-targeted REQUEST_UPDATE broadcast. Accept only the
+         * exact action, and do no work at all for any other or absent action.
+         * The handler itself does not trigger a weather download: it only re-serves
+         * cached data, throttled by GadgetbridgeAPI to one update per 30 minutes.
+         */
+        if (!UPDATE_ACTION.equals(intent.getAction())) {
+            return;
+        }
+        PrivateLog.log(context, PrivateLog.UPDATER, PrivateLog.INFO, "received a broadcast to update Gadgetbridge.");
+        if (WeatherSettings.useBackgroundLocation(context)){
+            WeatherLocationManager.checkForBackgroundLocation(context);
+        }
+        if (WeatherSettings.serveGadgetBridge(context)){
+            setNextGadgetbridgeUpdateAction(context);
+        }
+        GadgetbridgeAPI.sendWeatherBroadcastIfEnabled(context,null);
     }
 
     private static long getNextGadgetbridgeUpdateTime(Context context){
