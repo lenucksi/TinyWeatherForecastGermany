@@ -43,6 +43,8 @@ public class WeatherSyncAdapter extends AbstractThreadedSyncAdapter {
     ContentResolver contentResolver;
     private Context context;
     public final static String EXTRAS_UPDATE_FLAG = "update_favorites";
+    /** Identifier carried by the explicit notification intent to the warning screen. */
+    public final static String EXTRA_WARNING_IDENTIFIER = "warning_identifier";
 
     public static class UpdateFlags {
         public static final int FLAG_UPDATE_DEFAULT = 0;
@@ -122,6 +124,13 @@ public class WeatherSyncAdapter extends AbstractThreadedSyncAdapter {
         return n;
     }
 
+    /**
+     * Builds the ACTION_SEND intent for an explicit, user-initiated share gesture (the share
+     * icon in the warning list). This intent is deliberately implicit so the system chooser
+     * can offer the user's preferred share targets. It must never be wrapped in a
+     * PendingIntent: a PendingIntent executes with this app's privileges and would let the
+     * receiving app redirect an implicit intent (CodeQL java/android/implicit-pendingintents).
+     */
     public static Intent getWarningIntent(Context context, WeatherWarning weatherWarning) {
         Intent intent = new Intent();
         intent.setAction(Intent.ACTION_SEND);
@@ -131,16 +140,32 @@ public class WeatherSyncAdapter extends AbstractThreadedSyncAdapter {
         return intent;
     }
 
+    /**
+     * Builds the explicit intent used when the user taps a warning notification. The
+     * destination is always this app's warning screen, so the intent cannot be intercepted
+     * or redirected to a third party. The warning identifier is passed along so the screen
+     * can show the event that triggered the notification.
+     */
+    public static Intent getWarningContentIntent(Context context, WeatherWarning weatherWarning) {
+        Intent intent = new Intent(context, WeatherWarningActivity.class);
+        intent.setPackage(context.getPackageName());
+        if (weatherWarning!=null){
+            intent.putExtra(EXTRA_WARNING_IDENTIFIER, weatherWarning.identifier);
+        }
+        return intent;
+    }
+
     @SuppressLint("UnspecifiedImmutableFlag")
     public static PendingIntent getWarningPendingIntent(Context context, WeatherWarning weatherWarning, int uniqueNotificationID) {
-        Intent intent = getWarningIntent(context, weatherWarning);
-        PendingIntent pendingIntent;
+        Intent intent = getWarningContentIntent(context, weatherWarning);
+        // Re-assert the explicit destination next to the PendingIntent sink; CodeQL treats
+        // setPackage on an intent as an explicit-intent sanitizer at this point.
+        intent.setPackage(context.getPackageName());
+        int flags = PendingIntent.FLAG_CANCEL_CURRENT;
         if (Build.VERSION.SDK_INT >= 23) {
-            pendingIntent = PendingIntent.getActivity(context, uniqueNotificationID, intent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_CANCEL_CURRENT);
-        } else {
-            pendingIntent = PendingIntent.getActivity(context, uniqueNotificationID, intent, PendingIntent.FLAG_CANCEL_CURRENT);
+            flags |= PendingIntent.FLAG_IMMUTABLE;
         }
-        return pendingIntent;
+        return PendingIntent.getActivity(context, uniqueNotificationID, intent, flags);
     }
 
     public static Notification getWarningNotification(Context context, NotificationManager notificationManager, WeatherWarning weatherWarning, String sortKey, int uniqueNotificationID) {
@@ -156,13 +181,9 @@ public class WeatherSyncAdapter extends AbstractThreadedSyncAdapter {
             nc.setShowBadge(true);
             notificationManager.createNotificationChannel(nc);
         }
-        Intent intent = new Intent(context, WeatherWarningActivity.class);
-        PendingIntent pendingIntent;
-        int flags = PendingIntent.FLAG_CANCEL_CURRENT;
-        if (Build.VERSION.SDK_INT >= 23) {
-            flags |= PendingIntent.FLAG_IMMUTABLE;
-        }
-        pendingIntent = PendingIntent.getActivity(context, uniqueNotificationID, intent, flags);
+        // Tapping the notification opens this app's warning screen. Use the audited helper
+        // so the wrapped intent is explicit and immutable on API 23+.
+        PendingIntent pendingIntent = getWarningPendingIntent(context, weatherWarning, uniqueNotificationID);
         Bitmap warningIconBitmap = BitmapFactory.decodeResource(context.getResources(), R.mipmap.warning_icon);
         Bitmap iconMutable = warningIconBitmap.copy(Bitmap.Config.ARGB_8888, true);
         ThemePicker.applyColor(iconMutable, weatherWarning.getWarningColor());
@@ -173,8 +194,9 @@ public class WeatherSyncAdapter extends AbstractThreadedSyncAdapter {
             expires = expires.replaceFirst(String.valueOf(expires.charAt(0)), String.valueOf(expires.charAt(0)).toUpperCase());
             notificationBody = notificationBody + " (" + expires + ".)";
         }
-        // construct pending intent for sharing
-        PendingIntent shareWarningPendingIntent = getWarningPendingIntent(context, weatherWarning, uniqueNotificationID);
+        // No share action is attached to the notification: an ACTION_SEND intent is implicit
+        // by design and must not be wrapped in a PendingIntent. Sharing stays available as
+        // an explicit user gesture from the warning list (see getWarningIntent).
         Notification n;
         Notification.Builder notificationBuilder;
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
@@ -195,10 +217,6 @@ public class WeatherSyncAdapter extends AbstractThreadedSyncAdapter {
                     .setWhen(weatherWarning.onset)
                     .setGroup(WARNING_NC_GROUP)
                     .setSortKey(sortKey);
-            // for api level 23 and above
-            Notification.Action.Builder actionBuilder = new Notification.Action.Builder(WeatherIcons.getIconResource(context, WeatherIcons.IC_SHARE), context.getResources().getString(R.string.logging_button_share), shareWarningPendingIntent);
-            Notification.Action notificationAction = actionBuilder.build();
-            notificationBuilder.addAction(notificationAction);
         } else {
             notificationBuilder
                     .setContentTitle(weatherWarning.headline)
@@ -207,14 +225,6 @@ public class WeatherSyncAdapter extends AbstractThreadedSyncAdapter {
                     .setContentIntent(pendingIntent)
                     .setShowWhen(true)
                     .setWhen(weatherWarning.onset);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                // for api level 23 and above
-                Notification.Action.Builder actionBuilder = new Notification.Action.Builder(WeatherIcons.getIconResource(context, WeatherIcons.IC_SHARE), context.getResources().getString(R.string.logging_button_share), shareWarningPendingIntent);
-                Notification.Action notificationAction = actionBuilder.build();
-                notificationBuilder.addAction(notificationAction);
-            } else {
-                notificationBuilder.addAction(WeatherIcons.getIconResource(context, WeatherIcons.IC_SHARE), context.getResources().getString(R.string.logging_button_share), shareWarningPendingIntent);
-            }
             if (WeatherSettings.LEDEnabled(context)) {
                 notificationBuilder.setLights(WeatherSettings.getLEDColor(context), 200, 1000);
             }
