@@ -79,5 +79,7 @@ android {
 }
 
 dependencies {
-
+    // Gadgetbridge's WeatherSpec (AGPLv3) uses androidx.annotation.Nullable,
+    // which has CLASS retention - javac only, no runtime dependency needed.
+    compileOnly 'androidx.annotation:annotation:1.9.1'
 }
