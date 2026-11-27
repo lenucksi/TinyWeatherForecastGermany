@@ -293,6 +293,42 @@
 
             </RelativeLayout>
 
+            <!-- TASK-52: optional MapLibre vector basemap. Only visible when the
+                 vector-map preference is enabled; the static map above stays intact. -->
+            <RelativeLayout
+                    android:id="@+id/warningactivity_maplibre_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_below="@id/warningactivity_mapinfo_container"
+                    android:layout_above="@id/warningactivity_rainsliderSeekbarContainer"
+                    android:visibility="gone">
+
+                <org.maplibre.android.maps.MapView
+                        android:id="@+id/warningactivity_maplibre"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:contentDescription="@string/a11y_warning_map"/>
+
+                <TextView
+                        android:id="@+id/warningactivity_maplibre_attribution"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentBottom="true"
+                        android:layout_alignParentRight="true"
+                        android:layout_marginRight="4dp"
+                        android:layout_marginBottom="4dp"
+                        android:paddingLeft="4dp"
+                        android:paddingRight="4dp"
+                        android:paddingTop="1dp"
+                        android:paddingBottom="1dp"
+                        android:background="@android:color/white"
+                        android:textColor="@android:color/black"
+                        android:textSize="10sp"
+                        android:text="@string/map_attribution_vector"
+                        android:visibility="gone"/>
+
+            </RelativeLayout>
+
         </RelativeLayout>
 
         <ListView android:id="@+id/warningactivity_listview"
