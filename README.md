@@ -53,6 +53,27 @@ Please note that the builds linked here are not signed by the F-Droid key, so yo
 
 For a detailed list of recent changes, see [the changelog](https://codeberg.org/Starfish/TinyWeatherForecastGermany/src/branch/master/CHANGELOG.md). 
 
+## Building
+
+Build with the bundled Gradle wrapper (e.g. `./gradlew :app:assembleDebug`). The
+toolchain versions are pinned as follows:
+
+| Component | Version | Rationale |
+| --- | --- | --- |
+| Android Gradle plugin (AGP) | 8.12.1 | 8.12 line supports API level 36 (`compileSdk`/`targetSdk` 36). |
+| Gradle (wrapper) | 8.13 | Minimum and default Gradle version for AGP 8.12; the previous pairing with Gradle 9.1 was unsupported. |
+| Java toolchain, source/target compatibility | 21 | Both compile options now match the toolchain; AGP 8.12 requires JDK 17 or newer to run. |
+
+Sources: [AGP 8.12 release notes](https://developer.android.com/build/releases/agp-8-12-0-release-notes)
+and [AGP/Gradle compatibility table](https://developer.android.com/build/releases/about-agp#update-gradle).
+
+Dependency verification is enabled via `gradle/verification-metadata.xml` (SHA-256
+checksums). Gradle verifies downloaded artifacts against it on every build; when
+dependencies change, regenerate the file with
+`./gradlew --write-verification-metadata sha256 :app:assembleDebug` and review the
+diff before committing. To make missing checksums a hard failure in CI, pass
+`-Dorg.gradle.dependency.verification=strict`.
+
 ## License
 
 Copyright (c) 2020, 2021, 2022, 2023, 2024, 2025 Pawel Dube

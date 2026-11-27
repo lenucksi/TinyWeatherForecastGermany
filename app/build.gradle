@@ -40,9 +40,10 @@ android {
         }
     }
 
+    // Keep source/target compatibility aligned with the Java 21 toolchain above.
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
 
     dependenciesInfo {
