@@ -262,6 +262,14 @@ public class APIReaders {
             if (containsDtdDeclaration(xml)) {
                 throw new IOException("DOCTYPE/ENTITY declarations are forbidden in DWD XML data");
             }
+            // Justification for the java/xxe suppression below: this builder is hardened in
+            // newSecureDocumentBuilder() (secure processing, disallow-doctype-decl, no external
+            // general/parameter entities, no external DTD and a no-op EntityResolver), and the
+            // DTD/ENTITY pre-screen above rejects a malicious document before this call. CodeQL
+            // cannot follow the hardening through the setFeatureIfSupported() helper or see the
+            // pre-screen. The feature calls stay best-effort on purpose: Android's parser rejects
+            // several JAXP features, and making them fatal regressed every DWD download in TASK-47.
+            // codeql[java/xxe]
             return newSecureDocumentBuilder().parse(new InputSource(new StringReader(xml)));
         }
 
