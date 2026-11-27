@@ -54,6 +54,7 @@ import org.maplibre.android.WellKnownTileServer;
 import org.maplibre.android.camera.CameraPosition;
 import org.maplibre.android.camera.CameraUpdateFactory;
 import org.maplibre.android.geometry.LatLng;
+import org.maplibre.android.geometry.LatLngQuad;
 import org.maplibre.android.maps.MapLibreMap;
 import org.maplibre.android.maps.MapView;
 import org.maplibre.android.maps.OnMapReadyCallback;
@@ -62,7 +63,9 @@ import org.maplibre.android.style.expressions.Expression;
 import org.maplibre.android.style.layers.FillLayer;
 import org.maplibre.android.style.layers.LineLayer;
 import org.maplibre.android.style.layers.PropertyFactory;
+import org.maplibre.android.style.layers.RasterLayer;
 import org.maplibre.android.style.sources.GeoJsonSource;
+import org.maplibre.android.style.sources.ImageSource;
 
 public class WeatherWarningActivity extends Activity {
 
@@ -144,6 +147,10 @@ public class WeatherWarningActivity extends Activity {
     private final static String EXCLUDED_LINE_COLOR="#000000";
     private final static Float WARNING_FILL_OPACITY=0.45f;
     private final static Float EXCLUDED_FILL_OPACITY=0.30f;
+    // TASK-54: one georeferenced ImageSource for all cached radar frames.
+    private final static String RADAR_SOURCE_ID="twfg-radar-imagesource";
+    private final static String RADAR_LAYER_ID="twfg-radar-raster";
+    private final static Float RADAR_RASTER_OPACITY=0.8f;
 
     public final static long CREDENTIALS_FADE_TIME_DELAY = 7000l;
 
@@ -259,29 +266,27 @@ public class WeatherWarningActivity extends Activity {
     };
 
     private synchronized void startRainRadar(){
-        // Radar slides are drawn on the static bitmap only (TASK-54 will overlay them on the vector map).
-        if (useVectorMap){
-            return;
-        }
         if (!hide_rain){
             if (!rainSlidesRunning){
-                // make sure not to start rain radar before views are created
-                germany.post(new Runnable() {
+                Runnable start = new Runnable() {
                     @Override
                     public void run() {
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                // make slider visible before rain radar starts
-                                if (rainsliderSeekbarContainer!=null){
-                                    updateRainSeekBar(0);
-                                    rainsliderSeekbarContainer.setVisibility(View.VISIBLE);
-                                }
-                            }
-                        });
+                        // make slider visible before rain radar starts
+                        if (rainsliderSeekbarContainer!=null){
+                            updateRainSeekBar(0);
+                            rainsliderSeekbarContainer.setVisibility(View.VISIBLE);
+                        }
                         new Thread(rainRadarRunnable).start();
                     }
-                });
+                };
+                if (useVectorMap){
+                    // The static ImageView is hidden in vector mode; post on the UI thread
+                    // instead of relying on a hidden view's handler.
+                    runOnUiThread(start);
+                } else {
+                    // Legacy path: make sure not to start before views are created.
+                    germany.post(start);
+                }
             }
         }
     }
@@ -385,11 +390,9 @@ public class WeatherWarningActivity extends Activity {
         }
         // at this point, do not cancel slides (anymore)
         cancelRainSlides = false;
-        // Radar slides and the precipitation legend are drawn on the static bitmap only.
-        // Starting the reader in vector mode would also try to measure the hidden SeekBar.
-        if (!useVectorMap){
-            scheduledExecutorService.execute(radarMNSetGeoserverRunnable);
-        }
+        // TASK-54: the frames are downloaded once for both map modes. The vector path only
+        // swaps already cached bitmaps into its ImageSource; its UI callbacks are guarded.
+        scheduledExecutorService.execute(radarMNSetGeoserverRunnable);
     }
 
     @Override
@@ -562,7 +565,14 @@ public class WeatherWarningActivity extends Activity {
             @Override
             public void onFinished(long startTime, boolean success){
                 super.onFinished(startTime,success);
+                rainSlidesStartTime = startTime;
                 if (useVectorMap){
+                    // Vector radar uses the same cached frames and the same timer; only the
+                    // drawing target differs (ImageSource.setImage instead of a bitmap).
+                    validSlideSetObtained = success;
+                    if (success){
+                        startRainRadar();
+                    }
                     return;
                 }
                 hideRainSlideProgressBar();
@@ -691,7 +701,7 @@ public class WeatherWarningActivity extends Activity {
                 hide_rain = true; hide_admin = true;
             }
             if (!hide_rain){
-                germany.post(new Runnable() {
+                runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         startRainRadar();
@@ -700,6 +710,9 @@ public class WeatherWarningActivity extends Activity {
             } else {
                 if (rainSlidesRunning){
                     cancelRainSlides=true;
+                }
+                if (useVectorMap){
+                    removeVectorRadarLayer();
                 }
             }
             drawMapBitmap();
@@ -971,6 +984,10 @@ public class WeatherWarningActivity extends Activity {
                     public void onProgressChanged(SeekBar seekBar, int i, boolean fromUser) {
                         if (fromUser){
                             nextRainSlide = Math.round((APIReaders.RadarMNSetGeoserverRunnable.DATASET_SIZE/100f)*i);
+                            if (useVectorMap){
+                                // Swap the cached bitmap immediately; no network request here.
+                                applyVectorRadarFrame(nextRainSlide);
+                            }
                         }
                     }
                     @Override
@@ -1013,6 +1030,14 @@ public class WeatherWarningActivity extends Activity {
     }
 
     private void drawRadarSlide(final int count){
+        if (useVectorMap){
+            // TASK-54: no static bitmap and no hand pixel corrections here; the raw cached
+            // PNG is georeferenced by the ImageSource LatLngQuad.
+            applyVectorRadarFrame(count);
+            updateRainSeekBar(count);
+            lastDrawnRainSlide=count;
+            return;
+        }
         if (APIReaders.RadarMNSetGeoserverRunnable.radarCacheFileValid(context,count)) {
             radarBitmap.eraseColor(Color.TRANSPARENT);
             Canvas radarCanvas = new Canvas(radarBitmap);
@@ -1925,6 +1950,95 @@ public class WeatherWarningActivity extends Activity {
     }
 
     /**
+     * TASK-54: exact DWD radar corners as a MapLibre LatLngQuad. LatLngQuad takes
+     * TOP-LEFT, TOP-RIGHT, BOTTOM-RIGHT, BOTTOM-LEFT (not lat/lon sorted pairs).
+     * No hand pixel correction is applied: the cached PNG is georeferenced directly.
+     */
+    static LatLngQuad radarLatLngQuad(){
+        double[] bounds = RadarMN2.getRadarVectorBounds();
+        return new LatLngQuad(
+                new LatLng(bounds[1],bounds[0]), // TL: west / north
+                new LatLng(bounds[1],bounds[2]), // TR: east / north
+                new LatLng(bounds[3],bounds[2]), // BR: east / south
+                new LatLng(bounds[3],bounds[0]));// BL: west / south
+    }
+
+    /**
+     * TASK-54: swap one cached radar frame into the single MapLibre ImageSource. The bitmap
+     * comes from the already-downloaded PNG (RadarMN2.getBitmap) - there is no network call
+     * per frame, and RadarMN2's legacy getXPixel/getYPixel corrections are not used here.
+     */
+    private void applyVectorRadarFrame(final int count){
+        if ((!useVectorMap) || (mapLibreMap==null) || (!vectorWarningStyleReady) || hide_rain){
+            return;
+        }
+        if (!APIReaders.RadarMNSetGeoserverRunnable.radarCacheFileValid(context,count)){
+            return;
+        }
+        final Bitmap bitmap = RadarMN2.getBitmap(context,count);
+        if (bitmap==null){
+            return;
+        }
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if ((!useVectorMap) || (mapLibreMap==null) || (!vectorWarningStyleReady) || hide_rain){
+                    return;
+                }
+                Style style;
+                try {
+                    style = mapLibreMap.getStyle();
+                } catch (Exception e){
+                    return;
+                }
+                if (style==null){
+                    return;
+                }
+                ImageSource source = style.getSourceAs(RADAR_SOURCE_ID);
+                if (source==null){
+                    source = new ImageSource(RADAR_SOURCE_ID,radarLatLngQuad(),bitmap);
+                    style.addSource(source);
+                } else {
+                    source.setImage(bitmap);
+                }
+                if (style.getLayer(RADAR_LAYER_ID)==null){
+                    RasterLayer raster = new RasterLayer(RADAR_LAYER_ID,RADAR_SOURCE_ID)
+                            .withProperties(
+                                    PropertyFactory.rasterOpacity(RADAR_RASTER_OPACITY),
+                                    PropertyFactory.rasterFadeDuration(0f));
+                    // Keep the coloured warning fills readable above the radar overlay.
+                    if (style.getLayer(WARNING_FILL_LAYER_ID)!=null){
+                        style.addLayerBelow(raster,WARNING_FILL_LAYER_ID);
+                    } else {
+                        style.addLayer(raster);
+                    }
+                }
+            }
+        });
+    }
+
+    /** Hides radar in vector mode when the user switches the rain layer off. */
+    private void removeVectorRadarLayer(){
+        if ((mapLibreMap==null) || (!vectorWarningStyleReady)){
+            return;
+        }
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Style style;
+                try {
+                    style = mapLibreMap.getStyle();
+                } catch (Exception e){
+                    return;
+                }
+                if (style!=null){
+                    style.removeLayer(RADAR_LAYER_ID);
+                }
+            }
+        });
+    }
+
+    /**
      * TASK-52: initialise the MapLibre MapView declared in both warning-map layouts.
      * The style is loaded from OpenFreeMap over HTTPS; the legacy static map is not touched.
      */
@@ -1965,6 +2079,9 @@ public class WeatherWarningActivity extends Activity {
                         public void onStyleLoaded(Style style){
                             vectorWarningStyleReady = true;
                             applyVectorWarningLayers();
+                            // TASK-54: install the radar source/layer from a cached frame if
+                            // one is already available; the timer updates it as frames arrive.
+                            applyVectorRadarFrame(nextRainSlide);
                         }
                     });
                     map.moveCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder()
