@@ -18,12 +18,14 @@
 -->
 
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
-    android:minWidth="285dp"
-    android:minResizeWidth="285dp"
+    android:minWidth="250dp"
+    android:minResizeWidth="180dp"
     android:minHeight="110dp"
-    android:minResizeHeight="53dp"
+    android:minResizeHeight="90dp"
+    android:maxResizeWidth="520dp"
+    android:maxResizeHeight="220dp"
     android:targetCellWidth="4"
-    android:targetCellHeight="1"
+    android:targetCellHeight="2"
     android:layout_height="match_parent"
     android:layout_width="match_parent"
     android:updatePeriodMillis="1800000"
@@ -35,8 +37,5 @@
     android:widgetCategory="home_screen">
 </appwidget-provider>
 
-<!--
-Removed max-size values:
-        android:maxResizeWidth="520dp"
-        android:maxResizeHeight="193dp"
--->
+<!-- TASK-26: two-cell default so the three text rows are not clipped;
+     min/max resize bounds match the supported layouts. -->

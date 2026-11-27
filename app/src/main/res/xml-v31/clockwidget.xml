@@ -18,11 +18,13 @@
 -->
 
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
-    android:minWidth="145dp"
-    android:minResizeWidth="145dp"
-    android:minHeight="100dp"
+    android:minWidth="200dp"
+    android:minResizeWidth="180dp"
+    android:minHeight="110dp"
     android:minResizeHeight="100dp"
-    android:targetCellWidth="3"
+    android:maxResizeWidth="520dp"
+    android:maxResizeHeight="360dp"
+    android:targetCellWidth="4"
     android:targetCellHeight="2"
     android:layout_height="match_parent"
     android:layout_width="match_parent"
@@ -35,8 +37,5 @@
     android:widgetCategory="home_screen">
 </appwidget-provider>
 
-        <!--
-            Intended grid size:
-                minimum: 3x2    => approx. 155 dp x 110 dp (with some safety margins)
-                proposed: 4x2
-         -->
+        <!-- TASK-26: 4x2 default matches the other widgets and leaves enough
+             room for clock plus weather rows at large font scales. -->

@@ -28,7 +28,7 @@
                android:layout_width="match_parent"
                android:layout_height="match_parent"/>
 
-    <TextView android:id="@+id/widget_reference_text"
+    <TextView android:id="@+id/widget_reference_text" android:ellipsize="end" android:maxLines="2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
@@ -42,7 +42,7 @@
         android:text="@string/dwd_notice_app"/>
 
     <TextClock
-        android:id="@+id/clockwidget_clock"
+        android:id="@+id/clockwidget_clock" android:ellipsize="end" android:maxLines="1"
         android:layout_width="match_parent"
         android:layout_gravity="center_horizontal|top"
         android:gravity="center_horizontal|top"
@@ -55,7 +55,7 @@
         android:textStyle="normal"
         android:textSize="@dimen/widget_textsize_clock"/>
 
-    <TextView android:id="@+id/widget_date"
+    <TextView android:id="@+id/widget_date" android:ellipsize="end" android:maxLines="1"
         android:textSize="@dimen/widget_textsize_large"
         android:textColor="@color/colorTextWidget"
         android:layout_below="@id/clockwidget_clock"
@@ -68,7 +68,7 @@
         android:layout_marginBottom="0dp"
         android:text="-"/>
 
-    <TextView android:id="@+id/widget_nextalarm"
+    <TextView android:id="@+id/widget_nextalarm" android:ellipsize="end" android:maxLines="1"
         android:textSize="@dimen/widget_textsize_large"
         android:textColor="@color/colorTextWidget"
         android:layout_below="@id/clockwidget_clock"
@@ -131,7 +131,7 @@
                            android:src="@mipmap/warning_icon"
                 />
 
-                <TextView android:id="@+id/widget_warningtext"
+                <TextView android:id="@+id/widget_warningtext" android:ellipsize="end" android:maxLines="2"
                           android:layout_width="match_parent"
                           android:layout_height="wrap_content"
                           android:textSize="@dimen/widget_textsize_medium"
@@ -153,7 +153,7 @@
             android:layout_gravity="left"
             android:src="@mipmap/not_available" />
 
-        <TextView android:id="@+id/classicwidget_temperature"
+        <TextView android:id="@+id/classicwidget_temperature" android:ellipsize="end" android:maxLines="1"
             android:textSize="@dimen/widget_textsize_double"
             android:textColor="@color/colorTextWidget"
             android:gravity="left"
@@ -167,7 +167,7 @@
             android:layout_marginRight="4dp"
             android:text="-°"/>
 
-        <TextView android:id="@+id/classicwidget_temperature_highlow"
+        <TextView android:id="@+id/classicwidget_temperature_highlow" android:ellipsize="end" android:maxLines="1"
             android:textSize="@dimen/widget_textsize_medium"
             android:textColor="@color/colorTextWidget"
             android:gravity="left"
@@ -178,7 +178,7 @@
             android:layout_height="wrap_content"
             android:text="-° | -°"/>
 
-        <TextView android:id="@+id/widget_pressure"
+        <TextView android:id="@+id/widget_pressure" android:ellipsize="end" android:maxLines="1"
                   android:textSize="@dimen/widget_textsize_medium"
                   android:textColor="@color/colorTextWidget"
                   android:layout_gravity="right"
@@ -197,7 +197,7 @@
                 android:layout_toRightOf="@id/classicwidget_temperature"/>
 
         <TextView
-                android:id="@+id/widget_rh_value"
+                android:id="@+id/widget_rh_value" android:ellipsize="end" android:maxLines="1"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textSize="@dimen/widget_textsize_medium"
@@ -222,7 +222,7 @@
                 android:layout_alignParentTop="true"
                 android:src="@mipmap/symbol_precipitation" />
 
-            <TextView android:id="@+id/widget_precipitation_text"
+            <TextView android:id="@+id/widget_precipitation_text" android:ellipsize="end" android:maxLines="1"
                 android:textSize="@dimen/widget_textsize_medium"
                 android:textColor="@color/colorTextWidget"
                 android:layout_width="wrap_content"
@@ -274,7 +274,7 @@
             </ImageView>
 
             <TextView
-                android:id="@+id/classicwidget_wind"
+                android:id="@+id/classicwidget_wind" android:ellipsize="end" android:maxLines="1"
                 android:textSize="@dimen/widget_textsize_medium"
                 android:textColor="@color/colorTextWidget"
                 android:gravity="left"
@@ -285,7 +285,7 @@
                 android:text="- (-)"/>
 
             <TextView
-                android:id="@+id/classicwidget_wind_unit"
+                android:id="@+id/classicwidget_wind_unit" android:ellipsize="end" android:maxLines="1"
                 android:textSize="@dimen/widget_textsize_small"
                 android:textColor="@color/colorTextWidget"
                 android:gravity="left"
@@ -315,7 +315,7 @@
             </ImageView>
 
             <TextView
-                android:id="@+id/widget_visibility_text"
+                android:id="@+id/widget_visibility_text" android:ellipsize="end" android:maxLines="1"
                 android:textSize="@dimen/widget_textsize_medium"
                 android:textColor="@color/colorTextWidget"
                 android:gravity="left"
@@ -326,7 +326,7 @@
                 android:text="-"/>
 
             <TextView
-                android:id="@+id/widget_visibility_probvalue"
+                android:id="@+id/widget_visibility_probvalue" android:ellipsize="end" android:maxLines="1"
                 android:textSize="@dimen/widget_textsize_medium"
                 android:textColor="@color/colorTextWidget"
                 android:gravity="left"
@@ -379,7 +379,7 @@
             </ImageView>
 
             <TextView
-                android:id="@+id/widget_temperature5cm_value"
+                android:id="@+id/widget_temperature5cm_value" android:ellipsize="end" android:maxLines="1"
                 android:textSize="@dimen/widget_textsize_medium"
                 android:textColor="@color/colorTextWidget"
                 android:gravity="left"
@@ -400,7 +400,7 @@
             </ImageView>
 
             <TextView
-                android:id="@+id/widget_clouds_value"
+                android:id="@+id/widget_clouds_value" android:ellipsize="end" android:maxLines="1"
                 android:textSize="@dimen/widget_textsize_medium"
                 android:textColor="@color/colorTextWidget"
                 android:gravity="left"
