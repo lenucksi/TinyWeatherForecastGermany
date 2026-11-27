@@ -41,8 +41,6 @@ import android.text.style.RelativeSizeSpan;
 import android.widget.SeekBar;
 import android.widget.Toast;
 
-import java.util.Locale;
-
 @SuppressWarnings("deprecation")
 public class Settings extends PreferenceActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
 
@@ -214,9 +212,9 @@ public class Settings extends PreferenceActivity implements SharedPreferences.On
                 if ((weatherUrl==null) || (weatherUrl.trim().isEmpty())){
                     WeatherSettings.setWeatherUrl(context,WeatherSettings.PREF_WEATHER_URL_DEFAULT);
                 } else {
-                    // trim prefix(es)
-                    weatherUrl = weatherUrl.toLowerCase(Locale.ROOT).replace("https://","")
-                            .replace("http://","");
+                    // Normalise the configured host to a bare host name. Requests always add
+                    // https:// themselves (see APIReaders.HttpsUrl); no cleartext scheme is kept.
+                    weatherUrl = APIReaders.HttpsUrl.normalizeHost(weatherUrl);
                     PrivateLog.log(context,PrivateLog.MAIN,PrivateLog.INFO,"Data url changed to: "+weatherUrl);
                     WeatherSettings.setWeatherUrl(context,weatherUrl);
                 }
@@ -298,20 +296,6 @@ public class Settings extends PreferenceActivity implements SharedPreferences.On
         }
     }
 
-
-    @SuppressWarnings("deprecation")
-    public void disableTLSOption() {
-        CheckBoxPreference checkBoxPreference = (CheckBoxPreference) findPreference(WeatherSettings.PREF_DISABLE_TLS);
-        if (checkBoxPreference != null) {
-            checkBoxPreference.setChecked(false);
-            checkBoxPreference.setEnabled(false);
-            checkBoxPreference.setShouldDisableView(true);
-            PreferenceScreen preferenceScreen = (PreferenceScreen) findPreference("PREF_screen_logging");
-            if (preferenceScreen != null) {
-                preferenceScreen.removePreference(checkBoxPreference);
-            }
-        }
-    }
 
     @SuppressWarnings("deprecation")
     public void setAlarmSettingAllowed() {
@@ -475,9 +459,6 @@ public class Settings extends PreferenceActivity implements SharedPreferences.On
         if (!WeatherSettings.appReleaseIsUserdebug()){
             disableLogCatLogging();
             //disableClearNotifications();
-        }
-        if (!WeatherSettings.isTLSdisabled(context)){
-            disableTLSOption();
         }
         if (WeatherSettings.getViewModel(context).equals(WeatherSettings.ViewModel.EXTENDED)){
             // do something

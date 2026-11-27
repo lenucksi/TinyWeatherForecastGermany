@@ -157,20 +157,15 @@ public class TextForecasts {
     }
 
     public static class TextForecastSource{
-        String webPath;
-        String webPathLegacy;
-        ArrayList<TextForecastFile> files;
+        final String webPath;
+        final ArrayList<TextForecastFile> files;
 
-        public TextForecastSource(String webPath, String webPathLegacy, ArrayList<TextForecastFile> files){
+        public TextForecastSource(String webPath, ArrayList<TextForecastFile> files){
             this.webPath = webPath;
-            this.webPathLegacy = webPathLegacy;
             this.files = files;
         }
 
-        public String getWebPath(Context context){
-            if (WeatherSettings.isTLSdisabled(context)){
-                return this.webPathLegacy;
-            }
+        public String getWebPath(){
             return this.webPath;
         }
 
@@ -248,12 +243,10 @@ public class TextForecasts {
     }
 
     public static ArrayList<TextForecastSource> getTextForecastSources(Context context){
-        final String TEXT_WEBPATH = "https://"+WeatherSettings.getWeatherUrl(context)+"/weather/text_forecasts/txt/";
-        final String TEXT_WEBPATH_LEGACY = "http://"+WeatherSettings.getWeatherUrl(context)+"/weather/text_forecasts/txt/";
-        final String MARITIME_WEBPATH_DE = "https://"+WeatherSettings.getWeatherUrl(context)+"/weather/maritime/forecast/german/";
-        final String MARITIME_WEBPATH_LEGACY_DE = "https://"+WeatherSettings.getWeatherUrl(context)+"/weather/maritime/forecast/german/";
-        final String MARITIME_WEBPATH_EN = "https://"+WeatherSettings.getWeatherUrl(context)+"/weather/maritime/forecast/english/";
-        final String MARITIME_WEBPATH_LEGACY_EN = "https://"+WeatherSettings.getWeatherUrl(context)+"/weather/maritime/forecast/english/";
+        final String weatherUrl = WeatherSettings.getWeatherUrl(context);
+        final String TEXT_WEBPATH = APIReaders.HttpsUrl.build(weatherUrl,"/weather/text_forecasts/txt/");
+        final String MARITIME_WEBPATH_DE = APIReaders.HttpsUrl.build(weatherUrl,"/weather/maritime/forecast/german/");
+        final String MARITIME_WEBPATH_EN = APIReaders.HttpsUrl.build(weatherUrl,"/weather/maritime/forecast/english/");
         ArrayList<TextForecastSource> resultList = new ArrayList<TextForecastSource>();
         // construct the features and common forecasts
         TextForecastFile common_feature = new TextForecastFile("FPDL",Type.FEATURE);
@@ -263,7 +256,7 @@ public class TextForecasts {
         common_files.add(common_feature);
         common_files.add(common_kurzfrist);
         common_files.add(common_mittelfrist);
-        TextForecastSource common = new TextForecastSource(TEXT_WEBPATH,TEXT_WEBPATH_LEGACY,common_files);
+        TextForecastSource common = new TextForecastSource(TEXT_WEBPATH,common_files);
         resultList.add(common);
         // construct the maritime forecasts
         TextForecastFile maritime_NordseeOstseeDE = new TextForecastFile("FQEN50_EDZW",Type.MARITIME_NORD_UND_OSTSEE); // german version
@@ -281,13 +274,13 @@ public class TextForecasts {
             maritime_files.add(maritime_NordseeOstseeDE);
             maritime_files.add(maritime_dNordseeOstseeDE);
             maritime_files.add(maritime_MittelmeerDE);
-            TextForecastSource maritime = new TextForecastSource(MARITIME_WEBPATH_DE,MARITIME_WEBPATH_LEGACY_DE,maritime_files);
+            TextForecastSource maritime = new TextForecastSource(MARITIME_WEBPATH_DE,maritime_files);
             resultList.add(maritime);
         } else {
             maritime_files.add(maritime_NordseeOstseeEN);
             maritime_files.add(maritime_dNordseeOstseeEN);
             maritime_files.add(maritime_MittelmeerEN);
-            TextForecastSource maritime = new TextForecastSource(MARITIME_WEBPATH_EN,MARITIME_WEBPATH_LEGACY_EN,maritime_files);
+            TextForecastSource maritime = new TextForecastSource(MARITIME_WEBPATH_EN,maritime_files);
             resultList.add(maritime);
         }
         return resultList;
