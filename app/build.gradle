@@ -57,6 +57,37 @@ android {
         buildConfig true
     }
 
+    testOptions {
+        // Robolectric builds its shadow runtime from the merged Android
+        // resources, so unit tests must see them (raw files, layouts, manifest).
+        unitTests.includeAndroidResources = true
+        // Robolectric 4.16 on JDK 21 reflects into bootstrap classes. Without
+        // these opens the tests fail with InaccessibleObjectException before
+        // any assertion runs (documented in Robolectric's JDK 17+ setup).
+        unitTests.all {
+            jvmArgs '--add-opens=java.base/java.lang=ALL-UNNAMED',
+                    '--add-opens=java.base/java.lang.invoke=ALL-UNNAMED',
+                    '--add-opens=java.base/java.lang.reflect=ALL-UNNAMED',
+                    '--add-opens=java.base/java.io=ALL-UNNAMED',
+                    '--add-opens=java.base/java.net=ALL-UNNAMED',
+                    '--add-opens=java.base/java.nio=ALL-UNNAMED',
+                    '--add-opens=java.base/java.util=ALL-UNNAMED',
+                    '--add-opens=java.base/java.util.concurrent=ALL-UNNAMED',
+                    '--add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED',
+                    '--add-opens=java.base/sun.nio.ch=ALL-UNNAMED',
+                    '--add-opens=java.base/sun.nio.cs=ALL-UNNAMED',
+                    '--add-opens=java.base/sun.security.action=ALL-UNNAMED',
+                    '--add-opens=java.base/sun.util.calendar=ALL-UNNAMED'
+        }
+    }
+
+    // TASK-16: the 439 pre-existing findings are frozen in this baseline.
+    // abortOnError stays on, so every *new* finding still fails lintDebug in CI.
+    lint {
+        baseline = file('lint-baseline.xml')
+        abortOnError = true
+    }
+
     buildTypes {
         release {
             minifyEnabled true
@@ -84,4 +115,20 @@ dependencies {
     // Gadgetbridge's WeatherSpec (AGPLv3) uses androidx.annotation.Nullable,
     // which has CLASS retention - javac only, no runtime dependency needed.
     compileOnly 'androidx.annotation:annotation:1.9.1'
+
+    // TASK-16: JVM test foundation. The presence of testImplementation also
+    // enables the (otherwise guarded) unit-test step in the CI workflow.
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.robolectric:robolectric:4.16'
+}
+
+// Robolectric 4.16 resolves AndroidX Test 3.7.0/1.8.0, whose manifests raise
+// minSdk to 21. This app still supports API 19 (TASK-14 is not merged), so the
+// unit-test manifest merge fails unless we pin the last minSdk-19 releases.
+// Scoped to test configurations; production dependencies are unaffected.
+configurations.matching { it.name.toLowerCase().contains('test') }.all {
+    resolutionStrategy {
+        force 'androidx.test:monitor:1.7.2'
+        force 'androidx.test.espresso:espresso-idling-resource:3.6.1'
+    }
 }
