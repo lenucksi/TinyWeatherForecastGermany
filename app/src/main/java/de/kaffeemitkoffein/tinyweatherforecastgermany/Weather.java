@@ -289,6 +289,12 @@ public final class Weather {
 
         public String getDescription(Context context){
             if ((hasAlternateDescription()) && ((this.description.contains("SWIS-PUNKT")) || (WeatherSettings.replaceByMunicipality(context)))){
+                // Stations saved by an older app version may still carry a misleading
+                // warning-cell name; the station-id override always wins (issue #306).
+                String mappedName = StationNameMapping.getDisplayName(this.name);
+                if (mappedName!=null){
+                    return mappedName;
+                }
                 if (this.description_alternate.equalsIgnoreCase("null")){
                     return this.description;
                 }

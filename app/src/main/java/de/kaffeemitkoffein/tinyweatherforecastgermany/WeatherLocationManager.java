@@ -363,6 +363,14 @@ public class WeatherLocationManager implements Application.ActivityLifecycleCall
     public static String getDescriptionAlternate(Context context, Weather.WeatherLocation weatherLocation) {
         String newDescriptionAlternate = null;
         if (weatherLocation != null) {
+            // Some stations lie in a warning cell whose name is misleading for the station
+            // (issue #306: L821 Wiesbaden-Auringen was labelled "Wiesbaden-Süd"). The
+            // authoritative station-id mapping wins over the warning-cell lookup.
+            String overriddenName = StationNameMapping.getDisplayName(weatherLocation.getName());
+            if (overriddenName != null) {
+                WeatherSettings.setDescriptionAlternate(context,overriddenName);
+                return overriddenName;
+            }
             int[] types = {Areas.Area.Type.GEMEINDE, Areas.Area.Type.SEE, Areas.Area.Type.KUESTE, Areas.Area.Type.BINNENSEE};
             ArrayList<Areas.Area> areas = Areas.getAreas(context,types);
             int i = 0;
