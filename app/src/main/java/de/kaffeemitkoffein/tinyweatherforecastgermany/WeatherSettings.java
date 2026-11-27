@@ -1809,7 +1809,22 @@ public class WeatherSettings {
         return sharedPreferences.getString(PREF_GADGETBRIDGE_PACKAGENAME,PREF_GADGETBRIDGE_PACKAGENAME_DEFAULT);
     }
 
+    /**
+     * Returns an allowlisted, normalised DWD host. Anything else (a stale install value, a
+     * restored preference, user input) falls back to the default so no derived URL can point
+     * at another host. See APIReaders.HttpsUrl for the single URL-construction seam.
+     */
     public static String getWeatherUrl(Context context){
+        SharedPreferences sharedPreferences = getSharedPreferences(context);
+        String stored = sharedPreferences.getString(PREF_WEATHER_URL,PREF_WEATHER_URL_DEFAULT);
+        String validated = APIReaders.HttpsUrl.validatedHost(stored);
+        return validated==null ? PREF_WEATHER_URL_DEFAULT : validated;
+    }
+
+    /**
+     * Raw stored value, only for validation feedback in Settings. Never use it to build URLs.
+     */
+    public static String getRawWeatherUrl(Context context){
         SharedPreferences sharedPreferences = getSharedPreferences(context);
         return sharedPreferences.getString(PREF_WEATHER_URL,PREF_WEATHER_URL_DEFAULT);
     }
