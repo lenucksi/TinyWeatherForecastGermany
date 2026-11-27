@@ -2,14 +2,20 @@
 
 Weather forecast with widgets for up to 10 days, based on open data from the Deutscher Wetterdienst (DWD).
 
-> **Note**
+> **Note from the original project**
 > This app will continue to be actively developed as soon as Android becomes an open platform again. Until then, it is unlikely that new features will be added.
+
+## About this fork
+
+This repository is a maintained fork of [Tiny Weather Forecast Germany](https://codeberg.org/Starfish/TinyWeatherForecastGermany), originally written by **Pawel Dube (Starfish)**. The fork exists because upstream maintenance has stalled: [upstream PR #309](https://codeberg.org/Starfish/TinyWeatherForecastGermany/pulls/309) was closed without being merged, with the maintainer dismissing the contribution as "likely ai-slop that will break things", and the upstream README states that development will not resume until "Android becomes an open platform again". This fork continues maintenance at <https://github.com/lenucksi/TinyWeatherForecastGermany>. All credit for the original code, design and translations remains with Pawel Dube and the upstream contributors.
+
+**Supported platform:** this fork is developed and tested for **Android 13 (API 33) and newer**. The `minSdkVersion` declared in `app/build.gradle` has not been raised yet (tracked separately), so older Android versions are not supported or tested.
 
 ## Features
 
 - weather forecast for up to 10 days for over 6000 locations worldwide
 - 100% based on open data (no api keys needed)
-- no ads, no tracking, no 3rd party libraries/dependencies
+- no ads, no tracking, no bundled runtime 3rd-party libraries
 - supports weather on wearables using GadgetBridge
 - weather warnings, rain radar and pollen count forecast for Germany
 - uv hazard index forecast
@@ -30,6 +36,10 @@ Tiny Weather Forecast Germany is available from the F-Droid main repository and 
 [<img src="https://kaffeemitkoffein.de/resources/fdroidButton.png" alt="Get it on F-Droid" height="80px">](https://f-droid.org/packages/de.kaffeemitkoffein.tinyweatherforecastgermany)
 
 [<img src="https://kaffeemitkoffein.de/resources/IzzyOnDroidButton.png" alt="Get it on F-Droid" height="80px">](https://apt.izzysoft.de/fdroid/index/apk/de.kaffeemitkoffein.tinyweatherforecastgermany)
+
+**Install this fork from F-Droid (planned repository):**
+
+Add <https://lenucksi.github.io/TinyWeatherForecastGermany/fdroid/repo/> in F-Droid under Settings → Repositories → + New Repository, then install this fork from that repository. It is hosted on GitHub Pages and uses a different signing key than the F-Droid, IzzyOnDroid and upstream builds, so uninstall any existing installation before switching.
 
 **Alternative sources:**
 
@@ -76,20 +86,27 @@ diff before committing. To make missing checksums a hard failure in CI, pass
 
 ## License
 
-Copyright (c) 2020, 2021, 2022, 2023, 2024, 2025 Pawel Dube
+**SPDX-License-Identifier: AGPL-3.0-or-later**
+
+Copyright (c) 2020-2025 Pawel Dube and the Tiny Weather Forecast Germany contributors.
+Fork modifications: Copyright (c) 2026 lenucksi and contributors.
 
 This program is free software: you can redistribute it and/or modify it
-under the terms of the GNU General Public License as published by the
+under the terms of the GNU Affero General Public License as published by the
 Free Software Foundation, either version 3 of the License, or (at
 your option) any later version.
 
 Tiny Weather Forecast Germany is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-General Public License for more details.
+Affero General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with Tiny Weather Forecast Germany. If not, see <http://www.gnu.org/licenses/>.
+You should have received a copy of the GNU Affero General Public License
+along with Tiny Weather Forecast Germany. If not, see <https://www.gnu.org/licenses/>.
+The full license text is in [COPYING](COPYING); vendored components are listed in [NOTICE](NOTICE).
+
+This fork uses AGPLv3-or-later consistently because the vendored Gadgetbridge
+`WeatherSpec` class is AGPLv3-or-later and is kept upstream-verbatim.
 
 ## Credits
 
@@ -102,10 +119,11 @@ licensed under the Apache 2.0 license.
 Data source: Deutscher Wetterdienst, own elements added, some data
 averaged over individual values. Weather warnings are abbreviated. Source for geo-data: Deutscher Wetterdienst.
 
-This program uses the WeatherSpec class of Gadgetbridge,
-Copyright (C) 2016-2020 Andreas Shimokawa, Carsten Pfeiffer,
-Daniele Gobbetti, licensed under the GNU AFFRERO GENERAL PUBLIC LICENSE,
-Version 3, 19 November 2007.
+This program uses the WeatherSpec class (v4, kept upstream-verbatim) of
+[Gadgetbridge](https://github.com/Freeyourgadget/Gadgetbridge),
+Copyright (C) 2016-2024 Andreas Shimokawa, Arjan Schrijver, beardhatcode,
+Carsten Pfeiffer, Daniele Gobbetti, Enrico Brambilla, José Rebelo, Taavi Eomäe,
+licensed under the GNU Affero General Public License, version 3 or later.
 
 This program uses PNPOLY - Point Inclusion in Polygon Test by W. Randolph Franklin (WRF), Copyright (c) 1970-2003, Wm. Randolph Franklin
 
@@ -505,7 +523,9 @@ After this initial setup, you are ready to access the system log.
 
 ## Contributing
 
-Please leave comments, bug reports, issues and feature requests at the app repository at [codeberg.org](https://codeberg.org/Starfish/TinyWeatherForecastGermany):
+For issues specific to **this fork**, please use <https://github.com/lenucksi/TinyWeatherForecastGermany/issues>.
+
+The original project and its community remain at [codeberg.org](https://codeberg.org/Starfish/TinyWeatherForecastGermany):
 
 <https://codeberg.org/Starfish/TinyWeatherForecastGermany>
 
