@@ -23,7 +23,6 @@ import android.app.ActivityManager;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
-import android.net.Uri;
 import android.os.Build;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -35,6 +34,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Locale;
+import java.util.regex.Pattern;
 
 public class PrivateLog {
     public final static String LOGHANDLE="tiwefoge";
@@ -65,6 +66,55 @@ public class PrivateLog {
     public static final int ERR  = 2;
     public static final int FATAL = 3;
 
+    /**
+     * Redaction is centralised here so every log producer benefits without having to remember
+     * to sanitise its own message. This nested class has no Android references on purpose:
+     * pure JVM tests can exercise it (see PrivateLogRedactionTest).
+     */
+    public static final class Redaction {
+        public static final String MASK = "[redacted]";
+
+        private static final Pattern GEO_URI = Pattern.compile("(?i)\\bgeo:[^\\s\"'<>]+");
+        private static final Pattern URL_WITH_SCHEME =
+                Pattern.compile("(?i)\\b[a-z][a-z0-9+.-]*://[^\\s\"'<>,;)]+");
+        private static final Pattern NAMED_COORDINATE =
+                Pattern.compile("(?i)\\b(lat(?:itude)?|lon(?:gitude)?|long)\\s*[:=]\\s*[-+]?\\d+(?:[.,]\\d+)?\\b");
+        private static final Pattern COORDINATE_PAIR =
+                Pattern.compile("(?<![\\d.,])([-+]?\\d{1,3}[.,]\\d{2,})\\s*[,;/\\-]?\\s*([-+]?\\d{1,3}[.,]\\d{2,})(?![\\d.,])");
+        private static final Pattern EMAIL =
+                Pattern.compile("(?i)\\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}\\b");
+
+        private Redaction() {
+        }
+
+        public static String redact(String message) {
+            return redact(message, null);
+        }
+
+        /** Removes geo URIs, coordinates, URLs, mail addresses and the configured data host. */
+        public static String redact(String message, String configuredHost) {
+            if (message == null) {
+                return null;
+            }
+            String result = GEO_URI.matcher(message).replaceAll(MASK);
+            result = URL_WITH_SCHEME.matcher(result).replaceAll(MASK);
+            result = NAMED_COORDINATE.matcher(result).replaceAll("$1=" + MASK);
+            result = COORDINATE_PAIR.matcher(result).replaceAll(MASK);
+            result = EMAIL.matcher(result).replaceAll(MASK);
+            if (configuredHost != null && !configuredHost.trim().isEmpty()) {
+                result = Pattern.compile(Pattern.quote(configuredHost.trim()), Pattern.CASE_INSENSITIVE)
+                        .matcher(result).replaceAll(MASK);
+            }
+            return result;
+        }
+
+        /** Logcat stays off in release builds, even if a user enabled the debug preference. */
+        public static boolean isLogcatAllowed(boolean debugBuild, String versionName) {
+            return debugBuild || (versionName != null
+                    && versionName.toLowerCase(Locale.ROOT).contains("debug"));
+        }
+    }
+
     public static String getLogs(Context context){
         try {
             FileInputStream fileInputStream = new FileInputStream(context.getFileStreamPath(LOGFILENAME));
@@ -77,7 +127,8 @@ public class PrivateLog {
                 stringBuilder.append(buffer,0,length);
             }
             fileInputStream.close();
-            return stringBuilder.toString();
+            // Sanitise on read as well: logs written by older versions may still be present.
+            return Redaction.redact(stringBuilder.toString(),WeatherSettings.getWeatherUrl(context));
         } catch (Exception e){
             return null;
         }
@@ -93,7 +144,7 @@ public class PrivateLog {
             String line;
             int length;
             while ((line = bufferedReader.readLine()) != null) {
-                logList.add(line);
+                logList.add(Redaction.redact(line,WeatherSettings.getWeatherUrl(context)));
             }
             fileInputStream.close();
             return logList;
@@ -111,8 +162,10 @@ public class PrivateLog {
 
     private static boolean log(Context context, String s){
         if (WeatherSettings.loggingEnabled(context)) {
-            if (WeatherSettings.loggingToLogcatEnabled(context)){
-                Log.v(LOGHANDLE,s);
+            String safeMessage = Redaction.redact(s,WeatherSettings.getWeatherUrl(context));
+            if (WeatherSettings.loggingToLogcatEnabled(context)
+                    && Redaction.isLogcatAllowed(BuildConfig.DEBUG,BuildConfig.VERSION_NAME)){
+                Log.v(LOGHANDLE,safeMessage);
             }
             File path = context.getFilesDir();
             File logfile = new File(path,LOGFILENAME);
@@ -133,9 +186,9 @@ public class PrivateLog {
             try {
                 Date date = Calendar.getInstance().getTime();
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss.SSS ");
-                s = sdf.format(date) + s + System.lineSeparator();
+                String line = sdf.format(date) + safeMessage + System.lineSeparator();
                 FileOutputStream fileOutputStream = context.openFileOutput(LOGFILENAME,Context.MODE_PRIVATE | Context.MODE_APPEND);
-                byte[] content = s.getBytes();
+                byte[] content = line.getBytes();
                 fileOutputStream.write(content);
                 fileOutputStream.flush();
                 fileOutputStream.close();
@@ -193,11 +246,6 @@ public class PrivateLog {
     public static boolean clearLogs(Context context){
         File file = new File(context.getFilesDir().getAbsolutePath(),LOGFILENAME);
         return file.delete();
-    }
-
-    public static Uri getLogUri(Context context){
-        File file = new File(context.getFilesDir().getAbsolutePath(),LOGFILENAME);
-        return Uri.parse(file.toString());
     }
 
     public static class AsyncGetLogs implements Runnable {

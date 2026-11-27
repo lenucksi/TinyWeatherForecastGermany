@@ -26,7 +26,6 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.net.Uri;
 import android.os.Bundle;
 import android.app.*;
 import android.text.Spannable;
@@ -263,11 +262,12 @@ public class LoggingActivity extends Activity {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
                 dialogInterface.dismiss();
-                Uri uri = PrivateLog.getLogUri(getApplicationContext());
                 Intent intent = new Intent();
                 intent.setAction(Intent.ACTION_SEND);
-                intent.putExtra(Intent.EXTRA_EMAIL, new String[]{"weather@kaffeemitkoffein.de"});
-                intent.setDataAndType(uri, "text/plain");
+                // Share the (redacted) text directly. A file:// or bare-path Uri would
+                // throw FileUriExposedException on modern Android; EXTRA_TEXT needs no
+                // FileProvider and works on API 33+.
+                intent.setType("text/plain");
                 String subject=getApplicationContext().getResources().getString(R.string.logging_title);
                 if (comment!=null){
                     String s = comment.getText().toString();
