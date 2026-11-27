@@ -9,7 +9,7 @@ Weather forecast with widgets for up to 10 days, based on open data from the Deu
 
 This repository is a maintained fork of [Tiny Weather Forecast Germany](https://codeberg.org/Starfish/TinyWeatherForecastGermany), originally written by **Pawel Dube (Starfish)**. The fork exists because upstream maintenance has stalled: [upstream PR #309](https://codeberg.org/Starfish/TinyWeatherForecastGermany/pulls/309) was closed without being merged, with the maintainer dismissing the contribution as "likely ai-slop that will break things", and the upstream README states that development will not resume until "Android becomes an open platform again". This fork continues maintenance at <https://github.com/lenucksi/TinyWeatherForecastGermany>. All credit for the original code, design and translations remains with Pawel Dube and the upstream contributors.
 
-**Supported platform:** this fork is developed and tested for **Android 13 (API 33) and newer**. The `minSdkVersion` declared in `app/build.gradle` has not been raised yet (tracked separately), so older Android versions are not supported or tested.
+**Supported platform:** this fork requires **Android 13 (API 33) or newer** — `minSdkVersion` is 33, while `targetSdkVersion` and `compileSdkVersion` remain 36. Devices running Android 12 (API 32) or older can no longer install this app; see [RELEASE_NOTES.md](RELEASE_NOTES.md).
 
 ## Features
 
@@ -39,7 +39,7 @@ Tiny Weather Forecast Germany is available from the F-Droid main repository and 
 
 **Install this fork from F-Droid (planned repository):**
 
-Add <https://lenucksi.github.io/TinyWeatherForecastGermany/fdroid/repo/> in F-Droid under Settings → Repositories → + New Repository, then install this fork from that repository. It is hosted on GitHub Pages and uses a different signing key than the F-Droid, IzzyOnDroid and upstream builds, so uninstall any existing installation before switching.
+Add <https://lenucksi.github.io/TinyWeatherForecastGermany/fdroid/repo/> in F-Droid under Settings → Repositories → + New Repository, then install this fork from that repository. The fork requires **Android 13 or newer**. It is hosted on GitHub Pages and uses a different signing key than the F-Droid, IzzyOnDroid and upstream builds, so uninstall any existing installation before switching.
 
 **Alternative sources:**
 
