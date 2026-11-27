@@ -1,0 +1,25 @@
+Tiny Weather Forecast Germany (fork)
+====================================
+
+This fork: https://github.com/lenucksi/TinyWeatherForecastGermany
+Upstream:  https://codeberg.org/Starfish/TinyWeatherForecastGermany
+
+Main license: AGPL-3.0-or-later (full text in COPYING).
+Copyright (c) 2020-2025 Pawel Dube and the upstream contributors.
+Fork modifications: Copyright (c) 2026 lenucksi and contributors.
+
+Vendored components and attribution:
+
+* WeatherSpec.java (Gadgetbridge, version 4, kept upstream-verbatim):
+  Copyright (C) 2016-2024 Andreas Shimokawa, Arjan Schrijver, beardhatcode,
+  Carsten Pfeiffer, Daniele Gobbetti, Enrico Brambilla, José Rebelo, Taavi Eomäe.
+  AGPL-3.0-or-later. https://github.com/Freeyourgadget/Gadgetbridge
+
+* PNPOLY - Point Inclusion in Polygon Test, W. Randolph Franklin.
+* Astronomy class, Helmut Lehmeyer (GPLv3-or-later).
+* Solarized Precision colors theme, Ethan Schoonover.
+* Material Design icons, Google Inc. (Apache-2.0).
+* Gradle wrapper, Gradle Inc. (Apache-2.0).
+
+Original notices for the components above are also kept in README.md.
+Weather data: Deutscher Wetterdienst (DWD). Map data: OpenStreetMap contributors.
