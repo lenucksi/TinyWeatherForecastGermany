@@ -24,6 +24,7 @@ import android.graphics.Color;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Locale;
+import java.util.Map;
 
 public class WeatherWarning implements Comparable<WeatherWarning> {
 
@@ -373,6 +374,115 @@ public class WeatherWarning implements Comparable<WeatherWarning> {
             }
         } else {
             return expires;
+        }
+    }
+
+    /**
+     * A warning whose applicable expiry has passed must never be announced again.
+     * The explicit "now" parameter keeps this decision testable.
+     */
+    public boolean isExpired(long now){
+        return getApplicableExpires() < now;
+    }
+
+    public boolean isExpired(){
+        return isExpired(Calendar.getInstance().getTimeInMillis());
+    }
+
+    /**
+     * Persisted announcement state for warning events (Codeberg #308).
+     *
+     * The legacy notification list in WeatherWarnings is cleared on boot and every 12 hours,
+     * which made already-announced warnings reappear with a new notification id. This state
+     * lives in the app's default SharedPreferences (WeatherSettings.getSharedPreferences)
+     * under keys defined here, so WeatherSettings.java and the boot receiver do not need changes:
+     *
+     *   key:   weather_warning_alert_state:&lt;event key&gt;
+     *   value: &lt;stable notification id&gt;:&lt;expiry in millis&gt;
+     *
+     * The event key is the CAP identifier (with a deterministic fallback when it is missing).
+     * Presence of an entry means "announced": a user who dismisses the notification does not
+     * get it again on the next start, and the stored id keeps later notifications stable.
+     */
+    public static final class AlertNotificationState {
+
+        public static final String PREF_KEY_PREFIX = "weather_warning_alert_state:";
+        public static final int INVALID_NOTIFICATION_ID = Integer.MIN_VALUE;
+        private static final String VALUE_SEPARATOR = ":";
+
+        private AlertNotificationState() {
+        }
+
+        public static String eventKey(WeatherWarning warning){
+            if ((warning.identifier!=null) && (warning.identifier.length()>0)){
+                return warning.identifier;
+            }
+            // Fallback for malformed CAP messages: still stable across app restarts.
+            return String.valueOf(warning.event)+VALUE_SEPARATOR+warning.sent+VALUE_SEPARATOR+warning.onset+VALUE_SEPARATOR+warning.effective;
+        }
+
+        public static String prefKey(WeatherWarning warning){
+            return PREF_KEY_PREFIX+eventKey(warning);
+        }
+
+        public static String encode(int notificationId, long expires){
+            return notificationId+VALUE_SEPARATOR+expires;
+        }
+
+        public static int notificationId(String encoded){
+            if (encoded==null){
+                return INVALID_NOTIFICATION_ID;
+            }
+            int separator = encoded.indexOf(VALUE_SEPARATOR);
+            if (separator<=0){
+                return INVALID_NOTIFICATION_ID;
+            }
+            try {
+                return Integer.parseInt(encoded.substring(0,separator));
+            } catch (NumberFormatException e){
+                return INVALID_NOTIFICATION_ID;
+            }
+        }
+
+        public static long expiry(String encoded){
+            if (encoded==null){
+                return 0;
+            }
+            int separator = encoded.indexOf(VALUE_SEPARATOR);
+            if ((separator<0) || (separator==encoded.length()-1)){
+                return 0;
+            }
+            try {
+                return Long.parseLong(encoded.substring(separator+1));
+            } catch (NumberFormatException e){
+                return 0;
+            }
+        }
+
+        /**
+         * Records an announcement without ever replacing an existing, valid entry.
+         */
+        public static void record(Map<String,String> state, WeatherWarning warning, int notificationId, long expires){
+            String key = prefKey(warning);
+            if ((!state.containsKey(key)) || (notificationId(state.get(key))==INVALID_NOTIFICATION_ID)){
+                state.put(key,encode(notificationId,expires));
+            }
+        }
+
+        public static boolean isExpired(WeatherWarning warning, long now){
+            return warning.isExpired(now);
+        }
+
+        /**
+         * True only for a warning that has not expired and has not been announced before.
+         * Corrupt state is treated like no state so it can be repaired with a stable id.
+         */
+        public static boolean shouldAnnounce(WeatherWarning warning, long now, Map<String,String> state){
+            if (isExpired(warning,now)){
+                return false;
+            }
+            String key = prefKey(warning);
+            return (!state.containsKey(key)) || (notificationId(state.get(key))==INVALID_NOTIFICATION_ID);
         }
     }
 
