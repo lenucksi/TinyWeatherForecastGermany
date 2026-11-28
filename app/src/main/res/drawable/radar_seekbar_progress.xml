@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  This file is part of TinyWeatherForecastGermany.
+
+  Copyright (c) 2026 Pawel Dube
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+-->
+<!-- TASK-70: a slim, theme-aware track instead of the wide default Holo bar. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@android:id/background">
+        <shape android:shape="rectangle">
+            <size android:height="4dp"/>
+            <solid android:color="?attr/colorPrimaryLight"/>
+        </shape>
+    </item>
+    <item android:id="@android:id/progress">
+        <clip android:clipOrientation="horizontal" android:gravity="left">
+            <shape android:shape="rectangle">
+                <size android:height="4dp"/>
+                <solid android:color="?attr/colorAccent"/>
+            </shape>
+        </clip>
+    </item>
+</layer-list>

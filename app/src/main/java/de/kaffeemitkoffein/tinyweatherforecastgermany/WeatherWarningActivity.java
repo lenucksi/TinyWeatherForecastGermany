@@ -69,6 +69,7 @@ import org.maplibre.android.maps.MapLibreMap;
 import org.maplibre.android.maps.MapView;
 import org.maplibre.android.maps.OnMapReadyCallback;
 import org.maplibre.android.maps.Style;
+import org.maplibre.android.maps.UiSettings;
 import org.maplibre.android.style.expressions.Expression;
 import org.maplibre.android.style.layers.FillLayer;
 import org.maplibre.android.style.layers.LineLayer;
@@ -140,6 +141,12 @@ public class WeatherWarningActivity extends Activity {
     RelativeLayout gpsProgressHolder;
     RelativeLayout rainsliderSeekbarContainer;
     SeekBar rainsliderSeekbar;
+    // TASK-70: timeline context and transport controls, all inside the SeekBar container.
+    TextView rainSlideFrame;
+    ImageButton radarPlayButton;
+    ImageButton radarStopButton;
+    ImageButton radarStepBackButton;
+    ImageButton radarStepForwardButton;
 
     Bundle zoomMapState = null;
 
@@ -233,11 +240,16 @@ public class WeatherWarningActivity extends Activity {
         }
     };
 
-    private int nextRainSlide = 0;
+    // TASK-70: the frame timer thread and the UI (SeekBar/transport buttons) both
+    // touch these flags, so they must be visible across threads.
+    private volatile int nextRainSlide = 0;
     private int lastDrawnRainSlide = 0;
     private long rainSlidesStartTime = 0;
-    private boolean cancelRainSlides = false;
-    private boolean rainSlidesRunning = false;
+    private volatile boolean cancelRainSlides = false;
+    private volatile boolean rainSlidesRunning = false;
+    // Pause suspends the 750 ms loop without tearing down the thread; STOP cancels it.
+    private volatile boolean rainSlidesPaused = false;
+    private volatile boolean keepTimelineAfterStop = false;
     private boolean validSlideSetObtained = false;
     public final static int RAINSLIDEDELAY=750;
 
@@ -261,6 +273,14 @@ public class WeatherWarningActivity extends Activity {
             android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
             nextRainSlide=0;
             rainSlidesRunning = true;
+            // The icon must show PAUSE as soon as the timer actually runs, not only
+            // when the (asynchronous) start runnable was posted.
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    refreshRadarTransportControls();
+                }
+            });
             // check if rain slider is visible and make it visible if necessary
             if (rainsliderSeekbarContainer!=null){
                 if (rainsliderSeekbarContainer.getVisibility()!=View.VISIBLE){
@@ -273,6 +293,16 @@ public class WeatherWarningActivity extends Activity {
                 }
             }
             while (!cancelRainSlides){
+                // TASK-70: pause keeps the timer thread alive but stops advancing frames.
+                // A pending STOP is still observed on the next iteration.
+                if (rainSlidesPaused){
+                    try {
+                        Thread.sleep(50);
+                    } catch (InterruptedException e) {
+                        // do nothing
+                    }
+                    continue;
+                }
                 long startTime = Calendar.getInstance().getTimeInMillis();
                 if (nextRainSlide<APIReaders.RadarMNSetGeoserverRunnable.DATASET_SIZE) {
                     rainDrawLock = true;
@@ -305,16 +335,23 @@ public class WeatherWarningActivity extends Activity {
                     }
                 }
             }
-            // make rain slider isvisible after slides stopped
+            // TASK-70: a user-requested STOP leaves the timeline visible so single
+            // frames can be stepped; automatic stops still hide it as before.
             if (rainsliderSeekbarContainer!=null){
+                final boolean keepVisible = keepTimelineAfterStop;
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        rainsliderSeekbarContainer.setVisibility(View.INVISIBLE);
+                        if (!keepVisible){
+                            rainsliderSeekbarContainer.setVisibility(View.INVISIBLE);
+                        }
+                        refreshRadarTransportControls();
                     }
                 });
             }
             rainSlidesRunning = false;
+            rainSlidesPaused = false;
+            keepTimelineAfterStop = false;
             cancelRainSlides = false;
         }
     };
@@ -324,14 +361,19 @@ public class WeatherWarningActivity extends Activity {
         // legacy static map so the two settings stay independent.
         if (radarEnabled()){
             if (!rainSlidesRunning){
+                // TASK-70: a fresh run always starts in the playing state.
+                rainSlidesPaused = false;
+                keepTimelineAfterStop = false;
                 Runnable start = new Runnable() {
                     @Override
                     public void run() {
                         // make slider visible before rain radar starts
                         if (rainsliderSeekbarContainer!=null){
                             updateRainSeekBar(0);
+                            updateRainFrameText();
                             rainsliderSeekbarContainer.setVisibility(View.VISIBLE);
                         }
+                        refreshRadarTransportControls();
                         new Thread(rainRadarRunnable).start();
                     }
                 };
@@ -622,6 +664,8 @@ public class WeatherWarningActivity extends Activity {
         rainSlideProgressBar = (ProgressBar) findViewById(R.id.warningactivity_rainslideprogressbar);
         rainSlideProgressBarText = (TextView) findViewById(R.id.warningactivity_rainslideprogressbartext);
         rainSlideTime = (TextView) findViewById(R.id.warningactivity_rainslidetime);
+        // TASK-70: wire the timeline caption and the play/stop/step transport row.
+        setupRainTimelineControls();
         /*
         rainSlideTime.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -1386,14 +1430,24 @@ public class WeatherWarningActivity extends Activity {
         Date rainSlideDate = new Date(rainSlidesStartTime+(nextRainSlide)*APIReaders.RadarMNSetGeoserverRunnable.TIMESTEP_5MINUTES);
         String radartime = simpleDateFormat.format(rainSlideDate);
         if (validSlideSetObtained) {
-            rainSlideTime.setTextColor(Color.WHITE);
+            // TASK-70: theme attributes instead of fixed white/yellow so the caption
+            // stays readable in light, dark and solarized themes.
+            rainSlideTime.setTextColor(resolveThemeColor(R.attr.colorText));
             if (Calendar.getInstance().getTimeInMillis() > rainSlidesStartTime + 1000*60*60*1.5f){
-                rainSlideTime.setTextColor(0xfffa7712);
+                rainSlideTime.setTextColor(resolveThemeColor(R.attr.colorAccentOrange));
             }
         } else {
-            rainSlideTime.setTextColor(Color.YELLOW);
+            rainSlideTime.setTextColor(resolveThemeColor(R.attr.colorAccentYellow));
         }
         rainSlideTime.setText(radartime);
+    }
+
+    private int resolveThemeColor(int attribute){
+        TypedValue value = new TypedValue();
+        if (getTheme().resolveAttribute(attribute,value,true)){
+            return value.data;
+        }
+        return Color.WHITE;
     }
 
     @SuppressLint("NewApi")
@@ -1536,7 +1590,13 @@ public class WeatherWarningActivity extends Activity {
                             if (useVectorMap){
                                 // Swap the cached bitmap immediately; no network request here.
                                 applyVectorRadarFrame(nextRainSlide);
+                            } else if ((!rainSlidesRunning) || (rainSlidesPaused)){
+                                // TASK-70: while paused/stopped the legacy timer will not
+                                // repaint, so show the dragged frame through the existing path.
+                                drawRadarSlide(nextRainSlide);
                             }
+                            updateRainFrameText();
+                            updateSlideTimeText();
                         }
                     }
                     @Override
@@ -1552,6 +1612,138 @@ public class WeatherWarningActivity extends Activity {
             int position = getSeekBarPosition(count);
             rainsliderSeekbar.setProgress(Math.round(position+SEEKBAR_PADDING));
         }
+    }
+
+    /* ------------------------------------------------------------------
+     * TASK-70: compact radar transport controls. All frame changes go through
+     * drawRadarSlide(), i.e. the existing applyVectorRadarFrame() / legacy bitmap
+     * paths. No new download is started from this UI.
+     * ------------------------------------------------------------------ */
+
+    private void setupRainTimelineControls(){
+        rainSlideFrame = (TextView) findViewById(R.id.warningactivity_rainslideframe);
+        radarPlayButton = (ImageButton) findViewById(R.id.warningactivity_radar_play);
+        radarStopButton = (ImageButton) findViewById(R.id.warningactivity_radar_stop);
+        radarStepBackButton = (ImageButton) findViewById(R.id.warningactivity_radar_step_back);
+        radarStepForwardButton = (ImageButton) findViewById(R.id.warningactivity_radar_step_forward);
+        if (radarPlayButton!=null){
+            radarPlayButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view){
+                    toggleRainSlides();
+                }
+            });
+        }
+        if (radarStopButton!=null){
+            radarStopButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view){
+                    stopAndResetRainSlides();
+                }
+            });
+        }
+        if (radarStepBackButton!=null){
+            radarStepBackButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view){
+                    stepRainSlide(-1);
+                }
+            });
+        }
+        if (radarStepForwardButton!=null){
+            radarStepForwardButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view){
+                    stepRainSlide(1);
+                }
+            });
+        }
+        refreshRadarTransportControls();
+    }
+
+    /** PLAY starts the existing timer; while it runs the same button becomes PAUSE. */
+    private void toggleRainSlides(){
+        if (!rainSlidesRunning){
+            startRainRadar();
+        } else {
+            rainSlidesPaused = !rainSlidesPaused;
+            refreshRadarTransportControls();
+        }
+    }
+
+    /** STOP cancels the timer and leaves frame 0 on screen with the timeline visible. */
+    private void stopAndResetRainSlides(){
+        if (rainSlidesRunning){
+            keepTimelineAfterStop = true;
+            rainSlidesPaused = false;
+            cancelRainSlides = true;
+        }
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run(){
+                jumpToRainSlide(0);
+                refreshRadarTransportControls();
+            }
+        });
+    }
+
+    /** A single frame step always pauses first so the timer cannot overwrite it. */
+    private void stepRainSlide(final int delta){
+        if (rainSlidesRunning){
+            rainSlidesPaused = true;
+        }
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run(){
+                jumpToRainSlide(nextRainSlide+delta);
+            }
+        });
+    }
+
+    /** Must be called on the UI thread; reuses the existing drawing and seekbar paths. */
+    private void jumpToRainSlide(final int frame){
+        int target = normalizeRainFrame(frame);
+        nextRainSlide = target;
+        if (BuildConfig.DEBUG){
+            android.util.Log.d("TWFG_MAP70","frame="+target+" running="+rainSlidesRunning+" paused="+rainSlidesPaused);
+        }
+        if (rainsliderSeekbarContainer!=null){
+            rainsliderSeekbarContainer.setVisibility(View.VISIBLE);
+        }
+        drawRadarSlide(target);
+        updateRainSeekBar(target);
+        updateSlideTimeText();
+        updateRainFrameText();
+        refreshRadarTransportControls();
+    }
+
+    /** Wraps a frame index into 0..DATASET_SIZE-1 (24 frames, 5 minutes apart). */
+    static int normalizeRainFrame(int frame){
+        int size = APIReaders.RadarMNSetGeoserverRunnable.DATASET_SIZE;
+        if (size<=0){
+            return 0;
+        }
+        int result = frame % size;
+        if (result<0){
+            result += size;
+        }
+        return result;
+    }
+
+    private void updateRainFrameText(){
+        if (rainSlideFrame!=null){
+            rainSlideFrame.setText(getString(R.string.radar_frame,nextRainSlide+1,
+                    APIReaders.RadarMNSetGeoserverRunnable.DATASET_SIZE));
+        }
+    }
+
+    private void refreshRadarTransportControls(){
+        if (radarPlayButton!=null){
+            boolean playing = rainSlidesRunning && !rainSlidesPaused;
+            radarPlayButton.setImageResource(playing?R.drawable.ic_radar_pause_24dp:R.drawable.ic_radar_play_24dp);
+            radarPlayButton.setContentDescription(getString(playing?R.string.a11y_radar_pause:R.string.a11y_radar_play));
+        }
+        updateRainFrameText();
     }
 
     private int getPrecipitationAtPinPoint(final int count, final Bitmap slideBitmap){
@@ -1584,6 +1776,9 @@ public class WeatherWarningActivity extends Activity {
             // PNG is georeferenced by the ImageSource LatLngQuad.
             applyVectorRadarFrame(count);
             updateRainSeekBar(count);
+            // TASK-70: the vector path used to leave the time caption stale; the legacy
+            // bitmap path updates it from drawMapBitmap().
+            updateSlideTimeText();
             lastDrawnRainSlide=count;
             return;
         }
@@ -2954,6 +3149,17 @@ public class WeatherWarningActivity extends Activity {
                     return;
                 }
                 mapLibreMap = map;
+                // TASK-70: MapLibre draws its wordmark and a circled "i" attribution
+                // button on top of each other in the bottom-left corner. Our own
+                // warningactivity_maplibre_attribution TextView carries all data
+                // credits (OpenFreeMap, OpenMapTiles, OpenStreetMap contributors)
+                // in both orientations, and the MapLibre BSD notice stays in NOTICE,
+                // so the duplicate native widgets can be switched off.
+                UiSettings uiSettings = map.getUiSettings();
+                if (uiSettings!=null){
+                    uiSettings.setLogoEnabled(false);
+                    uiSettings.setAttributionEnabled(false);
+                }
                 // TASK-53: keep the legacy tap-to-warning behaviour. The click coordinates
                 // are tested against the same parsed polygon cache the static map uses.
                 map.addOnMapClickListener(new MapLibreMap.OnMapClickListener() {

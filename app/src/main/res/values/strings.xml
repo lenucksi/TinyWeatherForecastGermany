@@ -623,4 +623,13 @@
     <string name="a11y_map_locate" tools:ignore="MissingTranslation">Zoom to my location</string>
     <string name="map_locate_device" tools:ignore="MissingTranslation">Map centred on your location.</string>
     <string name="map_locate_fallback" tools:ignore="MissingTranslation">No device location available; showing the configured station instead.</string>
+
+    <!-- TASK-70: radar timeline transport controls and frame context. -->
+    <string name="radar_frame" tools:ignore="MissingTranslation">Frame %1$d/%2$d</string>
+    <string name="a11y_radar_timeline" tools:ignore="MissingTranslation">Radar timeline, drag to choose a frame</string>
+    <string name="a11y_radar_play" tools:ignore="MissingTranslation">Play radar animation</string>
+    <string name="a11y_radar_pause" tools:ignore="MissingTranslation">Pause radar animation</string>
+    <string name="a11y_radar_stop" tools:ignore="MissingTranslation">Stop radar animation and reset to the first frame</string>
+    <string name="a11y_radar_step_back" tools:ignore="MissingTranslation">Previous radar frame</string>
+    <string name="a11y_radar_step_forward" tools:ignore="MissingTranslation">Next radar frame</string>
 </resources>
