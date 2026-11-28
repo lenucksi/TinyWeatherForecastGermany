@@ -198,7 +198,7 @@ configurations {
 }
 
 dependencies {
-    robolectricApi26 'org.robolectric:android-all-instrumented:8.0.0_r4-robolectric-r1-i7'
+    robolectricApi26 'org.robolectric:android-all-instrumented:8.1.0-robolectric-4611349-i7'
     robolectricApi28 'org.robolectric:android-all-instrumented:9-robolectric-4913185-2-i7'
     robolectricApi33 'org.robolectric:android-all-instrumented:13-robolectric-9030017-i7'
     robolectricApi36 'org.robolectric:android-all-instrumented:16-robolectric-13921718-i7'
