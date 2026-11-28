@@ -477,6 +477,29 @@ public class Settings extends PreferenceActivity implements SharedPreferences.On
     }
 
     @SuppressWarnings("deprecation")
+    /** TASK-89: reflect the persisted radar choices in the list preference summaries. */
+    private void updateRadarListSummaries(){
+        setRadarListSummary(WeatherSettings.PREF_RADAR_TIME_WINDOW,
+                WeatherSettings.getRadarTimeWindow(context));
+        setRadarListSummary(WeatherSettings.PREF_RADAR_PREFETCH_PROFILE,
+                WeatherSettings.getRadarPrefetchProfile(context));
+        setRadarListSummary(WeatherSettings.PREF_RADAR_PLAYBACK_START,
+                WeatherSettings.getRadarPlaybackStart(context));
+        setRadarListSummary(WeatherSettings.PREF_RADAR_OPACITY,
+                String.valueOf(WeatherSettings.getRadarOpacityPercent(context)));
+    }
+
+    private void setRadarListSummary(String key, String value){
+        ListPreference preference = (ListPreference) findPreference(key);
+        if (preference==null){
+            return;
+        }
+        int index = preference.findIndexOfValue(value);
+        CharSequence entry = (index>=0) && (preference.getEntries()!=null)
+                ? preference.getEntries()[index] : value;
+        preference.setSummary(String.format(getResources().getString(R.string.preference_radar_current_value),entry));
+    }
+
     private void updateValuesDisplay(){
         final PreferenceCategory preferenceCategoryGeneral = (PreferenceCategory) findPreference(WeatherSettings.PREF_CATEGORY_GENERAL);
         if (!WeatherSettings.appReleaseIsUserdebug()){
@@ -517,6 +540,8 @@ public class Settings extends PreferenceActivity implements SharedPreferences.On
         if (displayRotation!=null){
             displayRotation.setSummary(WeatherSettings.getDeviceRotationString(this));
         }
+        // TASK-89: show the stored radar choices; the loader reads them in TASK-90.
+        updateRadarListSummaries();
         Preference resetPreferences = (Preference) findPreference("PREF_reset");
         if (resetPreferences!=null){
             resetPreferences.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {

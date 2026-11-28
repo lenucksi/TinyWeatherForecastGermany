@@ -634,4 +634,70 @@
     <string name="a11y_radar_step_forward" tools:ignore="MissingTranslation">Next radar frame</string>
     <!-- TASK-87: honest state when the cache has no usable animation. -->
     <string name="radar_timeline_unavailable" tools:ignore="MissingTranslation">Radar unavailable – no animation</string>
+
+    <!-- TASK-89: radar settings. Consumed by Settings.java; the loader reads the stored
+         values in TASK-90. Other locales fall back to these English defaults. -->
+    <string name="preference_category_radar" tools:ignore="MissingTranslation">Radar</string>
+    <string name="preference_radar_use_mobile_data_title" tools:ignore="MissingTranslation">Load radar over mobile data</string>
+    <string name="preference_radar_use_mobile_data_summary" tools:ignore="MissingTranslation">Allow radar downloads on metered (mobile/5G) connections. Off by default; Wi-Fi is always allowed.</string>
+    <string name="preference_radar_time_window_title" tools:ignore="MissingTranslation">Radar time window</string>
+    <string name="preference_radar_time_window_summary" tools:ignore="MissingTranslation">How much radar history is available on the timeline.</string>
+    <string name="preference_radar_prefetch_profile_title" tools:ignore="MissingTranslation">Prefetch profile</string>
+    <string name="preference_radar_prefetch_profile_summary" tools:ignore="MissingTranslation">How many frames are loaded ahead of the current frame.</string>
+    <string name="preference_radar_playback_start_title" tools:ignore="MissingTranslation">Playback start</string>
+    <string name="preference_radar_playback_start_summary" tools:ignore="MissingTranslation">Frame at which the radar animation starts.</string>
+    <string name="preference_radar_layer_visible_title" tools:ignore="MissingTranslation">Radar layer visible</string>
+    <string name="preference_radar_layer_visible_summary" tools:ignore="MissingTranslation">Show the radar overlay on the map; same value as the layer selector.</string>
+    <string name="preference_radar_opacity_title" tools:ignore="MissingTranslation">Radar opacity</string>
+    <string name="preference_radar_opacity_summary" tools:ignore="MissingTranslation">Opacity of the radar overlay; lower values keep the basemap visible.</string>
+    <string name="preference_radar_current_value" tools:ignore="MissingTranslation">Current: %1$s</string>
+
+    <string-array name="radar_time_window_text" tools:ignore="MissingTranslation">
+        <item>2 hours</item>
+        <item>24 hours</item>
+        <item>Full DWD range (about 3.5 days)</item>
+    </string-array>
+    <string-array name="radar_time_window_values" tools:ignore="MissingTranslation">
+        <item>2h</item>
+        <item>24h</item>
+        <item>full</item>
+    </string-array>
+    <string-array name="radar_prefetch_profile_text" tools:ignore="MissingTranslation">
+        <item>Minimal</item>
+        <item>Balanced</item>
+        <item>Full</item>
+    </string-array>
+    <string-array name="radar_prefetch_profile_values" tools:ignore="MissingTranslation">
+        <item>minimal</item>
+        <item>balanced</item>
+        <item>full</item>
+    </string-array>
+    <string-array name="radar_playback_start_text" tools:ignore="MissingTranslation">
+        <item>Now</item>
+        <item>Oldest frame</item>
+        <item>+24 hours from now</item>
+        <item>00:00 of next day (UTC)</item>
+    </string-array>
+    <string-array name="radar_playback_start_values" tools:ignore="MissingTranslation">
+        <item>now</item>
+        <item>oldest</item>
+        <item>plus24h</item>
+        <item>next_midnight</item>
+    </string-array>
+    <!-- Percent signs cannot appear in ListPreference entries: the platform formats
+         summaries with String.format(), so a trailing '%' would crash on bind. -->
+    <string-array name="radar_opacity_text" tools:ignore="MissingTranslation">
+        <item>0 percent</item><item>5 percent</item><item>10 percent</item><item>15 percent</item><item>20 percent</item>
+        <item>25 percent</item><item>30 percent</item><item>35 percent</item><item>40 percent</item><item>45 percent</item>
+        <item>50 percent</item><item>55 percent</item><item>60 percent</item><item>65 percent</item><item>70 percent</item>
+        <item>75 percent</item><item>80 percent</item><item>85 percent</item><item>90 percent</item><item>95 percent</item>
+        <item>100 percent</item>
+    </string-array>
+    <string-array name="radar_opacity_values" tools:ignore="MissingTranslation">
+        <item>0</item><item>5</item><item>10</item><item>15</item><item>20</item>
+        <item>25</item><item>30</item><item>35</item><item>40</item><item>45</item>
+        <item>50</item><item>55</item><item>60</item><item>65</item><item>70</item>
+        <item>75</item><item>80</item><item>85</item><item>90</item><item>95</item>
+        <item>100</item>
+    </string-array>
 </resources>

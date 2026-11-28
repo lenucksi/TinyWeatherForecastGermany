@@ -617,4 +617,67 @@
     <string name="a11y_radar_step_forward">Nächstes Radar-Bild</string>
     <!-- TASK-87: ehrlicher Zustand ohne nutzbare Radar-Animation. -->
     <string name="radar_timeline_unavailable">Radar nicht verfügbar – keine Animation</string>
+
+    <!-- TASK-89: Radar-Einstellungen. -->
+    <string name="preference_category_radar">Radar</string>
+    <string name="preference_radar_use_mobile_data_title">Radar über Mobilfunk laden</string>
+    <string name="preference_radar_use_mobile_data_summary">Radar-Downloads über kostenpflichtige (Mobilfunk-/5G-)Verbindungen erlauben. Standardmäßig aus; WLAN ist immer erlaubt.</string>
+    <string name="preference_radar_time_window_title">Radar-Zeitfenster</string>
+    <string name="preference_radar_time_window_summary">Wie viel Radarvergangenheit die Zeitleiste bietet.</string>
+    <string name="preference_radar_prefetch_profile_title">Vorlade-Profil</string>
+    <string name="preference_radar_prefetch_profile_summary">Wie viele Bilder vor dem aktuellen Bild geladen werden.</string>
+    <string name="preference_radar_playback_start_title">Animationsstart</string>
+    <string name="preference_radar_playback_start_summary">Bild, mit dem die Radar-Animation startet.</string>
+    <string name="preference_radar_layer_visible_title">Radar-Ebene sichtbar</string>
+    <string name="preference_radar_layer_visible_summary">Radar-Overlay auf der Karte anzeigen; identisch mit dem Ebenen-Auswähler.</string>
+    <string name="preference_radar_opacity_title">Radar-Deckkraft</string>
+    <string name="preference_radar_opacity_summary">Deckkraft des Radar-Overlays; niedrigere Werte lassen die Basiskarte sichtbar.</string>
+    <string name="preference_radar_current_value">Aktuell: %1$s</string>
+
+    <string-array name="radar_time_window_text">
+        <item>2 Stunden</item>
+        <item>24 Stunden</item>
+        <item>Gesamter DWD-Zeitraum (ca. 3,5 Tage)</item>
+    </string-array>
+    <string-array name="radar_time_window_values">
+        <item>2h</item>
+        <item>24h</item>
+        <item>full</item>
+    </string-array>
+    <string-array name="radar_prefetch_profile_text">
+        <item>Minimal</item>
+        <item>Ausgewogen</item>
+        <item>Vollständig</item>
+    </string-array>
+    <string-array name="radar_prefetch_profile_values">
+        <item>minimal</item>
+        <item>balanced</item>
+        <item>full</item>
+    </string-array>
+    <string-array name="radar_playback_start_text">
+        <item>Jetzt</item>
+        <item>Ältestes Bild</item>
+        <item>+24 Stunden ab jetzt</item>
+        <item>00:00 des nächsten Tages (UTC)</item>
+    </string-array>
+    <string-array name="radar_playback_start_values">
+        <item>now</item>
+        <item>oldest</item>
+        <item>plus24h</item>
+        <item>next_midnight</item>
+    </string-array>
+    <string-array name="radar_opacity_text">
+        <item>0 Prozent</item><item>5 Prozent</item><item>10 Prozent</item><item>15 Prozent</item><item>20 Prozent</item>
+        <item>25 Prozent</item><item>30 Prozent</item><item>35 Prozent</item><item>40 Prozent</item><item>45 Prozent</item>
+        <item>50 Prozent</item><item>55 Prozent</item><item>60 Prozent</item><item>65 Prozent</item><item>70 Prozent</item>
+        <item>75 Prozent</item><item>80 Prozent</item><item>85 Prozent</item><item>90 Prozent</item><item>95 Prozent</item>
+        <item>100 Prozent</item>
+    </string-array>
+    <string-array name="radar_opacity_values">
+        <item>0</item><item>5</item><item>10</item><item>15</item><item>20</item>
+        <item>25</item><item>30</item><item>35</item><item>40</item><item>45</item>
+        <item>50</item><item>55</item><item>60</item><item>65</item><item>70</item>
+        <item>75</item><item>80</item><item>85</item><item>90</item><item>95</item>
+        <item>100</item>
+    </string-array>
 </resources>
