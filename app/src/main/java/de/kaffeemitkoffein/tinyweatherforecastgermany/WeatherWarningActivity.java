@@ -108,6 +108,11 @@ public class WeatherWarningActivity extends Activity {
     // TASK-55: vector-only station pin and wind-distance arcs.
     Marker vectorPinMarker;
     ArrayList<Polyline> vectorWindPolylines = new ArrayList<Polyline>();
+    // TASK-67: custom MapLibre navigation controls (MapLibre 13.8 has no zoom buttons).
+    View mapControls;
+    ImageButton mapZoomInButton;
+    ImageButton mapZoomOutButton;
+    ImageButton mapLocateButton;
     RelativeLayout map_collapsed_container;
     LinearLayout warningactivityMapinfoContainer;
     boolean deviceIsLandscape;
@@ -184,6 +189,9 @@ public class WeatherWarningActivity extends Activity {
     private final static String RADAR_SOURCE_ID="twfg-radar-imagesource";
     private final static String RADAR_LAYER_ID="twfg-radar-raster";
     private final static Float RADAR_RASTER_OPACITY=0.8f;
+    // TASK-67: zoom step for the custom buttons and the locate camera target level.
+    private final static double MAP_ZOOM_STEP=1d;
+    private final static double MAP_LOCATE_ZOOM=11d;
     // TASK-64: the legend reads the same data the layers render, so a change of a
     // warning/radar colour in the map code is reflected in the legend automatically.
     private final static int[] MAP_LEGEND_WARNING_COLORS=WeatherWarning.Severity.colors;
@@ -557,6 +565,9 @@ public class WeatherWarningActivity extends Activity {
         setContentView(R.layout.activity_weatherwarning);
         // TASK-52: pick the vector basemap or the legacy static map once per activity start.
         applyMapMode();
+        // TASK-67: re-attached on every creation, so rotation and style reloads keep the
+        // zoom/locate buttons alive. The controls themselves are vector-only views.
+        setupMapControls();
         if (useVectorMap){
             setupVectorMap(savedInstanceState);
         }
@@ -2988,6 +2999,8 @@ public class WeatherWarningActivity extends Activity {
     private void applyMapMode(){
         setVectorViewVisibility(R.id.warningactivity_maplibre_container,useVectorMap ? View.VISIBLE : View.GONE);
         setVectorViewVisibility(R.id.warningactivity_maplibre_attribution,useVectorMap ? View.VISIBLE : View.GONE);
+        // TASK-67: zoom/locate belong to the vector map only.
+        setVectorViewVisibility(R.id.warningactivity_map_controls,useVectorMap ? View.VISIBLE : View.GONE);
         if (useVectorMap){
             setVectorViewVisibility(R.id.warningactivity_map,View.GONE);
             setVectorViewVisibility(R.id.warningactivity_mapinfo_container,View.GONE);
@@ -3005,6 +3018,127 @@ public class WeatherWarningActivity extends Activity {
         if (view!=null){
             view.setVisibility(visibility);
         }
+    }
+
+    /**
+     * TASK-67: attach the three custom map controls. There is no native zoom UI in
+     * MapLibre Native 13.8 (UiSettings only exposes gestures/compass/attribution).
+     */
+    private void setupMapControls(){
+        mapControls = findViewById(R.id.warningactivity_map_controls);
+        mapZoomInButton = (ImageButton) findViewById(R.id.warningactivity_map_zoom_in);
+        mapZoomOutButton = (ImageButton) findViewById(R.id.warningactivity_map_zoom_out);
+        mapLocateButton = (ImageButton) findViewById(R.id.warningactivity_map_locate);
+        if (mapZoomInButton!=null){
+            mapZoomInButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view){
+                    changeVectorZoom(MAP_ZOOM_STEP);
+                }
+            });
+        }
+        if (mapZoomOutButton!=null){
+            mapZoomOutButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view){
+                    changeVectorZoom(-MAP_ZOOM_STEP);
+                }
+            });
+        }
+        if (mapLocateButton!=null){
+            mapLocateButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view){
+                    locateVectorMap();
+                }
+            });
+        }
+    }
+
+    /** Keeps a requested zoom inside the map's configured zoom range (order-independent). */
+    static double clampVectorZoom(double requestedZoom, double minZoom, double maxZoom){
+        double low = minZoom;
+        double high = maxZoom;
+        if (low>high){
+            double swap = low;
+            low = high;
+            high = swap;
+        }
+        return Math.max(low,Math.min(high,requestedZoom));
+    }
+
+    /** One +/- step, animated, honouring the native map's min/max zoom preferences. */
+    private void changeVectorZoom(double zoomDelta){
+        if ((!useVectorMap) || (mapLibreMap==null)){
+            return;
+        }
+        try {
+            double currentZoom = mapLibreMap.getZoom();
+            double targetZoom = clampVectorZoom(currentZoom+zoomDelta,mapLibreMap.getMinZoomLevel(),mapLibreMap.getMaxZoomLevel());
+            mapLibreMap.animateCamera(CameraUpdateFactory.zoomTo(targetZoom));
+            // Debug-only camera trace for emulator verification (stripped from release).
+            if (BuildConfig.DEBUG){
+                android.util.Log.d("TWFG_MAP67","zoom before="+currentZoom+" after="+targetZoom);
+            }
+            PrivateLog.log(context,PrivateLog.WARNINGS,PrivateLog.INFO,
+                    "TASK-67 vector zoom "+currentZoom+" -> "+targetZoom);
+        } catch (Exception e){
+            // Camera/native map not ready: fall back to the built-in relative updates.
+            try {
+                if (zoomDelta>0){
+                    mapLibreMap.animateCamera(CameraUpdateFactory.zoomIn());
+                } else {
+                    mapLibreMap.animateCamera(CameraUpdateFactory.zoomOut());
+                }
+            } catch (Exception ignored){
+                // A control tap must never take the activity down.
+            }
+        }
+    }
+
+    /** Google-Maps style locate: last known device position, station pin as fallback. */
+    private void locateVectorMap(){
+        if ((!useVectorMap) || (mapLibreMap==null)){
+            return;
+        }
+        Location deviceLocation = null;
+        if (WeatherLocationManager.hasLocationPermission(context)){
+            try {
+                deviceLocation = WeatherLocationManager.getLastKnownLocation(context);
+            } catch (Exception e){
+                deviceLocation = null;
+            }
+        }
+        LatLng target;
+        boolean stationFallback = false;
+        if (deviceLocation!=null){
+            target = new LatLng(deviceLocation.getLatitude(),deviceLocation.getLongitude());
+        } else {
+            Weather.WeatherLocation station = WeatherSettings.getSetStationLocation(context);
+            if (station==null){
+                target = new LatLng(VectorMapConfig.DEFAULT_CENTER_LATITUDE,VectorMapConfig.DEFAULT_CENTER_LONGITUDE);
+            } else {
+                target = new LatLng(station.latitude,station.longitude);
+            }
+            stationFallback = true;
+        }
+        double zoom = MAP_LOCATE_ZOOM;
+        try {
+            zoom = clampVectorZoom(zoom,mapLibreMap.getMinZoomLevel(),mapLibreMap.getMaxZoomLevel());
+        } catch (Exception ignored){
+            // Keep the default level if the native limits are unavailable yet.
+        }
+        mapLibreMap.animateCamera(CameraUpdateFactory.newLatLngZoom(target,zoom));
+        Toast.makeText(this,stationFallback?R.string.map_locate_fallback:R.string.map_locate_device,
+                Toast.LENGTH_SHORT).show();
+        // Debug-only camera trace for emulator verification (stripped from release).
+        if (BuildConfig.DEBUG){
+            android.util.Log.d("TWFG_MAP67","locate lat="+target.getLatitude()+" lon="+target.getLongitude()
+                    +" zoom="+zoom+" fallback="+stationFallback);
+        }
+        PrivateLog.log(context,PrivateLog.WARNINGS,PrivateLog.INFO,
+                "TASK-67 vector locate lat="+target.getLatitude()+" lon="+target.getLongitude()
+                        +" zoom="+zoom+" fallback="+stationFallback);
     }
 
     public void displayOsmNotice(){
