@@ -29,18 +29,27 @@
           android:orderInCategory="1">
     </item>
 
+    <!-- TASK-65: dedicated per-layer selector for the vector warning map. -->
+    <item android:id="@+id/map_layers"
+          android:title="@string/map_layers_title"
+          android:icon="?attr/ic_filter_list"
+          android:showAsAction="always"
+          android:orderInCategory="2">
+    </item>
+
+    <!-- Kept for the legacy static map; hidden in vector mode where map_layers takes over. -->
     <item android:id="@+id/hide_rain"
           android:title="@string/hide_rain"
           android:icon="?attr/ic_filter"
           android:showAsAction="always"
-          android:orderInCategory="2">
+          android:orderInCategory="3">
     </item>
 
     <item android:id="@+id/menu_refresh"
         android:title="@string/update_button"
         android:icon="?attr/ic_refresh"
         android:showAsAction="ifRoom"
-        android:orderInCategory="3">
+        android:orderInCategory="4">
     </item>
 
 </menu>

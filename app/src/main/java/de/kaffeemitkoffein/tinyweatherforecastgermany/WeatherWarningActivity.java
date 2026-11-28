@@ -63,6 +63,7 @@ import org.maplibre.android.annotations.PolylineOptions;
 import org.maplibre.android.camera.CameraPosition;
 import org.maplibre.android.camera.CameraUpdateFactory;
 import org.maplibre.android.geometry.LatLng;
+import org.maplibre.android.geometry.LatLngBounds;
 import org.maplibre.android.geometry.LatLngQuad;
 import org.maplibre.android.maps.MapLibreMap;
 import org.maplibre.android.maps.MapView;
@@ -118,6 +119,18 @@ public class WeatherWarningActivity extends Activity {
     ScheduledExecutorService scheduledExecutorService;
     boolean hide_rain = false;
     boolean hide_admin = true;
+    // TASK-65: vector layer switches. All default to on in WeatherSettings.
+    boolean showWarningPolygons = true;
+    boolean showExcludedAreas = true;
+    boolean showRadarLayer = true;
+    boolean showWindArcs = true;
+    boolean showStationPin = true;
+    boolean[] layerChoices = new boolean[]{true,true,true,true,true};
+    AlertDialog layerDialog;
+    boolean restoreLayerDialogOnResume = false;
+    // Notification deep link: consumed once warnings/style are ready, restored on rotation.
+    String pendingWarningIdentifier;
+    boolean pendingWarningJumpDone = false;
     WeatherLocationManager weatherLocationManager;
     RelativeLayout gpsProgressHolder;
     RelativeLayout rainsliderSeekbarContainer;
@@ -145,6 +158,14 @@ public class WeatherWarningActivity extends Activity {
     public final static String SIS_ZOOMMAPSTATEBUNDLE="ZOOMMAPSTATEBUNDLE";
     public final static String SIS_HIDERAIN="HIDERAIN";
     public final static String SIS_HIDEADMIN="HIDEADMIN";
+    // TASK-65: popup/storage state survives rotation independently of the map preference.
+    public final static String SIS_MAP_LAYER_WARNINGS="MAP_LAYER_WARNINGS";
+    public final static String SIS_MAP_LAYER_EXCLUDED="MAP_LAYER_EXCLUDED";
+    public final static String SIS_MAP_LAYER_RADAR="MAP_LAYER_RADAR";
+    public final static String SIS_MAP_LAYER_WIND="MAP_LAYER_WIND";
+    public final static String SIS_MAP_LAYER_PIN="MAP_LAYER_PIN";
+    public final static String SIS_MAP_LAYER_DIALOG_OPEN="MAP_LAYER_DIALOG_OPEN";
+    public final static String SIS_PENDING_WARNING_IDENTIFIER="PENDING_WARNING_IDENTIFIER";
 
     // TASK-53: stable ids for the vector warning GeoJSON sources and layers.
     private final static String WARNING_SOURCE_ID="twfg-warning-polygons";
@@ -291,7 +312,9 @@ public class WeatherWarningActivity extends Activity {
     };
 
     private synchronized void startRainRadar(){
-        if (!hide_rain){
+        // In vector mode the layer switch owns radar visibility; leave hide_rain to the
+        // legacy static map so the two settings stay independent.
+        if (radarEnabled()){
             if (!rainSlidesRunning){
                 Runnable start = new Runnable() {
                     @Override
@@ -339,6 +362,13 @@ public class WeatherWarningActivity extends Activity {
         }
         state.putBoolean(SIS_HIDERAIN,hide_rain);
         state.putBoolean(SIS_HIDEADMIN,hide_admin);
+        state.putBoolean(SIS_MAP_LAYER_WARNINGS,showWarningPolygons);
+        state.putBoolean(SIS_MAP_LAYER_EXCLUDED,showExcludedAreas);
+        state.putBoolean(SIS_MAP_LAYER_RADAR,showRadarLayer);
+        state.putBoolean(SIS_MAP_LAYER_WIND,showWindArcs);
+        state.putBoolean(SIS_MAP_LAYER_PIN,showStationPin);
+        state.putBoolean(SIS_MAP_LAYER_DIALOG_OPEN,layerDialog!=null && layerDialog.isShowing());
+        state.putString(SIS_PENDING_WARNING_IDENTIFIER,pendingWarningIdentifier);
         // TASK-52: MapView needs the saved state to restore its camera/native map.
         if (useVectorMap && mapLibreMapView!=null){
             mapLibreMapView.onSaveInstanceState(state);
@@ -349,7 +379,29 @@ public class WeatherWarningActivity extends Activity {
     @Override
     protected void onRestoreInstanceState(Bundle state){
         super.onRestoreInstanceState(state);
-        // do nothing here for the moment
+        restoreLayerState(state);
+        pendingWarningIdentifier = state.getString(SIS_PENDING_WARNING_IDENTIFIER,null);
+        // Re-opening the dialog here would leak the pre-rotation window; do it in onResume.
+        restoreLayerDialogOnResume = state.getBoolean(SIS_MAP_LAYER_DIALOG_OPEN,false);
+    }
+
+    /** Reads the persisted layer switches (or their rotated activity state) once per start. */
+    private void restoreLayerState(Bundle state){
+        showWarningPolygons = state!=null ? state.getBoolean(SIS_MAP_LAYER_WARNINGS,WeatherSettings.showMapLayerWarnings(context))
+                : WeatherSettings.showMapLayerWarnings(context);
+        showExcludedAreas = state!=null ? state.getBoolean(SIS_MAP_LAYER_EXCLUDED,WeatherSettings.showMapLayerExcluded(context))
+                : WeatherSettings.showMapLayerExcluded(context);
+        showRadarLayer = state!=null ? state.getBoolean(SIS_MAP_LAYER_RADAR,WeatherSettings.showMapLayerRadar(context))
+                : WeatherSettings.showMapLayerRadar(context);
+        showWindArcs = state!=null ? state.getBoolean(SIS_MAP_LAYER_WIND,WeatherSettings.showMapLayerWind(context))
+                : WeatherSettings.showMapLayerWind(context);
+        showStationPin = state!=null ? state.getBoolean(SIS_MAP_LAYER_PIN,WeatherSettings.showMapLayerPin(context))
+                : WeatherSettings.showMapLayerPin(context);
+        syncLayerChoices();
+    }
+
+    private void syncLayerChoices(){
+        layerChoices = new boolean[]{showWarningPolygons,showExcludedAreas,showRadarLayer,showWindArcs,showStationPin};
     }
 
     @Override
@@ -379,6 +431,11 @@ public class WeatherWarningActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        // Saved state is delivered after onStart(), so re-open the layer popup here.
+        if (restoreLayerDialogOnResume){
+            restoreLayerDialogOnResume = false;
+            showLayerSelector();
+        }
         if (useVectorMap && mapLibreMapView!=null){
             mapLibreMapView.onResume();
         }
@@ -442,6 +499,12 @@ public class WeatherWarningActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        if (layerDialog!=null){
+            if (layerDialog.isShowing()){
+                layerDialog.dismiss();
+            }
+            layerDialog = null;
+        }
         if (useVectorMap && mapLibreMapView!=null){
             mapLibreMapView.onDestroy();
             mapLibreMapView = null;
@@ -467,6 +530,16 @@ public class WeatherWarningActivity extends Activity {
         }
         super.onCreate(savedInstanceState);
         context = getApplicationContext();
+        restoreLayerState(savedInstanceState);
+        // TASK-65: a notification tap carries the warning identifier. Defer the camera move
+        // until both the warning list and the vector style are ready (see maybeJumpToPendingWarning).
+        Intent launchIntent = getIntent();
+        if ((launchIntent!=null) && (savedInstanceState==null)){
+            String warningIdentifier = launchIntent.getStringExtra(WeatherSyncAdapter.EXTRA_WARNING_IDENTIFIER);
+            if ((warningIdentifier!=null) && (!warningIdentifier.isEmpty())){
+                pendingWarningIdentifier = warningIdentifier;
+            }
+        }
         useVectorMap = VectorMapConfig.isVectorMapEnabled(context);
         // MapLibre 13.8 refuses to inflate a MapView unless its singleton was initialised first.
         // Both map layouts contain the MapView, so this must happen in either mode.
@@ -690,6 +763,16 @@ public class WeatherWarningActivity extends Activity {
     public boolean onCreateOptionsMenu(Menu menu){
         MenuInflater mi = getMenuInflater();
         mi.inflate(R.menu.weatherwarning_activity,menu);
+        // TASK-65: the legacy rain/admin filter belongs to the static map; the vector map
+        // uses the dedicated per-layer selector instead.
+        MenuItem layersItem = menu.findItem(R.id.map_layers);
+        if (layersItem!=null){
+            layersItem.setVisible(useVectorMap);
+        }
+        MenuItem rainItem = menu.findItem(R.id.hide_rain);
+        if (rainItem!=null){
+            rainItem.setVisible(!useVectorMap);
+        }
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -714,7 +797,16 @@ public class WeatherWarningActivity extends Activity {
             showMapLegend();
             return true;
         }
+        if (item_id==R.id.map_layers) {
+            showLayerSelector();
+            return true;
+        }
         if (item_id==R.id.hide_rain) {
+            // The legacy filter is static-map only. In vector mode the layer popup owns
+            // radar visibility, so a stale hide_rain value must not remove vector layers.
+            if (useVectorMap){
+                return true;
+            }
             // invalidate some map views so that they will be drawn again once
             mapIsDrawn = false;
             if ((hide_rain) && (hide_admin)){
@@ -751,6 +843,95 @@ public class WeatherWarningActivity extends Activity {
     }
 
     /* ------------------------------------------------------------------
+     * TASK-65: per-layer selector for the vector warning map. The five flags are
+     * independent of the vector/static preference and of the legacy hide_rain flag.
+     * ------------------------------------------------------------------ */
+
+    private void showLayerSelector(){
+        if (isFinishing()){
+            return;
+        }
+        if ((layerDialog!=null) && layerDialog.isShowing()){
+            layerDialog.dismiss();
+        }
+        syncLayerChoices();
+        final boolean[] checked = layerChoices.clone();
+        String[] labels = new String[]{
+                getString(R.string.map_layer_warnings),getString(R.string.map_layer_excluded),
+                getString(R.string.map_layer_radar),getString(R.string.map_layer_wind),
+                getString(R.string.map_layer_pin)};
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle(R.string.map_layers_title)
+                .setMultiChoiceItems(labels,checked,new DialogInterface.OnMultiChoiceClickListener(){
+                    @Override
+                    public void onClick(DialogInterface dialogInterface,int which,boolean isChecked){
+                        checked[which]=isChecked;
+                        switch (which){
+                            case 0:
+                                showWarningPolygons=isChecked;
+                                WeatherSettings.setMapLayerWarnings(context,isChecked);
+                                break;
+                            case 1:
+                                showExcludedAreas=isChecked;
+                                WeatherSettings.setMapLayerExcluded(context,isChecked);
+                                break;
+                            case 2:
+                                showRadarLayer=isChecked;
+                                WeatherSettings.setMapLayerRadar(context,isChecked);
+                                break;
+                            case 3:
+                                showWindArcs=isChecked;
+                                WeatherSettings.setMapLayerWind(context,isChecked);
+                                break;
+                            case 4:
+                                showStationPin=isChecked;
+                                WeatherSettings.setMapLayerPin(context,isChecked);
+                                break;
+                            default:
+                                break;
+                        }
+                        applyLayerSelection();
+                    }
+                })
+                .setPositiveButton(R.string.alertdialog_ok,null)
+                .create();
+        final AlertDialog createdDialog = dialog;
+        dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialogInterface) {
+                if (layerDialog==createdDialog){
+                    layerDialog=null;
+                }
+            }
+        });
+        layerDialog = dialog;
+        dialog.show();
+    }
+
+    /** Re-applies all layer switches to whichever map is currently active. */
+    private void applyLayerSelection(){
+        syncLayerChoices();
+        if (useVectorMap){
+            applyVectorWarningLayers();
+            if (showRadarLayer){
+                applyVectorRadarFrame(nextRainSlide);
+            } else {
+                removeVectorRadarLayer();
+            }
+            applyVectorOverlays();
+        } else {
+            // Only the radar switch has a legacy static-map counterpart.
+            hide_rain = !showRadarLayer;
+            mapIsDrawn = false;
+            drawMapBitmap();
+        }
+    }
+
+    private boolean radarEnabled(){
+        return useVectorMap ? showRadarLayer : !hide_rain;
+    }
+
+    /* ------------------------------------------------------------------
      * TASK-64: legend for the vector warning map. The dialog is built from
      * themed views and the same colour arrays/constants the layers use, so
      * no new image assets and no hard-coded duplicate colour values.
@@ -773,6 +954,9 @@ public class WeatherWarningActivity extends Activity {
         float textSize = getResources().getDimension(R.dimen.fcmain_textsize_medium);
         float headerSize = getResources().getDimension(R.dimen.fcmain_textsize_xl_half);
 
+        // TASK-65: only describe layers that are actually rendered. The static map always
+        // paints all of them, so the full legend is shown there.
+        if (!useVectorMap || showWarningPolygons){
         addLegendHeader(root,R.string.map_legend_warning_levels,textColor,headerSize,false);
         addLegendNote(root,R.string.map_legend_warning_fill,textColor,textSize);
         int[] warningLabels = new int[]{
@@ -782,7 +966,9 @@ public class WeatherWarningActivity extends Activity {
             addLegendSwatchRow(root,MAP_LEGEND_WARNING_COLORS[i],getString(warningLabels[i]),
                     textColor,textSize,false);
         }
+        }
 
+        if (!useVectorMap || showRadarLayer){
         addLegendHeader(root,R.string.map_legend_radar,textColor,headerSize,true);
         LinearLayout radarRow = new LinearLayout(this);
         radarRow.setOrientation(LinearLayout.HORIZONTAL);
@@ -805,12 +991,21 @@ public class WeatherWarningActivity extends Activity {
             labelRow.addLabel(getString(label));
         }
         root.addView(labelRow,new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT));
+        }
 
-        addLegendSwatchRow(root,Color.parseColor(EXCLUDED_FILL_COLOR),
+        if (!useVectorMap || showExcludedAreas){
+            addLegendSwatchRow(root,Color.parseColor(EXCLUDED_FILL_COLOR),
                 getString(R.string.map_legend_excluded),textColor,textSize,true);
+        }
+        if (!useVectorMap || showStationPin || showWindArcs){
         addLegendHeader(root,R.string.map_legend_others,textColor,headerSize,true);
-        addLegendImageRow(root,R.mipmap.pin,getString(R.string.map_legend_pin),textColor,textSize);
-        addLegendImageRow(root,-1,getString(R.string.map_legend_wind),textColor,textSize);
+        }
+        if (!useVectorMap || showStationPin){
+            addLegendImageRow(root,R.mipmap.pin,getString(R.string.map_legend_pin),textColor,textSize);
+        }
+        if (!useVectorMap || showWindArcs){
+            addLegendImageRow(root,-1,getString(R.string.map_legend_wind),textColor,textSize);
+        }
 
         ScrollView scroll = new ScrollView(this);
         scroll.setVerticalScrollBarEnabled(true);
@@ -1094,11 +1289,21 @@ public class WeatherWarningActivity extends Activity {
                         weatherList = (ListView) findViewById(R.id.warningactivity_listview);
                         weatherWarningAdapter = new WeatherWarningAdapter(getBaseContext(),safeWarnings,scheduledExecutorService);
                         weatherWarningAdapter.setLocalWarnings(localWarnings);
+                        // TASK-65: inverse of map-tap -> list jump. Row clicks (including the
+                        // expandable area text) are forwarded by the adapter so one callback
+                        // highlights the row and moves the vector camera to its polygon bounds.
+                        weatherWarningAdapter.setWarningClickListener(new WeatherWarningAdapter.OnWarningClickListener() {
+                            @Override
+                            public void onWarningClick(WeatherWarning warning){
+                                onWarningSelected(warning,-1);
+                            }
+                        });
                         if (weatherList!=null){
                             weatherList.setAdapter(weatherWarningAdapter);
                             weatherList.setSelection(WarningUiDataGuard.firstWarningPosition(safeWarnings,localWarnings));
                             weatherList.invalidate();
                         }
+                        maybeJumpToPendingWarning();
                     }
                 });
             }
@@ -1856,6 +2061,197 @@ public class WeatherWarningActivity extends Activity {
         }
     }
 
+    /** Maximum zoom used by the warning-row/notification camera jump. */
+    static final double MAX_WARNING_CAMERA_ZOOM = 12d;
+    /** Padding in pixels passed to CameraUpdateFactory.newLatLngBounds. */
+    static final int WARNING_CAMERA_PADDING = 64;
+    /** Spans at or below this value (degrees) count as a degenerate bounding box. */
+    static final double WARNING_BOUNDS_EPSILON = 0.00001d;
+
+    private int warningPosition(WeatherWarning warning){
+        if ((warning==null) || (weatherWarnings==null)){
+            return -1;
+        }
+        for (int i=0; i<weatherWarnings.size(); i++){
+            if (weatherWarnings.get(i)==warning){
+                return i;
+            }
+            if ((weatherWarnings.get(i)!=null) && (warning.identifier!=null) &&
+                    warning.identifier.equals(weatherWarnings.get(i).identifier)){
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /** Row/notification selection: highlight the list entry, then try to frame its geometry. */
+    private void onWarningSelected(WeatherWarning warning,int position){
+        if (warning==null){
+            return;
+        }
+        if (position<0){
+            position = warningPosition(warning);
+        }
+        PrivateLog.log(context,PrivateLog.WARNINGS,PrivateLog.INFO,
+                "Warning row selected: "+(warning.identifier==null ? "" : warning.identifier));
+        if (weatherWarningAdapter!=null){
+            weatherWarningAdapter.setSelectedIdentifier(warning.identifier);
+            weatherWarningAdapter.notifyDataSetChanged();
+        }
+        if ((weatherList!=null) && (position>=0)){
+            weatherList.setSelection(position);
+        }
+        // A user gesture supersedes a still pending notification jump.
+        pendingWarningIdentifier = null;
+        jumpMapToWarning(warning);
+    }
+
+    /**
+     * Consumes WeatherSyncAdapter.EXTRA_WARNING_IDENTIFIER once the warnings and (in vector
+     * mode) the MapLibre style are ready. Called from displayWarnings and the style callback.
+     */
+    private void maybeJumpToPendingWarning(){
+        if ((pendingWarningIdentifier==null) || pendingWarningJumpDone || (weatherWarnings==null)){
+            return;
+        }
+        if (useVectorMap && ((mapLibreMap==null) || (!vectorWarningStyleReady))){
+            return;
+        }
+        for (int i=0; i<weatherWarnings.size(); i++){
+            WeatherWarning warning = weatherWarnings.get(i);
+            if ((warning!=null) && (pendingWarningIdentifier.equals(warning.identifier))){
+                pendingWarningJumpDone = true;
+                pendingWarningIdentifier = null;
+                onWarningSelected(warning,i);
+                return;
+            }
+        }
+    }
+
+    private void jumpMapToWarning(WeatherWarning warning){
+        if (warning==null){
+            return;
+        }
+        if (warning.polygonlist==null){
+            warning.initPolygons(context);
+        }
+        double[] bounds = warningBounds(warning);
+        PrivateLog.log(context,PrivateLog.WARNINGS,PrivateLog.INFO,
+                "Warning geometry extent: "+(bounds==null ? "none" :
+                        java.util.Arrays.toString(bounds))+" vector="+useVectorMap+" map="+(mapLibreMap!=null));
+        if (bounds==null){
+            // DWD CAP bulletins that only carry free-text area descriptions (notably UV
+            // radiation / sun protection and some heat advisories) have neither a <polygon>
+            // nor WARNCELLID geocodes. initPolygons() then yields no geometry at all: keep
+            // the current camera and just show a short hint.
+            PrivateLog.log(context,PrivateLog.WARNINGS,PrivateLog.INFO,
+                    "Warning without geometry; map camera unchanged: "+(warning.event==null ? "" : warning.event));
+            Toast.makeText(context,R.string.warning_no_geometry,Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if ((!useVectorMap) || (mapLibreMap==null)){
+            return;
+        }
+        final double[] targetBounds = bounds;
+        final LatLngBounds.Builder boundsBuilder = new LatLngBounds.Builder()
+                .include(new LatLng(bounds[1],bounds[0]))
+                .include(new LatLng(bounds[3],bounds[2]));
+        final LatLngBounds latLngBounds = boundsBuilder.build();
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (mapLibreMap==null){
+                    return;
+                }
+                try {
+                    if (boundsAreDegenerate(targetBounds)){
+                        // Keep the current zoom for point-like warnings.
+                        mapLibreMap.animateCamera(CameraUpdateFactory.newLatLng(latLngBounds.getCenter()));
+                        return;
+                    }
+                    mapLibreMap.animateCamera(
+                            CameraUpdateFactory.newLatLngBounds(latLngBounds,WARNING_CAMERA_PADDING),
+                            new MapLibreMap.CancelableCallback() {
+                                @Override
+                                public void onFinish() {
+                                    if ((mapLibreMap!=null) &&
+                                            (mapLibreMap.getCameraPosition().zoom>MAX_WARNING_CAMERA_ZOOM)){
+                                        mapLibreMap.easeCamera(CameraUpdateFactory.zoomTo(MAX_WARNING_CAMERA_ZOOM));
+                                    }
+                                }
+                                @Override
+                                public void onCancel() {
+                                }
+                            });
+                } catch (Exception e){
+                    // newLatLngBounds needs a measured map; fall back to the known centre.
+                    try {
+                        double zoom = Math.min(mapLibreMap.getCameraPosition().zoom,MAX_WARNING_CAMERA_ZOOM);
+                        mapLibreMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLngBounds.getCenter(),zoom));
+                    } catch (Exception ignored){
+                        // No usable camera at all: leave the current view untouched.
+                    }
+                }
+            }
+        });
+    }
+
+    /**
+     * Pure geometry helper: WGS84 extent {west,south,east,north} of one warning. Both its
+     * polygons and its excluded areas are included so the cut-out stays in view, and
+     * Polygon.polygonX/polygonY are longitude/latitude respectively (see Polygon.java).
+     * Returns null when the warning carries no usable geometry.
+     */
+    static double[] warningBounds(WeatherWarning warning){
+        if (warning==null){
+            return null;
+        }
+        double minLon = Double.POSITIVE_INFINITY;
+        double minLat = Double.POSITIVE_INFINITY;
+        double maxLon = Double.NEGATIVE_INFINITY;
+        double maxLat = Double.NEGATIVE_INFINITY;
+        int points = 0;
+        ArrayList<ArrayList<Polygon>> groups = new ArrayList<ArrayList<Polygon>>();
+        groups.add(warning.polygonlist);
+        groups.add(warning.excluded_polygonlist);
+        for (ArrayList<Polygon> polygons : groups){
+            if (polygons==null){
+                continue;
+            }
+            for (Polygon polygon : polygons){
+                if ((polygon==null) || (polygon.polygonX==null) || (polygon.polygonY==null)){
+                    continue;
+                }
+                int count = Math.min(polygon.polygonX.length,polygon.polygonY.length);
+                for (int i=0; i<count; i++){
+                    double lon = polygon.polygonX[i];
+                    double lat = polygon.polygonY[i];
+                    if ((!Double.isFinite(lon)) || (!Double.isFinite(lat)) ||
+                            (Math.abs(lon)>180d) || (Math.abs(lat)>90d)){
+                        continue;
+                    }
+                    minLon = Math.min(minLon,lon);
+                    maxLon = Math.max(maxLon,lon);
+                    minLat = Math.min(minLat,lat);
+                    maxLat = Math.max(maxLat,lat);
+                    points++;
+                }
+            }
+        }
+        if (points==0){
+            return null;
+        }
+        return new double[]{minLon,minLat,maxLon,maxLat};
+    }
+
+    static boolean boundsAreDegenerate(double[] bounds){
+        if ((bounds==null) || (bounds.length<4)){
+            return true;
+        }
+        return (Math.abs(bounds[2]-bounds[0])<=WARNING_BOUNDS_EPSILON) ||
+                (Math.abs(bounds[3]-bounds[1])<=WARNING_BOUNDS_EPSILON);
+    }
+
     private boolean isDeviceLandscape(){
         Display display = ((WindowManager) getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
         int orientation = display.getRotation();
@@ -2070,6 +2466,27 @@ public class WeatherWarningActivity extends Activity {
         }
     }
 
+    /** Removes a layer before its source; MapLibre rejects source removal while in use. */
+    private static void removeManagedStyleLayer(Style style,String layerId){
+        try {
+            if (style.getLayer(layerId)!=null){
+                style.removeLayer(layerId);
+            }
+        } catch (Exception e){
+            // A concurrent style reload may have removed it already.
+        }
+    }
+
+    private static void removeManagedStyleSource(Style style,String sourceId){
+        try {
+            if (style.getSourceAs(sourceId)!=null){
+                style.removeSource(sourceId);
+            }
+        } catch (Exception e){
+            // A concurrent style reload may have removed it already.
+        }
+    }
+
     /**
      * TASK-53: convert the parsed CAP polygons of the current warnings into GeoJSON and push
      * them into MapLibre. Layers are only installed once the OpenFreeMap style is ready;
@@ -2099,50 +2516,68 @@ public class WeatherWarningActivity extends Activity {
                 // Populate the tap cache from exactly the same data that is rendered, so a
                 // click resolves to the same warning row as on the legacy static map.
                 refreshVectorPolygonCaches(safeWarnings);
-                String warningGeoJson = WarningGeoJson.featureCollection(safeWarnings,false);
-                String excludedGeoJson = WarningGeoJson.featureCollection(safeWarnings,true);
-                GeoJsonSource warningSource = style.getSourceAs(WARNING_SOURCE_ID);
-                if (warningSource==null){
-                    warningSource = new GeoJsonSource(WARNING_SOURCE_ID,warningGeoJson);
-                    style.addSource(warningSource);
+                if (showWarningPolygons){
+                    String warningGeoJson = WarningGeoJson.featureCollection(safeWarnings,false);
+                    GeoJsonSource warningSource = style.getSourceAs(WARNING_SOURCE_ID);
+                    if (warningSource==null){
+                        warningSource = new GeoJsonSource(WARNING_SOURCE_ID,warningGeoJson);
+                        style.addSource(warningSource);
+                    } else {
+                        warningSource.setGeoJson(warningGeoJson);
+                    }
+                    if (style.getLayer(WARNING_FILL_LAYER_ID)==null){
+                        FillLayer fill = new FillLayer(WARNING_FILL_LAYER_ID,WARNING_SOURCE_ID)
+                                .withProperties(
+                                        PropertyFactory.fillColor(Expression.get(WarningGeoJson.PROPERTY_COLOR)),
+                                        PropertyFactory.fillOpacity(WARNING_FILL_OPACITY));
+                        // Radar must stay underneath the coloured fills even when this layer
+                        // is (re-)added after a style reload or an undock/toggle cycle.
+                        if (style.getLayer(RADAR_LAYER_ID)!=null){
+                            style.addLayerAbove(fill,RADAR_LAYER_ID);
+                        } else {
+                            style.addLayer(fill);
+                        }
+                    }
+                    if (style.getLayer(WARNING_LINE_LAYER_ID)==null){
+                        LineLayer outline = new LineLayer(WARNING_LINE_LAYER_ID,WARNING_SOURCE_ID)
+                                .withProperties(
+                                        PropertyFactory.lineColor(Expression.get(WarningGeoJson.PROPERTY_COLOR)),
+                                        PropertyFactory.lineWidth(2f));
+                        style.addLayer(outline);
+                    }
                 } else {
-                    warningSource.setGeoJson(warningGeoJson);
+                    removeManagedStyleLayer(style,WARNING_FILL_LAYER_ID);
+                    removeManagedStyleLayer(style,WARNING_LINE_LAYER_ID);
+                    removeManagedStyleSource(style,WARNING_SOURCE_ID);
                 }
-                GeoJsonSource excludedSource = style.getSourceAs(EXCLUDED_SOURCE_ID);
-                if (excludedSource==null){
-                    excludedSource = new GeoJsonSource(EXCLUDED_SOURCE_ID,excludedGeoJson);
-                    style.addSource(excludedSource);
+                if (showExcludedAreas){
+                    String excludedGeoJson = WarningGeoJson.featureCollection(safeWarnings,true);
+                    GeoJsonSource excludedSource = style.getSourceAs(EXCLUDED_SOURCE_ID);
+                    if (excludedSource==null){
+                        excludedSource = new GeoJsonSource(EXCLUDED_SOURCE_ID,excludedGeoJson);
+                        style.addSource(excludedSource);
+                    } else {
+                        excludedSource.setGeoJson(excludedGeoJson);
+                    }
+                    if (style.getLayer(EXCLUDED_FILL_LAYER_ID)==null){
+                        FillLayer excludedFill = new FillLayer(EXCLUDED_FILL_LAYER_ID,EXCLUDED_SOURCE_ID)
+                                .withProperties(
+                                        PropertyFactory.fillColor(EXCLUDED_FILL_COLOR),
+                                        PropertyFactory.fillOpacity(EXCLUDED_FILL_OPACITY));
+                        style.addLayer(excludedFill);
+                    }
+                    if (style.getLayer(EXCLUDED_LINE_LAYER_ID)==null){
+                        LineLayer excludedOutline = new LineLayer(EXCLUDED_LINE_LAYER_ID,EXCLUDED_SOURCE_ID)
+                                .withProperties(
+                                        PropertyFactory.lineColor(EXCLUDED_LINE_COLOR),
+                                        PropertyFactory.lineWidth(2f),
+                                        PropertyFactory.lineDasharray(new Float[]{2f,1f}));
+                        style.addLayer(excludedOutline);
+                    }
                 } else {
-                    excludedSource.setGeoJson(excludedGeoJson);
-                }
-                if (style.getLayer(WARNING_FILL_LAYER_ID)==null){
-                    FillLayer fill = new FillLayer(WARNING_FILL_LAYER_ID,WARNING_SOURCE_ID)
-                            .withProperties(
-                                    PropertyFactory.fillColor(Expression.get(WarningGeoJson.PROPERTY_COLOR)),
-                                    PropertyFactory.fillOpacity(WARNING_FILL_OPACITY));
-                    style.addLayer(fill);
-                }
-                if (style.getLayer(WARNING_LINE_LAYER_ID)==null){
-                    LineLayer outline = new LineLayer(WARNING_LINE_LAYER_ID,WARNING_SOURCE_ID)
-                            .withProperties(
-                                    PropertyFactory.lineColor(Expression.get(WarningGeoJson.PROPERTY_COLOR)),
-                                    PropertyFactory.lineWidth(2f));
-                    style.addLayer(outline);
-                }
-                if (style.getLayer(EXCLUDED_FILL_LAYER_ID)==null){
-                    FillLayer excludedFill = new FillLayer(EXCLUDED_FILL_LAYER_ID,EXCLUDED_SOURCE_ID)
-                            .withProperties(
-                                    PropertyFactory.fillColor(EXCLUDED_FILL_COLOR),
-                                    PropertyFactory.fillOpacity(EXCLUDED_FILL_OPACITY));
-                    style.addLayer(excludedFill);
-                }
-                if (style.getLayer(EXCLUDED_LINE_LAYER_ID)==null){
-                    LineLayer excludedOutline = new LineLayer(EXCLUDED_LINE_LAYER_ID,EXCLUDED_SOURCE_ID)
-                            .withProperties(
-                                    PropertyFactory.lineColor(EXCLUDED_LINE_COLOR),
-                                    PropertyFactory.lineWidth(2f),
-                                    PropertyFactory.lineDasharray(new Float[]{2f,1f}));
-                    style.addLayer(excludedOutline);
+                    removeManagedStyleLayer(style,EXCLUDED_FILL_LAYER_ID);
+                    removeManagedStyleLayer(style,EXCLUDED_LINE_LAYER_ID);
+                    removeManagedStyleSource(style,EXCLUDED_SOURCE_ID);
                 }
             }
         });
@@ -2294,7 +2729,7 @@ public class WeatherWarningActivity extends Activity {
      * per frame, and RadarMN2's legacy getXPixel/getYPixel corrections are not used here.
      */
     private void applyVectorRadarFrame(final int count){
-        if ((!useVectorMap) || (mapLibreMap==null) || (!vectorWarningStyleReady) || hide_rain){
+        if ((!useVectorMap) || (mapLibreMap==null) || (!vectorWarningStyleReady) || (!showRadarLayer)){
             return;
         }
         if (!APIReaders.RadarMNSetGeoserverRunnable.radarCacheFileValid(context,count)){
@@ -2307,7 +2742,7 @@ public class WeatherWarningActivity extends Activity {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                if ((!useVectorMap) || (mapLibreMap==null) || (!vectorWarningStyleReady) || hide_rain){
+                if ((!useVectorMap) || (mapLibreMap==null) || (!vectorWarningStyleReady) || (!showRadarLayer)){
                     return;
                 }
                 Style style;
@@ -2342,7 +2777,7 @@ public class WeatherWarningActivity extends Activity {
         });
     }
 
-    /** Hides radar in vector mode when the user switches the rain layer off. */
+    /** Hides radar in vector mode when the user switches the radar layer off. */
     private void removeVectorRadarLayer(){
         if ((mapLibreMap==null) || (!vectorWarningStyleReady)){
             return;
@@ -2358,6 +2793,7 @@ public class WeatherWarningActivity extends Activity {
                 }
                 if (style!=null){
                     style.removeLayer(RADAR_LAYER_ID);
+                    removeManagedStyleSource(style,RADAR_SOURCE_ID);
                 }
             }
         });
@@ -2383,12 +2819,15 @@ public class WeatherWarningActivity extends Activity {
 
     /** Places the station pin at the exact geo position of the configured station. */
     private void applyVectorPin(){
-        if ((mapLibreMap==null) || (ownLocation==null)){
+        if (mapLibreMap==null){
             return;
         }
         if (vectorPinMarker!=null){
             mapLibreMap.removeMarker(vectorPinMarker);
             vectorPinMarker=null;
+        }
+        if ((!showStationPin) || (ownLocation==null)){
+            return;
         }
         float pinSize = WeatherSettings.getMapPinSize(context)/2f;
         int pinSizePixels = Math.max(1,Math.round(18*getResources().getDisplayMetrics().density*pinSize));
@@ -2416,7 +2855,7 @@ public class WeatherWarningActivity extends Activity {
             mapLibreMap.removePolyline(line);
         }
         vectorWindPolylines.clear();
-        if ((ownLocation==null) || (!WeatherSettings.displayWindDistance(context))){
+        if ((!showWindArcs) || (ownLocation==null) || (!WeatherSettings.displayWindDistance(context))){
             return;
         }
         CurrentWeatherInfo currentWeatherInfo = Weather.getCurrentWeatherInfo(context);
@@ -2517,6 +2956,8 @@ public class WeatherWarningActivity extends Activity {
                             applyVectorRadarFrame(nextRainSlide);
                             // TASK-55: station pin and wind arcs after the style is ready.
                             applyVectorOverlays();
+                            // TASK-65: a notification tap can only jump once the style exists.
+                            maybeJumpToPendingWarning();
                         }
                     });
                     map.moveCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder()

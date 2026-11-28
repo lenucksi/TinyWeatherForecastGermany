@@ -100,6 +100,15 @@ public class WeatherSettings {
     public static final String PREF_GPSMANUAL = "PREF_gpsmanual";
     public static final String PREF_TEXTFORECAST_FILTER = "PREF_textforecast_filter";
     public static final String PREF_RADAR_SHOW = "PREF_radar_show";
+
+    // TASK-65: per-layer switches of the vector warning map. They are deliberately independent
+    // from the vector/static map preference (VectorMapConfig) and from the legacy hide_rain flag.
+    public static final String PREF_MAP_LAYER_WARNINGS = "PREF_map_layer_warnings";
+    public static final String PREF_MAP_LAYER_EXCLUDED = "PREF_map_layer_excluded";
+    public static final String PREF_MAP_LAYER_RADAR = "PREF_map_layer_radar";
+    public static final String PREF_MAP_LAYER_WIND = "PREF_map_layer_wind";
+    public static final String PREF_MAP_LAYER_PIN = "PREF_map_layer_pin";
+
     public static final String PREF_ADMINMAP_SHOW="PREF_adminmap_show";
     public static final String PREF_MAP_DISPLAY_MUNICIPALITIES ="PREF_map_display_municipalities";
     public static final String PREF_MAP_DISPLAY_COUNTIES = "PREF_map_display_counties";
@@ -212,6 +221,14 @@ public class WeatherSettings {
     public static final boolean PREF_GPSMANUAL_DEFAULT = false;
     public static final boolean PREF_TEXTFORECAST_FILTER_DEFAULT = false;
     public static final boolean PREF_RADAR_SHOW_DEFAULT = true;
+
+    // All vector layers start visible; the user can switch any of them off in the map UI.
+    public static final boolean PREF_MAP_LAYER_WARNINGS_DEFAULT = true;
+    public static final boolean PREF_MAP_LAYER_EXCLUDED_DEFAULT = true;
+    public static final boolean PREF_MAP_LAYER_RADAR_DEFAULT = true;
+    public static final boolean PREF_MAP_LAYER_WIND_DEFAULT = true;
+    public static final boolean PREF_MAP_LAYER_PIN_DEFAULT = true;
+
     public static final boolean PREF_ADMINMAP_SHOW_DEFAULT=false;
     public static final boolean PREF_MAP_DISPLAY_MUNICIPALITIES_DEFAULT = false;
     public static final boolean PREF_MAP_DISPLAY_COUNTIES_DEFAULT = true;
@@ -789,6 +806,56 @@ public class WeatherSettings {
     public static boolean showAdminMapByDefault(Context context){
         SharedPreferences sharedPreferences = getSharedPreferences(context);
         return sharedPreferences.getBoolean(PREF_ADMINMAP_SHOW,PREF_ADMINMAP_SHOW_DEFAULT);
+    }
+
+    /* TASK-65: independent visibility flags for the vector warning map layers. Each setter
+     * commits with apply() like the rest of this class; defaults are all-on. */
+    private static boolean getMapLayer(Context context,String key,boolean defaultValue){
+        return getSharedPreferences(context).getBoolean(key,defaultValue);
+    }
+
+    private static void setMapLayer(Context context,String key,boolean value){
+        getSharedPreferences(context).edit().putBoolean(key,value).apply();
+    }
+
+    public static boolean showMapLayerWarnings(Context context){
+        return getMapLayer(context,PREF_MAP_LAYER_WARNINGS,PREF_MAP_LAYER_WARNINGS_DEFAULT);
+    }
+
+    public static void setMapLayerWarnings(Context context,boolean value){
+        setMapLayer(context,PREF_MAP_LAYER_WARNINGS,value);
+    }
+
+    public static boolean showMapLayerExcluded(Context context){
+        return getMapLayer(context,PREF_MAP_LAYER_EXCLUDED,PREF_MAP_LAYER_EXCLUDED_DEFAULT);
+    }
+
+    public static void setMapLayerExcluded(Context context,boolean value){
+        setMapLayer(context,PREF_MAP_LAYER_EXCLUDED,value);
+    }
+
+    public static boolean showMapLayerRadar(Context context){
+        return getMapLayer(context,PREF_MAP_LAYER_RADAR,PREF_MAP_LAYER_RADAR_DEFAULT);
+    }
+
+    public static void setMapLayerRadar(Context context,boolean value){
+        setMapLayer(context,PREF_MAP_LAYER_RADAR,value);
+    }
+
+    public static boolean showMapLayerWind(Context context){
+        return getMapLayer(context,PREF_MAP_LAYER_WIND,PREF_MAP_LAYER_WIND_DEFAULT);
+    }
+
+    public static void setMapLayerWind(Context context,boolean value){
+        setMapLayer(context,PREF_MAP_LAYER_WIND,value);
+    }
+
+    public static boolean showMapLayerPin(Context context){
+        return getMapLayer(context,PREF_MAP_LAYER_PIN,PREF_MAP_LAYER_PIN_DEFAULT);
+    }
+
+    public static void setMapLayerPin(Context context,boolean value){
+        setMapLayer(context,PREF_MAP_LAYER_PIN,value);
     }
 
     public static boolean getDisplayMunicipalities(Context context){
