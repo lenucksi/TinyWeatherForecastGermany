@@ -607,4 +607,13 @@
     <string name="map_legend_others" tools:ignore="MissingTranslation">Map markers</string>
     <string name="map_legend_pin" tools:ignore="MissingTranslation">Station pin: location of the selected station</string>
     <string name="map_legend_wind" tools:ignore="MissingTranslation">Wind arcs: forecast wind direction and distance</string>
+
+    <!-- TASK-65: vector map layer selector and geometry-less warning fallback. -->
+    <string name="map_layers_title" tools:ignore="MissingTranslation">Map layers</string>
+    <string name="map_layer_warnings" tools:ignore="MissingTranslation">Warning polygons</string>
+    <string name="map_layer_excluded" tools:ignore="MissingTranslation">Excluded areas</string>
+    <string name="map_layer_radar" tools:ignore="MissingTranslation">Radar</string>
+    <string name="map_layer_wind" tools:ignore="MissingTranslation">Wind arcs</string>
+    <string name="map_layer_pin" tools:ignore="MissingTranslation">Station pin</string>
+    <string name="warning_no_geometry" tools:ignore="MissingTranslation">This warning has no map area; keeping the current map view.</string>
 </resources>
