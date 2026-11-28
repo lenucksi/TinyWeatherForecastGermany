@@ -52,6 +52,8 @@
         final Handler mainHandler;
         ArrayList<WeatherWarning> weatherWarnings;
         ArrayList<WeatherWarning> localWarnings;
+        // TASK-65: transient highlight of the warning whose polygons the map is framing.
+        String selectedIdentifier;
         Weather.WeatherLocation stationLocation;
 
         public WeatherWarningAdapter(Context context, ArrayList<WeatherWarning> weatherWarnings, Executor executor){
@@ -67,6 +69,10 @@
             this.localWarnings = localWarnings;
         }
 
+        public void setSelectedIdentifier(String selectedIdentifier){
+            this.selectedIdentifier = selectedIdentifier;
+        }
+
         private boolean isInLocalWarnings(WeatherWarning warning){
             if (localWarnings!=null){
                 for (int i=0; i<localWarnings.size(); i++){
@@ -78,7 +84,18 @@
             return false;
         }
 
-        public static class ViewHolder{
+        /** TASK-65: row taps (including the expandable area text) select the warning on the map. */
+    public interface OnWarningClickListener{
+        void onWarningClick(WeatherWarning warning);
+    }
+
+    OnWarningClickListener warningClickListener;
+
+    public void setWarningClickListener(OnWarningClickListener warningClickListener){
+        this.warningClickListener = warningClickListener;
+    }
+
+    public static class ViewHolder{
             RelativeLayout warning_item_frame;
             RelativeLayout warning_item_supermaincontainer;
             LinearLayout warning_item_maincontainer;
@@ -121,23 +138,39 @@
 
         @Override
         public Object getItem(int i) {
+            if ((weatherWarnings!=null) && (i>=0) && (i<weatherWarnings.size())){
+                return weatherWarnings.get(i);
+            }
             return null;
         }
 
         @Override
         public long getItemId(int i) {
-            return 0;
+            Object item = getItem(i);
+            if (item instanceof WeatherWarning){
+                String identifier = ((WeatherWarning) item).identifier;
+                if (identifier!=null){
+                    return identifier.hashCode();
+                }
+            }
+            return i;
         }
 
         @Override
         public View getView(int i, View view, ViewGroup viewGroup) {
             ViewHolder viewHolder = new ViewHolder();
             final WeatherWarning warning = weatherWarnings.get(i);
-            view = setWarningViewElements(context,layoutInflater,view,viewGroup, warning,isInLocalWarnings(warning),mainHandler,executor);
+            boolean highlight = isInLocalWarnings(warning) ||
+                    ((selectedIdentifier!=null) && (selectedIdentifier.equals(warning.identifier)));
+            view = setWarningViewElements(context,layoutInflater,view,viewGroup, warning,highlight,mainHandler,executor,warningClickListener);
             return view;
         }
 
         public static View setWarningViewElements(final Context context, LayoutInflater layoutInflater, View view, ViewGroup viewGroup, final WeatherWarning warning, boolean highlight, final Handler mainHandler, Executor executor) {
+            return setWarningViewElements(context,layoutInflater,view,viewGroup,warning,highlight,mainHandler,executor,null);
+        }
+
+        public static View setWarningViewElements(final Context context, LayoutInflater layoutInflater, View view, ViewGroup viewGroup, final WeatherWarning warning, boolean highlight, final Handler mainHandler, Executor executor, final OnWarningClickListener warningClickListener) {
             ViewHolder viewHolder = new ViewHolder();
             if (view != null) {
                 viewHolder = (ViewHolder) view.getTag();
@@ -276,6 +309,10 @@
                     } else {
                         finalViewHolder.warning_item_areas.setMaxLines(AREAS_COLLAPSED);
                     }
+                    // The expandable text consumes the ListView item click, so forward it.
+                    if (warningClickListener!=null){
+                        warningClickListener.onWarningClick(warning);
+                    }
                 }
             });
             if (warning.headline != null) {
@@ -310,6 +347,14 @@
                 viewHolder.warning_item_elements.setVisibility(View.GONE);
             } else {
                 viewHolder.warning_item_elements.setVisibility(View.VISIBLE);
+            }
+            if (warningClickListener!=null){
+                view.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        warningClickListener.onWarningClick(warning);
+                    }
+                });
             }
             return view;
         }
