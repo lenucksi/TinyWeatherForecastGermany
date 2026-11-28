@@ -201,24 +201,26 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
-                        android:weightSum="20"
+                        android:weightSum="1"
                         android:layout_marginLeft="6dp"
                         android:layout_marginRight="6dp"
                         android:layout_below="@id/main_infotext_layout">
 
                     <Spinner android:id="@+id/stations_spinner"
                              android:layout_width="0dp"
-                             android:layout_weight="18"
+                             android:layout_weight="1"
                              android:layout_height="wrap_content"
                              android:nextFocusForward="@id/main_reset_favorites"
                              android:nextFocusDown="@id/main_reset_favorites"/>
 
+                    <!-- Both top-right controls are fixed 48dp touch targets; only the spinner
+                         takes the remaining width so neither glyph grows with the screen. -->
                     <ImageView android:contentDescription="@string/a11y_reset_favorites" android:id="@+id/main_reset_favorites"
-                               android:layout_width="0dp"
-                               android:layout_weight="2"
-                               android:layout_height="wrap_content"
+                               android:layout_width="48dp"
+                               android:layout_height="48dp"
                                android:minWidth="48dp"
                                android:minHeight="48dp"
+                               android:padding="14dp"
                                android:focusable="true"
                                android:layout_gravity="center"
                                android:gravity="center"
@@ -227,13 +229,15 @@
                                android:tint="?attr/colorText"
                                android:src="?attr/ic_highlight_off"/>
 
-                    <!-- Legend info next to the reset-favorites X, never over chart data. -->
+                    <!-- Legend info next to the reset-favorites X, never over chart data.
+                         48dp touch target, 12dp internal padding leaves a ~24dp glyph,
+                         just larger than the X so the pair reads as balanced. -->
                     <ImageView android:id="@+id/main_overviewchart_legend"
                                android:layout_width="48dp"
                                android:layout_height="48dp"
                                android:minWidth="48dp"
                                android:minHeight="48dp"
-                               android:padding="16dp"
+                               android:padding="12dp"
                                android:focusable="true"
                                android:layout_gravity="center"
                                android:gravity="center"
