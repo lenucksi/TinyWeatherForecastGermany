@@ -31,6 +31,9 @@ import android.content.pm.PackageManager;
 import android.graphics.*;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.LayerDrawable;
+import android.graphics.drawable.ShapeDrawable;
+import android.graphics.drawable.shapes.RectShape;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
@@ -40,6 +43,7 @@ import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.style.UnderlineSpan;
 import android.util.DisplayMetrics;
+import android.util.TypedValue;
 import android.view.*;
 import android.widget.*;
 import java.text.SimpleDateFormat;
@@ -159,6 +163,19 @@ public class WeatherWarningActivity extends Activity {
     private final static String RADAR_SOURCE_ID="twfg-radar-imagesource";
     private final static String RADAR_LAYER_ID="twfg-radar-raster";
     private final static Float RADAR_RASTER_OPACITY=0.8f;
+    // TASK-64: the legend reads the same data the layers render, so a change of a
+    // warning/radar colour in the map code is reflected in the legend automatically.
+    private final static int[] MAP_LEGEND_WARNING_COLORS=WeatherWarning.Severity.colors;
+    private final static int[] MAP_LEGEND_RADAR_COLORS=buildMapLegendRadarColors();
+
+    private static int[] buildMapLegendRadarColors(){
+        // RAINCOLORS[0] is the transparent clutter/no-data entry; the radar paints
+        // indices 1..16, so show exactly those steps in the legend.
+        int[] source=Radarmap.RAINCOLORS;
+        int[] result=new int[source.length-1];
+        System.arraycopy(source,1,result,0,result.length);
+        return result;
+    }
 
     public final static long CREDENTIALS_FADE_TIME_DELAY = 7000l;
 
@@ -693,6 +710,10 @@ public class WeatherWarningActivity extends Activity {
             }
             return true;
         }
+        if (item_id==R.id.map_legend) {
+            showMapLegend();
+            return true;
+        }
         if (item_id==R.id.hide_rain) {
             // invalidate some map views so that they will be drawn again once
             mapIsDrawn = false;
@@ -727,6 +748,300 @@ public class WeatherWarningActivity extends Activity {
             return true;
         }
         return super.onOptionsItemSelected(mi);
+    }
+
+    /* ------------------------------------------------------------------
+     * TASK-64: legend for the vector warning map. The dialog is built from
+     * themed views and the same colour arrays/constants the layers use, so
+     * no new image assets and no hard-coded duplicate colour values.
+     * ------------------------------------------------------------------ */
+
+    private int legendDp(float value){
+        return Math.round(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,value,
+                getResources().getDisplayMetrics()));
+    }
+
+    private void showMapLegend(){
+        if (isFinishing()){
+            return;
+        }
+        LinearLayout root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+        int padding = legendDp(16);
+        root.setPadding(padding,padding,padding,padding);
+        int textColor = ThemePicker.getWidgetTextColor(context);
+        float textSize = getResources().getDimension(R.dimen.fcmain_textsize_medium);
+        float headerSize = getResources().getDimension(R.dimen.fcmain_textsize_xl_half);
+
+        addLegendHeader(root,R.string.map_legend_warning_levels,textColor,headerSize,false);
+        addLegendNote(root,R.string.map_legend_warning_fill,textColor,textSize);
+        int[] warningLabels = new int[]{
+                R.string.map_legend_minor,R.string.map_legend_moderate,R.string.map_legend_severe,
+                R.string.map_legend_extreme,R.string.map_legend_heat,R.string.map_legend_uv};
+        for (int i=0; i<MAP_LEGEND_WARNING_COLORS.length && i<warningLabels.length; i++){
+            addLegendSwatchRow(root,MAP_LEGEND_WARNING_COLORS[i],getString(warningLabels[i]),
+                    textColor,textSize,false);
+        }
+
+        addLegendHeader(root,R.string.map_legend_radar,textColor,headerSize,true);
+        LinearLayout radarRow = new LinearLayout(this);
+        radarRow.setOrientation(LinearLayout.HORIZONTAL);
+        radarRow.setContentDescription(getString(R.string.map_legend_radar_scale));
+        for (int color : MAP_LEGEND_RADAR_COLORS){
+            View step = new View(this);
+            step.setBackgroundColor(color);
+            step.setLayoutParams(new LinearLayout.LayoutParams(0,legendDp(28),1f));
+            step.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+            radarRow.addView(step);
+        }
+        root.addView(radarRow,new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        // The four words are the labels of the legacy radar legend; keep their positions
+        // relative to the colour steps instead of inventing new intensity wording.
+        int[] radarLabels = new int[]{
+                R.string.radar_rain1,R.string.radar_rain2,R.string.radar_rain3,R.string.radar_rain4};
+        LinearLabelRow labelRow = new LinearLabelRow(this,textColor,textSize);
+        for (int label : radarLabels){
+            labelRow.addLabel(getString(label));
+        }
+        root.addView(labelRow,new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        addLegendSwatchRow(root,Color.parseColor(EXCLUDED_FILL_COLOR),
+                getString(R.string.map_legend_excluded),textColor,textSize,true);
+        addLegendHeader(root,R.string.map_legend_others,textColor,headerSize,true);
+        addLegendImageRow(root,R.mipmap.pin,getString(R.string.map_legend_pin),textColor,textSize);
+        addLegendImageRow(root,-1,getString(R.string.map_legend_wind),textColor,textSize);
+
+        ScrollView scroll = new ScrollView(this);
+        scroll.setVerticalScrollBarEnabled(true);
+        scroll.addView(root,new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT));
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle(R.string.map_legend_title)
+                .setView(scroll)
+                .setPositiveButton(android.R.string.ok,null)
+                .create();
+        // A dialog-hosted custom view otherwise measures to a narrow wrap_content column,
+        // which makes the radar labels wrap even on wide devices. Give it a readable width
+        // and cap its height so the ScrollView works in landscape and at 600dp.
+        DisplayMetrics metrics = new DisplayMetrics();
+        ((WindowManager) getSystemService(Context.WINDOW_SERVICE))
+                .getDefaultDisplay().getMetrics(metrics);
+        final int maxHeight = metrics.heightPixels - legendDp(96);
+        final int dialogWidth = Math.min(metrics.widthPixels - legendDp(32),legendDp(380));
+        final Window dialogWindow = dialog.getWindow();
+        // AlertDialog re-applies its own window attributes in onStart(); onShow runs after
+        // that, so sizing here is reliable in every orientation.
+        dialog.setOnShowListener(new DialogInterface.OnShowListener() {
+            @Override
+            public void onShow(DialogInterface dialogInterface) {
+                WindowManager.LayoutParams params = dialogWindow.getAttributes();
+                params.width = dialogWidth;
+                dialogWindow.setAttributes(params);
+                root.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (isFinishing()){
+                            return;
+                        }
+                        // Measure at the final width; the extra space covers the dialog
+                        // title and the OK button row.
+                        root.measure(View.MeasureSpec.makeMeasureSpec(dialogWidth,View.MeasureSpec.EXACTLY),
+                                View.MeasureSpec.makeMeasureSpec(0,View.MeasureSpec.UNSPECIFIED));
+                        int desired = root.getMeasuredHeight()+legendDp(100);
+                        WindowManager.LayoutParams heightParams = dialogWindow.getAttributes();
+                        heightParams.height = Math.min(desired,maxHeight);
+                        dialogWindow.setAttributes(heightParams);
+                    }
+                });
+            }
+        });
+        dialog.show();
+        Button ok = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+        if (ok!=null){
+            // 48dp minimum touch target for the only interactive control in the dialog.
+            ok.setMinHeight(legendDp(48));
+            ok.setContentDescription(getString(android.R.string.ok));
+        }
+    }
+
+    private void addLegendHeader(LinearLayout parent,int resId,int textColor,float textSize,boolean spaced){
+        TextView header = new TextView(this);
+        header.setText(resId);
+        header.setTextColor(textColor);
+        header.setTextSize(TypedValue.COMPLEX_UNIT_PX,textSize);
+        header.setTypeface(Typeface.DEFAULT_BOLD);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,ViewGroup.LayoutParams.WRAP_CONTENT);
+        params.topMargin = legendDp(spaced ? 14 : 0);
+        params.bottomMargin = legendDp(4);
+        parent.addView(header,params);
+    }
+
+    private void addLegendNote(LinearLayout parent,int resId,int textColor,float textSize){
+        TextView note = new TextView(this);
+        note.setText(resId);
+        note.setTextColor(textColor);
+        note.setTextSize(TypedValue.COMPLEX_UNIT_PX,textSize);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT);
+        params.bottomMargin = legendDp(6);
+        parent.addView(note,params);
+    }
+
+    private void addLegendSwatchRow(LinearLayout parent,int color,String label,int textColor,
+                                    float textSize,boolean dashed){
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        View swatch = new View(this);
+        swatch.setBackground(makeLegendSwatch(color,dashed));
+        swatch.setContentDescription(label);
+        int swatchHeight = legendDp(22);
+        row.addView(swatch,new LinearLayout.LayoutParams(legendDp(36),swatchHeight));
+
+        TextView text = new TextView(this);
+        text.setText(label);
+        text.setTextColor(textColor);
+        text.setTextSize(TypedValue.COMPLEX_UNIT_PX,textSize);
+        LinearLayout.LayoutParams textParams = new LinearLayout.LayoutParams(0,ViewGroup.LayoutParams.WRAP_CONTENT,1f);
+        textParams.setMargins(legendDp(8),0,0,0);
+        row.addView(text,textParams);
+
+        LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT);
+        rowParams.setMargins(0,legendDp(2),0,legendDp(2));
+        parent.addView(row,rowParams);
+    }
+
+    /** Fill uses the layer opacity; the outline uses the full layer colour. */
+    private Drawable makeLegendSwatch(int color,boolean dashed){
+        float opacity = dashed ? EXCLUDED_FILL_OPACITY : WARNING_FILL_OPACITY;
+        // MapLibre renders the polygons over the light OpenFreeMap basemap, not over the
+        // dialog. Use the same light underlay so 45%/30% fills keep their map colours in
+        // both light and dark app themes.
+        ShapeDrawable underlay = new ShapeDrawable(new RectShape());
+        underlay.getPaint().setColor(0xfffafafa);
+        underlay.getPaint().setStyle(Paint.Style.FILL);
+
+        int fill = Color.argb(Math.round(opacity*255f),Color.red(color),Color.green(color),Color.blue(color));
+        ShapeDrawable fillDrawable = new ShapeDrawable(new RectShape());
+        fillDrawable.getPaint().setColor(fill);
+        fillDrawable.getPaint().setStyle(Paint.Style.FILL);
+
+        ShapeDrawable outlineDrawable = new ShapeDrawable(new RectShape());
+        outlineDrawable.getPaint().setColor(dashed ? Color.parseColor(EXCLUDED_LINE_COLOR) : color);
+        outlineDrawable.getPaint().setStyle(Paint.Style.STROKE);
+        float stroke = legendDp(2);
+        outlineDrawable.getPaint().setStrokeWidth(stroke);
+        if (dashed){
+            // Same 2:1 dash rhythm as the excluded layer's lineDasharray {2f,1f}.
+            outlineDrawable.getPaint().setPathEffect(new DashPathEffect(
+                    new float[]{legendDp(6),legendDp(3)},0f));
+        }
+        LayerDrawable result = new LayerDrawable(new Drawable[]{underlay,fillDrawable,outlineDrawable});
+        int inset = Math.round(stroke/2f);
+        result.setLayerInset(2,inset,inset,inset,inset);
+        return result;
+    }
+
+    private void addLegendImageRow(LinearLayout parent,int resource,String label,int textColor,float textSize){
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        if (resource>=0){
+            ImageView pin = new ImageView(this);
+            pin.setImageResource(resource);
+            pin.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            // The real pin is red/black. A light patch keeps it visible in dark themes.
+            pin.setBackgroundColor(0xffe8e8e8);
+            row.addView(pin,new LinearLayout.LayoutParams(legendDp(32),legendDp(32)));
+            pin.setContentDescription(label);
+        } else {
+            // Wind arcs are black on the light basemap; draw them on a light patch too.
+            View glyph = new View(this);
+            glyph.setContentDescription(label);
+            glyph.setBackground(new LegendWindDrawable(legendDp(2)));
+            row.addView(glyph,new LinearLayout.LayoutParams(legendDp(32),legendDp(32)));
+        }
+
+        TextView text = new TextView(this);
+        text.setText(label);
+        text.setTextColor(textColor);
+        text.setTextSize(TypedValue.COMPLEX_UNIT_PX,textSize);
+        LinearLayout.LayoutParams textParams = new LinearLayout.LayoutParams(0,ViewGroup.LayoutParams.WRAP_CONTENT,1f);
+        textParams.setMargins(legendDp(8),0,0,0);
+        row.addView(text,textParams);
+        LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT);
+        rowParams.setMargins(0,legendDp(2),0,legendDp(2));
+        parent.addView(row,rowParams);
+    }
+
+    private static class LinearLabelRow extends LinearLayout{
+        LinearLabelRow(Context context,int textColor,float textSize){
+            super(context);
+            setOrientation(LinearLayout.HORIZONTAL);
+            for (int i=0; i<4; i++){
+                TextView label = new TextView(context);
+                label.setTextColor(textColor);
+                label.setTextSize(TypedValue.COMPLEX_UNIT_PX,textSize);
+                label.setGravity(Gravity.CENTER);
+                addView(label,new LayoutParams(0,ViewGroup.LayoutParams.WRAP_CONTENT,1f));
+            }
+        }
+        void addLabel(String text){
+            for (int i=0; i<getChildCount(); i++){
+                TextView label = (TextView) getChildAt(i);
+                if (label.getText().length()==0){
+                    label.setText(text);
+                    return;
+                }
+            }
+        }
+    }
+
+    /** Small black wind path with distance arcs, matching the black vector polylines. */
+    private static class LegendWindDrawable extends Drawable{
+        private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+
+        LegendWindDrawable(float strokeWidth){
+            paint.setColor(Color.BLACK);
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setStrokeWidth(strokeWidth);
+        }
+
+        @Override
+        public void draw(Canvas canvas){
+            Rect bounds = getBounds();
+            canvas.drawColor(0xffe8e8e8);
+            float x0 = bounds.left+bounds.width()*0.15f;
+            float x1 = bounds.right-bounds.width()*0.15f;
+            float y0 = bounds.top+bounds.height()*0.68f;
+            float y1 = bounds.top+bounds.height()*0.36f;
+            Path path = new Path();
+            path.moveTo(x0,y0);
+            path.quadTo(bounds.left+bounds.width()*0.58f,y1-bounds.height()*0.12f,x1,y1);
+            canvas.drawPath(path,paint);
+            canvas.drawLine(x1,y1,x1-bounds.width()*0.13f,y1+bounds.height()*0.02f,paint);
+            canvas.drawLine(x1,y1,x1-bounds.width()*0.10f,y1+bounds.height()*0.12f,paint);
+            canvas.drawLine(x0-bounds.width()*0.05f,bounds.top+bounds.height()*0.28f,
+                    x0+bounds.width()*0.12f,bounds.top+bounds.height()*0.22f,paint);
+            canvas.drawLine(x0+bounds.width()*0.05f,bounds.top+bounds.height()*0.44f,
+                    x0+bounds.width()*0.22f,bounds.top+bounds.height()*0.38f,paint);
+        }
+
+        @Override
+        public void setAlpha(int alpha){
+            paint.setAlpha(alpha);
+            invalidateSelf();
+        }
+
+        @Override
+        public void setColorFilter(ColorFilter colorFilter){
+            paint.setColorFilter(colorFilter);
+            invalidateSelf();
+        }
+
+        @Override
+        public int getOpacity(){
+            return PixelFormat.TRANSLUCENT;
+        }
     }
 
     public void updateActionBarLabels(){
