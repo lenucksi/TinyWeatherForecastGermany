@@ -132,8 +132,13 @@ public class OverviewChartRedrawTest {
                     row.contains("@+id/main_overviewchart_legend"));
             assertTrue(relative + ": 48dp touch target", row.contains("android:minWidth=\"48dp\"")
                     && row.contains("android:minHeight=\"48dp\""));
-            assertTrue(relative + ": small glyph via 16dp internal padding",
-                    row.contains("android:padding=\"16dp\""));
+            // TASK-69: matched pair - X ~20dp glyph (14dp padding), info ~24dp glyph (12dp padding).
+            assertTrue(relative + ": reset X has a fixed 48dp target and 14dp internal padding",
+                    row.contains("android:layout_width=\"48dp\"") && row.contains("android:padding=\"14dp\""));
+            assertTrue(relative + ": legend info has a fixed 48dp target and 12dp internal padding",
+                    row.contains("android:padding=\"12dp\""));
+            assertTrue(relative + ": only the spinner may be weighted so neither icon grows",
+                    row.split("android:layout_weight=", -1).length - 1 == 1);
             assertTrue(relative + ": icon must be tinted for every theme",
                     row.contains("android:tint=\"?attr/colorText\""));
             assertFalse(relative + ": icon must not overlay the chart",
