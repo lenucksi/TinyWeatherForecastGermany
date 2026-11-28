@@ -21,18 +21,26 @@
 
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- TASK-64: dedicated legend entry in the warning-map action bar. -->
+    <item android:id="@+id/map_legend"
+          android:title="@string/map_legend_title"
+          android:icon="?attr/ic_map"
+          android:showAsAction="always"
+          android:orderInCategory="1">
+    </item>
+
     <item android:id="@+id/hide_rain"
           android:title="@string/hide_rain"
           android:icon="?attr/ic_filter"
           android:showAsAction="always"
-          android:orderInCategory="1">
+          android:orderInCategory="2">
     </item>
 
     <item android:id="@+id/menu_refresh"
         android:title="@string/update_button"
         android:icon="?attr/ic_refresh"
         android:showAsAction="ifRoom"
-        android:orderInCategory="2">
+        android:orderInCategory="3">
     </item>
 
 </menu>
