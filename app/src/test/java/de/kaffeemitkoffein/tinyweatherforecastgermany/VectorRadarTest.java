@@ -119,7 +119,8 @@ public class VectorRadarTest {
     public void seekBarSwapsCachedFrameImmediately() throws Exception {
         String activity = read("app/src/main/java/de/kaffeemitkoffein/tinyweatherforecastgermany/WeatherWarningActivity.java");
         String listener = between(activity,"public void onProgressChanged","public void onStartTrackingTouch");
-        assertTrue(listener.contains("if (fromUser)"));
+        // TASK-87: the drag guard also checks that a real animation exists.
+        assertTrue(listener.contains("if (fromUser && (usableRainFrames>1))"));
         assertTrue(listener.contains("applyVectorRadarFrame(nextRainSlide)"));
         // Frames are downloaded once at startup for both modes; no early return remains.
         assertFalse(activity.contains("Starting the reader in vector mode would also try to measure"));

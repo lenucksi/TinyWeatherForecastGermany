@@ -147,7 +147,7 @@ public class RadarFrameSetFixtureTest {
 
         String activity = read("app/src/main/java/de/kaffeemitkoffein/tinyweatherforecastgermany/WeatherWarningActivity.java");
         assertTrue("caption must be derived from start + frame index",
-                activity.contains("new Date(rainSlidesStartTime+(nextRainSlide)*APIReaders.RadarMNSetGeoserverRunnable.TIMESTEP_5MINUTES)"));
+                activity.contains("new Date(rainSlidesStartTime+frame*APIReaders.RadarMNSetGeoserverRunnable.TIMESTEP_5MINUTES)"));
     }
 
     private static int countRainPixels(int[] pixels) {
