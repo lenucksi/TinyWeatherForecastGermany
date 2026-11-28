@@ -91,9 +91,12 @@ public class RadarFrameCounterTest {
     @Test
     public void usableCountFollowsContiguousValidCacheFiles() throws Exception {
         Context context = RuntimeEnvironment.getApplication();
-        byte[] valid = new byte[5001];
-        Arrays.fill(valid,(byte) 0x42);
+        // TASK-88: validity now means a real PNG header with the requested dimensions,
+        // not merely "more than 5000 bytes".
+        byte[] valid = validPng(RadarMN2.getFixedRadarMapWidth(context),
+                RadarMN2.getFixedRadarMapHeight(context));
         byte[] invalid = new byte[100];
+        Arrays.fill(invalid,(byte) 0x42);
         try {
             assertEquals(0,WeatherWarningActivity.usableRadarFrameCount(context));
             write(context,0,valid);
@@ -118,6 +121,24 @@ public class RadarFrameCounterTest {
         File file = APIReaders.RadarMNSetGeoserverRunnable.getRadarMNFile(context,index);
         Files.write(file.toPath(),data);
         assertTrue(file.isFile());
+    }
+
+    private static byte[] validPng(int width, int height){
+        byte[] data = new byte[5001];
+        Arrays.fill(data,(byte) 0x42);
+        byte[] signature = new byte[]{(byte) 0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a};
+        System.arraycopy(signature,0,data,0,signature.length);
+        data[12]='I'; data[13]='H'; data[14]='D'; data[15]='R';
+        writeInt(data,16,width);
+        writeInt(data,20,height);
+        return data;
+    }
+
+    private static void writeInt(byte[] data, int offset, int value){
+        data[offset]   = (byte) ((value>>24) & 0xff);
+        data[offset+1] = (byte) ((value>>16) & 0xff);
+        data[offset+2] = (byte) ((value>>8) & 0xff);
+        data[offset+3] = (byte) (value & 0xff);
     }
 
     @Test

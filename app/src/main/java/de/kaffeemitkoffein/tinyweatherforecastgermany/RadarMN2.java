@@ -243,13 +243,14 @@ public class RadarMN2 {
     }
 
     /**
-     * TASK-66: drop every cached radar frame so the downloader must fetch a fresh set.
+     * TASK-66/TASK-88: drop every cached radar frame so the downloader must fetch a fresh set.
      * RadarMNSetGeoserverRunnable reuses any complete, up-to-date dataset, so a stale
      * frame (for example an alignment-QA fixture) would otherwise survive indefinitely.
+     * TASK-88: also clears the keyed cache/radar/ directory and any legacy frames.
      * @return number of frame files actually deleted.
      */
     public static int clearRadarCache(Context context){
-        int removed = 0;
+        int removed = RadarFrameCache.clear(context);
         for (int i=0; i<APIReaders.RadarMNSetGeoserverRunnable.DATASET_SIZE; i++){
             if (APIReaders.RadarMNSetGeoserverRunnable.deleteCacheFile(context,i)){
                 removed++;
@@ -269,6 +270,9 @@ public class RadarMN2 {
             bitmapOptions.inMutable = true;
             Bitmap bitmap;
             bitmap = BitmapFactory.decodeFile(APIReaders.RadarMNSetGeoserverRunnable.getRadarMNFile(context,count).getAbsolutePath().toString(),bitmapOptions);
+            if (bitmap==null){
+                return null;
+            }
             bitmap.getPixels(color,0,getFixedRadarMapWidth(context),0,0,getFixedRadarMapWidth(context),getFixedRadarMapHeight(context));
             int colorArraySize = getFixedRadarMapWidth(context)*getFixedRadarMapHeight(context);
             for (int i=0; i<colorArraySize; i++){
