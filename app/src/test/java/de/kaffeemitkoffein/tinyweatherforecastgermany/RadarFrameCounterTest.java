@@ -192,7 +192,7 @@ public class RadarFrameCounterTest {
     }
 
     @Test
-    public void bothLayoutsUseOneCompactCaptionRowAndKeepRadarBelowWarnings() throws Exception {
+    public void bothLayoutsUseOneCompactCaptionRowAndKeepRadarAboveFills() throws Exception {
         for (String path : new String[]{
                 "app/src/main/res/layout/activity_weatherwarning.xml",
                 "app/src/main/res/layout-w600dp-land/activity_weatherwarning.xml"}){
@@ -213,9 +213,11 @@ public class RadarFrameCounterTest {
                     caption.contains("android:layout_below=\"@id/warningactivity_rainslideframe\""));
         }
         String activity = read("app/src/main/java/de/kaffeemitkoffein/tinyweatherforecastgermany/WeatherWarningActivity.java");
-        // TASK-86(g): keep radar below the warning fills; no opacity change without a visual comparison.
-        assertTrue(activity.contains("style.addLayerBelow(raster,WARNING_FILL_LAYER_ID)"));
-        assertTrue(activity.contains("RADAR_RASTER_OPACITY=0.8f"));
+        // TASK-91 supersedes TASK-86(g): rain now sits above both fills, below both outlines,
+        // and the alpha is read from the TASK-89 setting instead of a hard-coded constant.
+        assertTrue(activity.contains("style.addLayerBelow(raster,belowId)"));
+        assertTrue(activity.contains("float radarOpacity=WeatherSettings.getRadarOpacity(context)"));
+        assertFalse(activity.contains("RADAR_RASTER_OPACITY"));
         String english = read("app/src/main/res/values/strings.xml");
         String german = read("app/src/main/res/values-de/strings.xml");
         assertTrue(english.contains("<string name=\"radar_timeline_unavailable\""));

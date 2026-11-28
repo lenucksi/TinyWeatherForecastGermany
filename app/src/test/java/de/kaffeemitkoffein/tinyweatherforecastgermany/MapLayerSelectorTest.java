@@ -97,7 +97,7 @@ public class MapLayerSelectorTest {
                 "removeManagedStyleSource(style,WARNING_SOURCE_ID)",
                 "removeManagedStyleSource(style,EXCLUDED_SOURCE_ID)",
                 "removeManagedStyleSource(style,RADAR_SOURCE_ID)",
-                "style.addLayerAbove(fill,RADAR_LAYER_ID)",
+                "style.addLayerBelow(fill,belowId)",
                 "WeatherSettings.setMapLayerWarnings(context,isChecked)",
                 "WeatherSettings.setMapLayerExcluded(context,isChecked)",
                 "WeatherSettings.setMapLayerRadar(context,isChecked)",

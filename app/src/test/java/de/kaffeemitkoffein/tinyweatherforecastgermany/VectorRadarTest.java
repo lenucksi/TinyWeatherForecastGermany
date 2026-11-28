@@ -88,9 +88,13 @@ public class VectorRadarTest {
         assertTrue(activity.contains("new ImageSource(RADAR_SOURCE_ID,radarLatLngQuad(),bitmap)"));
         assertTrue(activity.contains("source.setImage(bitmap)"));
         assertTrue(activity.contains("new RasterLayer(RADAR_LAYER_ID,RADAR_SOURCE_ID)"));
-        assertTrue(activity.contains("PropertyFactory.rasterOpacity(RADAR_RASTER_OPACITY)"));
-        // The raster must sit below the warning fills so those stay readable.
-        assertTrue(activity.contains("style.addLayerBelow(raster,WARNING_FILL_LAYER_ID)"));
+        // TASK-91: opacity comes from the TASK-89 setting, and the raster is anchored above
+        // the fills but below the outlines (no hard-coded 0.8f alpha any more).
+        assertTrue(activity.contains("float radarOpacity=WeatherSettings.getRadarOpacity(context)"));
+        assertTrue(activity.contains("PropertyFactory.rasterOpacity(opacity)"));
+        assertFalse(activity.contains("RADAR_RASTER_OPACITY"));
+        assertTrue(activity.contains("style.addLayerBelow(raster,belowId)"));
+        assertTrue(activity.contains("radarOrderIsCorrect(ids)"));
         assertTrue(activity.contains("style.removeLayer(RADAR_LAYER_ID)"));
         // Installed only from the style-ready callback, never before.
         assertTrue(activity.contains("applyVectorRadarFrame(nextRainSlide)"));
