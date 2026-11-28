@@ -606,4 +606,13 @@
     <string name="a11y_map_locate">Zum eigenen Standort zoomen</string>
     <string name="map_locate_device">Karte auf deinen Standort zentriert.</string>
     <string name="map_locate_fallback">Kein Gerätestandort verfügbar; die eingestellte Station wird angezeigt.</string>
+
+    <!-- TASK-70: Steuerung und Bildkontext der Radar-Zeitleiste. -->
+    <string name="radar_frame">Bild %1$d/%2$d</string>
+    <string name="a11y_radar_timeline">Radar-Zeitleiste, ziehen zum Wählen eines Bildes</string>
+    <string name="a11y_radar_play">Radar-Animation abspielen</string>
+    <string name="a11y_radar_pause">Radar-Animation pausieren</string>
+    <string name="a11y_radar_stop">Radar-Animation stoppen und zum ersten Bild zurückkehren</string>
+    <string name="a11y_radar_step_back">Vorheriges Radar-Bild</string>
+    <string name="a11y_radar_step_forward">Nächstes Radar-Bild</string>
 </resources>
