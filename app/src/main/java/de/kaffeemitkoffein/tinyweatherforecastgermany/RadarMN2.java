@@ -216,6 +216,48 @@ public class RadarMN2 {
                 RADAR_EAST_LONGITUDE,RADAR_SOUTH_LATITUDE};
     }
 
+    /*
+     * TASK-66: geometry of the scaled vector station pin. MapLibre 13.8 anchors a Marker
+     * icon at the centre of its bitmap and has no setAnchor() overload, so the sprite is
+     * drawn into a padded canvas whose centre coincides with the sprite tip. In every
+     * density bucket of R.mipmap.pin the tip sits at U~0.215 of the width on the bottom
+     * edge (V=1.0 before padding). Keeping these values in one place lets a JVM test
+     * verify the anchor maths without loading a Bitmap.
+     */
+    public static final float VECTOR_PIN_SCALE = 0.6f;
+    public static final float VECTOR_PIN_TIP_U  = 0.215f;
+
+    /** Scaled icon width/height in pixels for a pin originally pinSizePixels wide. */
+    public static int scaleVectorPinSize(int pinSizePixels){
+        return Math.max(1,Math.round(pinSizePixels*VECTOR_PIN_SCALE));
+    }
+
+    /** Side length of the square padded canvas; its centre hosts the pin tip. */
+    public static int vectorPinCanvasSize(int scaledPinPixels){
+        return scaledPinPixels*2;
+    }
+
+    /** Left offset of the sprite so that its bottom tip reaches the canvas centre. */
+    public static int vectorPinOffsetX(int scaledPinPixels){
+        return scaledPinPixels - Math.round(VECTOR_PIN_TIP_U*scaledPinPixels);
+    }
+
+    /**
+     * TASK-66: drop every cached radar frame so the downloader must fetch a fresh set.
+     * RadarMNSetGeoserverRunnable reuses any complete, up-to-date dataset, so a stale
+     * frame (for example an alignment-QA fixture) would otherwise survive indefinitely.
+     * @return number of frame files actually deleted.
+     */
+    public static int clearRadarCache(Context context){
+        int removed = 0;
+        for (int i=0; i<APIReaders.RadarMNSetGeoserverRunnable.DATASET_SIZE; i++){
+            if (APIReaders.RadarMNSetGeoserverRunnable.deleteCacheFile(context,i)){
+                removed++;
+            }
+        }
+        return removed;
+    }
+
     public static int[] getPixels(Context context){
         return new int[getFixedRadarMapWidth(context)*getFixedRadarMapHeight(context)];
     }
