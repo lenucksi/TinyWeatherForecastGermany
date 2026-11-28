@@ -41,6 +41,8 @@ import android.os.Bundle;
 import android.os.Process;
 import android.text.SpannableString;
 import android.text.Spanned;
+import android.text.method.LinkMovementMethod;
+import android.text.style.URLSpan;
 import android.text.style.UnderlineSpan;
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
@@ -279,7 +281,8 @@ public class WeatherWarningActivity extends Activity {
             if (intent!=null){
                 // update warning display if warnings have been updated
                 if (WEATHER_WARNINGS_UPDATE.equals(intent.getAction())) {
-                    weatherWarnings = WeatherWarnings.getCurrentWarnings(getApplicationContext(),true);
+                    weatherWarnings = WeatherWarnings.getCurrentWarnings(getApplicationContext(),true,
+                            WarningProvider.Registry.activeProvider(getApplicationContext()).id());
                     displayWarnings();
                     updateActionBarLabels();
                     hideProgressBar();
@@ -735,7 +738,8 @@ public class WeatherWarningActivity extends Activity {
             scheduledExecutorService.execute(new Runnable() {
                 @Override
                 public void run() {
-                    weatherWarnings = WeatherWarnings.getCurrentWarnings(getApplicationContext(),true);
+                    weatherWarnings = WeatherWarnings.getCurrentWarnings(getApplicationContext(),true,
+                            WarningProvider.Registry.activeProvider(getApplicationContext()).id());
                     PrivateLog.log(context,PrivateLog.WARNINGS,PrivateLog.INFO,"Weather warnings are up to date, showing the data available.");
                     displayWarnings();
                 }
@@ -1642,7 +1646,33 @@ public class WeatherWarningActivity extends Activity {
         }
     }
 
+    /** TASK-77: the visible warning list always names the source that produced its rows. */
+    private void updateWarningAttributionNotice(){
+        TextView notice = (TextView) findViewById(R.id.warningactivity_notice_text);
+        if (notice==null){
+            return;
+        }
+        WarningProvider warningProvider = WarningProvider.Registry.activeProvider(context);
+        if (WarningProvider.ID_METEOALARM.equals(warningProvider.id())){
+            String country = warningProvider.countryKey(WeatherSettings.getSetStationLocation(context));
+            String text = getString(R.string.warning_provider_attribution_meteoalarm,
+                    country==null ? "" : country);
+            SpannableString spannable = new SpannableString(text);
+            int linkStart = text.indexOf("meteoalarm.org");
+            if (linkStart>=0){
+                spannable.setSpan(new URLSpan(warningProvider.attributionUrl()),linkStart,
+                        linkStart+"meteoalarm.org".length(),Spanned.SPAN_INCLUSIVE_INCLUSIVE);
+                notice.setMovementMethod(LinkMovementMethod.getInstance());
+            }
+            notice.setText(spannable);
+        } else {
+            // DWD keeps its long-standing attribution text unchanged.
+            notice.setText(R.string.dwd_notice_app);
+        }
+    }
+
     private void displayWarnings(){
+        updateWarningAttributionNotice();
         // getCurrentWarnings() can return null on a database error. Normalise once so that
         // neither the adapter nor the map can dereference a null list (issue #285).
         weatherWarnings = WarningUiDataGuard.sanitized(weatherWarnings);

@@ -26,6 +26,13 @@
     <string name="dwd_notice_app">Data basis: Deutscher Wetterdienst, own elements added, some data averaged over individual values. Warnings abbreviated.</string>
     <string name="dwd_warnings_notice">Data basis: Deutscher Wetterdienst, displaying condensed warnings. </string>
     <string name="dwd_textforecast_notice">Data basis: Deutscher Wetterdienst, own elements added, layout changed.</string>
+    <!-- TASK-77: warning-source attribution. Only en + de are translated; all other
+         locales fall back to these English defaults via Android resource resolution. -->
+    <string name="warning_provider_dwd" tools:ignore="MissingTranslation">Deutscher Wetterdienst (DWD)</string>
+    <string name="warning_provider_meteoalarm" tools:ignore="MissingTranslation">MeteoAlarm</string>
+    <string name="warning_provider_attribution_meteoalarm" tools:ignore="MissingTranslation">Warnings: MeteoAlarm (%1$s) · CC BY 4.0 · meteoalarm.org</string>
+    <string name="warning_provider_dwd_attribution" tools:ignore="MissingTranslation">Warnings: Deutscher Wetterdienst · CC BY 4.0</string>
+    <string name="about_warning_sources" tools:ignore="MissingTranslation">Warning sources: Deutscher Wetterdienst (CC BY 4.0) and MeteoAlarm / EUMETNET (CC BY 4.0; additional redistribution terms apply, legal review pending). Warnings may be abbreviated; areas without geometry are identified by area code only.</string>
     <string name="new_station">Region changed to</string>
     <string name="license_button">License</string>
     <string name="update_button">Update</string>

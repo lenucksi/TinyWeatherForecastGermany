@@ -25,6 +25,12 @@
     <string name="dwd_notice_app">Quelle: Deutscher Wetterdienst, eigene Elemente ergänzt, einige Einzelwerte gemittelt. Warnungen gekürzt.</string>
     <string name="dwd_warnings_notice">Quelle: Deutscher Wetterdienst, Warnungen gekürzt dargestellt.</string>
     <string name="dwd_textforecast_notice">Quelle: Deutscher Wetterdienst, eigene Elemente ergänzt, Layout geändert.</string>
+    <!-- TASK-77: attribution for the active warning provider. -->
+    <string name="warning_provider_dwd">Deutscher Wetterdienst (DWD)</string>
+    <string name="warning_provider_meteoalarm">MeteoAlarm</string>
+    <string name="warning_provider_attribution_meteoalarm">Warnungen: MeteoAlarm (%1$s) · CC BY 4.0 · meteoalarm.org</string>
+    <string name="warning_provider_dwd_attribution">Warnungen: Deutscher Wetterdienst · CC BY 4.0</string>
+    <string name="about_warning_sources">Warnquellen: Deutscher Wetterdienst (CC BY 4.0) und MeteoAlarm / EUMETNET (CC BY 4.0; zusätzliche Weitergebungsbedingungen, rechtliche Prüfung ausstehend). Warnungen können gekürzt sein; Gebiete ohne Geometrie werden nur über ihren Gebietscode ausgewiesen.</string>
     <string name="new_station">Region geändert zu</string>
     <string name="license_button">Lizenz</string>
     <string name="about_button">Datenschutz/Über</string>

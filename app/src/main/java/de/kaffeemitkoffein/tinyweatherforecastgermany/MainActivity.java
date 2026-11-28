@@ -1615,6 +1615,9 @@ public class MainActivity extends Activity {
             inputStream.close();
             String text = new String(textdata);
             text = text.replace("[VERSION]",versioning);
+            // TASK-77: one attribution line for all warning sources. Only en/de are
+            // translated; other locales use the English default resource.
+            text = text + "\n\n" + getString(R.string.about_warning_sources) + "\n";
             if (WeatherSettings.appReleaseIsUserdebug()){
                 text = text + PrivateLog.getDebugInfoString(getApplicationContext());
                 text = text + PrivateLog.getInfoString(getApplicationContext());
