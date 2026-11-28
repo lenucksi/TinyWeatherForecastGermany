@@ -1,0 +1,21 @@
+Real DWD rain-radar composite used as an immutable Robolectric test fixture.
+This is genuine weather data, not a synthetic patch; do not edit or regenerate it.
+
+source_url=https://maps.dwd.de/geoserver/dwd/wms?service=WMS&version=1.1.0&request=GetMap&layers=dwd%3ARadar_wn-product_1x1km_ger&bbox=493000.00%2C5861000.00%2C1791000.00%2C7470000.00&time=2026-11-26T06:00:00.000Z&width=1108&height=1360&srs=EPSG%3A3857&styles=&format=image%2Fpng
+radar_timestamp_utc=2026-11-26T06:00:00.000Z
+http_date=Sat, 28 Nov 2026 10:30:35 GMT
+retrieved_utc=2026-11-28T10:30:52Z
+file=radar-real-20261126T0600Z.png
+format=PNG, 8-bit RGB without alpha, 1108 x 1360 pixels, 96599 bytes
+sha256=aa69756c2dc6ca50e40cdd1bf0fdc38fa0b0e14b0eed5feafe0bb109a4aa1e9f
+attribution=Deutscher Wetterdienst (DWD), CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/)
+
+Expected statistics of RadarMN2.getBitmap() on this frame (see RadarRealFixtureTest):
+total_pixels=1506880
+exact_raincolors_pixels=92050
+transparent_background_pixels=1408487
+opaque_pixels_after_app_palette_transform=98393
+rain_buckets=idx1:8483 idx2:14310 idx3:19221 idx4:30870 idx5:12705 idx6:4498 idx7:1539
+
+The four DWD background colours mapped to Color.TRANSPARENT by
+RadarMN2.getBitmap() are 0xFFBEBEBE, 0xFFFC3FFF, 0xFFBDBDBD and 0xFFFFFFFF.
