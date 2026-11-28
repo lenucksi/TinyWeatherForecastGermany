@@ -590,4 +590,21 @@
     <string name="a11y_warning_map" tools:ignore="MissingTranslation">Map of weather warnings</string>
     <string name="a11y_text_forecast_filter" tools:ignore="MissingTranslation">Toggle text forecast filter</string>
     <string name="a11y_chart_data" tools:ignore="MissingTranslation">Chart data</string>
+
+    <!-- TASK-64: legend for the vector warning map; other locales fall back to English. -->
+    <string name="map_legend_title" tools:ignore="MissingTranslation">Map legend</string>
+    <string name="map_legend_warning_levels" tools:ignore="MissingTranslation">DWD warning levels</string>
+    <string name="map_legend_warning_fill" formatted="false" tools:ignore="MissingTranslation">Warning areas have a 45% fill with an outline in the same colour.</string>
+    <string name="map_legend_minor" tools:ignore="MissingTranslation">Minor (level 1), yellow</string>
+    <string name="map_legend_moderate" tools:ignore="MissingTranslation">Moderate (level 2), orange</string>
+    <string name="map_legend_severe" tools:ignore="MissingTranslation">Severe (level 3), red</string>
+    <string name="map_legend_extreme" tools:ignore="MissingTranslation">Extreme (level 4), dark red</string>
+    <string name="map_legend_heat" tools:ignore="MissingTranslation">Heat, violet</string>
+    <string name="map_legend_uv" tools:ignore="MissingTranslation">UV radiation, magenta</string>
+    <string name="map_legend_radar" tools:ignore="MissingTranslation">Radar precipitation</string>
+    <string name="map_legend_radar_scale" tools:ignore="MissingTranslation">Radar precipitation colours: cyan, blue, green, yellow, orange, red, violet, magenta.</string>
+    <string name="map_legend_excluded" tools:ignore="MissingTranslation">Excluded area: warning cut out here, dark grey with a black dashed outline</string>
+    <string name="map_legend_others" tools:ignore="MissingTranslation">Map markers</string>
+    <string name="map_legend_pin" tools:ignore="MissingTranslation">Station pin: location of the selected station</string>
+    <string name="map_legend_wind" tools:ignore="MissingTranslation">Wind arcs: forecast wind direction and distance</string>
 </resources>

@@ -573,4 +573,21 @@
     <string name="a11y_warning_map">Karte mit Wetterwarnungen</string>
     <string name="a11y_text_forecast_filter">Textvorhersagen-Filter umschalten</string>
     <string name="a11y_chart_data">Diagrammdaten</string>
+
+    <!-- TASK-64: Legende der Warnkarte. -->
+    <string name="map_legend_title">Kartenlegende</string>
+    <string name="map_legend_warning_levels">DWD-Warnstufen</string>
+    <string name="map_legend_warning_fill" formatted="false">Warnflächen sind zu 45 % gefüllt und in derselben Farbe umrandet.</string>
+    <string name="map_legend_minor">Leicht (Stufe 1), gelb</string>
+    <string name="map_legend_moderate">Mäßig (Stufe 2), orange</string>
+    <string name="map_legend_severe">Schwer (Stufe 3), rot</string>
+    <string name="map_legend_extreme">Extrem (Stufe 4), dunkelrot</string>
+    <string name="map_legend_heat">Hitze, violett</string>
+    <string name="map_legend_uv">UV-Strahlung, magenta</string>
+    <string name="map_legend_radar">Radar-Niederschlag</string>
+    <string name="map_legend_radar_scale">Radarfarben: Cyan, Blau, Grün, Gelb, Orange, Rot, Violett, Magenta.</string>
+    <string name="map_legend_excluded">Ausgeschlossenes Gebiet: Warnung hier ausgespart, dunkelgrau mit schwarzer gestrichelter Umrandung</string>
+    <string name="map_legend_others">Kartenmarkierungen</string>
+    <string name="map_legend_pin">Stationsmarkierung: Standort der ausgewählten Station</string>
+    <string name="map_legend_wind">Windbögen: vorhergesagte Windrichtung und -entfernung</string>
 </resources>
