@@ -90,7 +90,7 @@ android {
     // time from the environment (CI maps these to GitHub Environment secrets).
     // No keystore, alias or password is stored in this repository. Debug and
     // userdebug variants do not reference this config, so local debug builds
-    // need none of these variables. See docs/signing.md.
+    // need none of these variables.
     signingConfigs {
         release {
             def keystorePath = System.getenv('RELEASE_KEYSTORE_FILE')

@@ -81,16 +81,6 @@ public class WidgetProviderSizingTest {
                 chartBlock.contains("ClockWidget.WIDGET_CUSTOM_REFRESH_ACTION"));
     }
 
-    @Test
-    public void roadmapLinksUserContentRequestsWithoutImplementingThem() throws Exception {
-        String roadmap = read("../docs/widget-roadmap.md");
-        assertTrue(roadmap.contains("issues/295"));
-        assertTrue(roadmap.contains("issues/298"));
-        assertTrue(roadmap.contains("issues/139"));
-        assertTrue(roadmap.contains("issues/140"));
-        assertTrue("roadmap must state that user-selectable contents are deferred",
-                roadmap.toLowerCase().contains("not implemented"));
-    }
 
     private static int dp(String xml, String attribute) {
         Matcher matcher = Pattern.compile("android:" + attribute + "=\"(\\d+)dp\"").matcher(xml);

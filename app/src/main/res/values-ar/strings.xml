@@ -19,7 +19,7 @@
 
  RTL locale (TASK-36): the curated entries below are Arabic. Every other entry
  intentionally carries the canonical English text as an explicit, lint-visible
- fallback; see docs/localization.md for the approved fallback policy.
+ fallback; the policy is documented in the project's local records.
 -->
 <resources>
     <string name="app_name">توقعات الطقس الصغيرة لألمانيا</string>

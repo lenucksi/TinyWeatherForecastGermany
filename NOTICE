@@ -6,7 +6,7 @@ Upstream:  https://codeberg.org/Starfish/TinyWeatherForecastGermany
 
 Main license: AGPL-3.0-or-later (full text in COPYING).
 F-Droid / IzzyOnDroid metadata License field: AGPL-3.0-or-later.
-Full licensing record, vendored-source header audit and rationale: docs/licensing.md.
+Licensing rationale is kept in the project's local records (not published).
 Copyright (c) 2020-2025 Pawel Dube and the upstream contributors.
 Fork modifications: Copyright (c) 2026 lenucksi and contributors.
 

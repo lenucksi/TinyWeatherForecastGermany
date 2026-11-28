@@ -38,7 +38,7 @@ import static org.junit.Assert.assertTrue;
  * tested exactly without a native map or a Bitmap; the wiring is pinned by source
  * inspection, as in VectorOverlayTest / VectorRadarTest.
  *
- * QA teardown for fixture injections is documented in docs/radar-alignment-qa.md.
+ * QA teardown for fixture injections is kept in the project's local records.
  */
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 33)

@@ -99,7 +99,7 @@ jobs:
             fi
           done
           if [ "$missing" -ne 0 ]; then
-            echo "::error::Refusing to build an unsigned release. See docs/signing.md."
+            echo "::error::Refusing to build an unsigned release: a signing secret is missing."
             exit 1
           fi
           echo "All four release signing secrets are present."

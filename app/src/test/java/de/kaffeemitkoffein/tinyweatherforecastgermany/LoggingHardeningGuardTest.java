@@ -29,7 +29,6 @@ public class LoggingHardeningGuardTest {
 
     private static String read(String relativePath) throws IOException {
         // Gradle runs unit tests with the module directory as working directory;
-        // docs/ lives in the repository root.
         String[] candidates = {relativePath, "app/" + relativePath,
                 "../" + relativePath, "../app/" + relativePath};
         for (String candidate : candidates) {
@@ -92,11 +91,4 @@ public class LoggingHardeningGuardTest {
                 source.contains("public static boolean logException("));
     }
 
-    @Test
-    public void documentationExplainsFailuresAndCrashScope() throws IOException {
-        String doc = read("docs/logging.md");
-        assertTrue(doc.toLowerCase().contains("crash"));
-        assertTrue(doc.toLowerCase().contains("catch"));
-        assertTrue(doc.toLowerCase().contains("redact"));
-    }
 }
