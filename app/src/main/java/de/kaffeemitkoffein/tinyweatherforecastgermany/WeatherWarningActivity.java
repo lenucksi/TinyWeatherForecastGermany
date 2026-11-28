@@ -149,12 +149,28 @@ public class WeatherWarningActivity extends Activity {
     ImageButton radarStopButton;
     ImageButton radarStepBackButton;
     ImageButton radarStepForwardButton;
+    ImageButton radarJumpToNowButton;
+    ImageButton radarSpeedButton;
+
+    // TASK-90: capabilities-driven absolute timeline and the lazy frame loader.
+    RadarCapabilities.Window radarWindow;
+    RadarTimeline radarTimeline;
+    RadarFrameLoader frameLoader;
+
+    /** TASK-90 review: loading is NOT unavailable; the last good frame stays on screen. */
+    enum FrameLoadState { LOADING, AVAILABLE, UNAVAILABLE }
+    FrameLoadState frameState = FrameLoadState.LOADING;
+    int displayedRainFrame = 0;
+    long displayedRainFrameTime = 0L;
+    /** Drops results of superseded frame requests (a slow failure must not repaint the UI). */
+    private final java.util.concurrent.atomic.AtomicLong frameRequestToken =
+            new java.util.concurrent.atomic.AtomicLong(0L);
 
     Bundle zoomMapState = null;
 
     RadarMN2.MercatorProjectionTile mercatorProjectionTile;
     PlotPoint pinPoint;
-    int[] precipitationAtPinPointArray = new int[24];
+    int[] precipitationAtPinPointArray = new int[0];
     ImageView precipitationAtPinPointColors;
     Bitmap precipitationAtPinPointBitmap;
 
@@ -274,6 +290,16 @@ public class WeatherWarningActivity extends Activity {
     private volatile int usableRainFrames = 0;
     public final static int RAINSLIDEDELAY=750;
 
+    /** TASK-90 review: in-memory playback-speed cycle; no TASK-89 preference is touched. */
+    public final static float[] RADAR_PLAYBACK_SPEEDS =
+            new float[]{0.5f,1.0f,1.5f,2.0f,3.0f};
+    private int radarSpeedIndex = 1;
+    private volatile float radarPlaybackSpeed = 1.0f;
+
+    static String radarSpeedLabel(float speed){
+        return String.format(Locale.ROOT,"%.1fx",speed);
+    }
+
     /**
      * TASK-87: the number of usable frames is the length of the contiguous valid prefix
      * of the cache. A partial set is displayed honestly (its real length), and a gap in
@@ -291,9 +317,92 @@ public class WeatherWarningActivity extends Activity {
         return count;
     }
 
+    /** TASK-90: the dynamic frame count comes from the absolute timeline when present. */
     private void refreshUsableRainFrames(){
-        usableRainFrames = usableRadarFrameCount(context);
+        if (radarTimeline!=null){
+            usableRainFrames = radarTimeline.frameCount;
+        } else {
+            usableRainFrames = usableRadarFrameCount(context);
+        }
     }
+
+    /** Absolute UTC timestamp of a frame index; legacy path kept for tests/no capabilities. */
+    private long frameTimeForIndex(final int frame){
+        if (radarTimeline!=null){
+            return radarTimeline.timeForIndex(frame);
+        }
+        return rainSlidesStartTime+frame*APIReaders.RadarMNSetGeoserverRunnable.TIMESTEP_5MINUTES;
+    }
+
+    /**
+     * TASK-90: displays one absolute frame with an explicit state machine.
+     * LOADING keeps the last good frame/time on screen; only a real failure switches to
+     * UNAVAILABLE. Decoded bitmaps come from the loader's bounded LRU, never from the UI thread.
+     */
+    private void requestRadarFrame(final int index, final boolean advanceAfter){
+        final int target = normalizeRainFrame(index,usableRainFrames);
+        nextRainSlide = target;
+        final long token = frameRequestToken.incrementAndGet();
+        final long timeMillis = frameTimeForIndex(target);
+        if (frameLoader==null || frameLoader.hasReadyBitmap(timeMillis)){
+            showAvailableFrame(target,timeMillis,advanceAfter);
+            return;
+        }
+        // A lazy fetch is in progress: do NOT repaint the caption or show the banner.
+        frameState = FrameLoadState.LOADING;
+        frameLoader.load(timeMillis,new RadarFrameLoader.FrameCallback() {
+            @Override
+            public void onFrame(final long loadedTime, final boolean available, boolean cancelled){
+                if (cancelled || loadedTime!=timeMillis
+                        || token!=frameRequestToken.get()){
+                    rainDrawLock=false;
+                    return;
+                }
+                if (available){
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            showAvailableFrame(target,timeMillis,advanceAfter);
+                        }
+                    });
+                    frameLoader.prefetchAfter(target,radarTimeline);
+                } else {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            // A genuine failure/offline result, never a transient loading tick.
+                            frameState = FrameLoadState.UNAVAILABLE;
+                            rainDrawLock=false;
+                            if (rainSlidesRunning){
+                                rainSlidesPaused=true;
+                            }
+                            updateSlideTimeText(displayedRainFrame);
+                            refreshRadarTransportControls();
+                        }
+                    });
+                }
+            }
+        });
+    }
+
+    /** Paints an available frame and keeps the caption/thumb in sync with what is displayed. */
+    private void showAvailableFrame(final int frame, final long timeMillis,
+                                    final boolean advanceAfter){
+        rainDrawLock=false;
+        frameState = FrameLoadState.AVAILABLE;
+        displayedRainFrame = frame;
+        displayedRainFrameTime = timeMillis;
+        drawRadarSlide(frame);
+        updateRainSeekBar(frame);
+        updateRainFrameText(frame);
+        updateSlideTimeText(frame);
+        // Re-evaluate transport enablement (a previous outage may have disabled them).
+        refreshRadarTransportControls();
+        if (advanceAfter){
+            nextRainSlide=frame+1;
+        }
+    }
+
 
     private boolean isNextRainSlide(){
         int frameCount = usableRainFrames;
@@ -329,7 +438,9 @@ public class WeatherWarningActivity extends Activity {
                 });
                 return;
             }
-            nextRainSlide=0;
+            nextRainSlide = (radarTimeline!=null)
+                    ? radarTimeline.playbackStartIndex(
+                            WeatherSettings.getRadarPlaybackStart(context)) : 0;
             rainSlidesRunning = true;
             // The icon must show PAUSE as soon as the timer actually runs, not only
             // when the (asynchronous) start runnable was posted.
@@ -364,19 +475,23 @@ public class WeatherWarningActivity extends Activity {
                 long startTime = Calendar.getInstance().getTimeInMillis();
                 if (nextRainSlide<usableRainFrames) {
                     rainDrawLock = true;
+                    // TASK-90: the frame is fetched lazily. On failure playback is paused on
+                    // that frame instead of skipping the gap or wrapping to the start.
+                    final int requestedFrame = nextRainSlide;
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            drawRadarSlide(nextRainSlide);
-                            nextRainSlide++;
-                            rainDrawLock = false;
+                            requestRadarFrame(requestedFrame,true);
                         }
                     });
                 } else {
                     nextRainSlide=0;
                 }
                 long stopTime = Calendar.getInstance().getTimeInMillis();
-                long waitTime = RAINSLIDEDELAY - (stopTime-startTime);
+                // TASK-90 review: the existing 750 ms tick is scaled by the in-memory speed.
+                long frameInterval = Math.max(50L,
+                        Math.round(RAINSLIDEDELAY/radarPlaybackSpeed));
+                long waitTime = frameInterval - (stopTime-startTime);
                 if (waitTime>0){
                     try {
                         Thread.sleep(waitTime);
@@ -439,11 +554,15 @@ public class WeatherWarningActivity extends Activity {
                     public void run() {
                         // make slider visible before rain radar starts
                         if (rainsliderSeekbarContainer!=null){
-                            updateRainSeekBar(0);
-                            updateRainFrameText(0);
+                            // TASK-90: the timer starts at the configured absolute frame.
+                            int firstFrame = normalizeRainFrame(nextRainSlide,usableRainFrames);
+                            updateRainSeekBar(firstFrame);
+                            updateRainFrameText(firstFrame);
                             rainsliderSeekbarContainer.setVisibility(View.VISIBLE);
                         }
                         refreshRadarTransportControls();
+                        android.util.Log.i("TWFG_MAP90","timer started interval="
+                                +Math.round(RAINSLIDEDELAY/radarPlaybackSpeed)+"ms");
                         new Thread(rainRadarRunnable).start();
                     }
                 };
@@ -619,6 +738,10 @@ public class WeatherWarningActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        if (frameLoader!=null){
+            frameLoader.shutdown();
+            frameLoader=null;
+        }
         if (layerDialog!=null){
             if (layerDialog.isShowing()){
                 layerDialog.dismiss();
@@ -672,7 +795,17 @@ public class WeatherWarningActivity extends Activity {
         ownLocation = WeatherSettings.getSetStationLocation(getApplicationContext());
         // calculate coordinates of user location on map
         pinPoint = getPlotPoint((float) ownLocation.longitude, (float) ownLocation.latitude);
-        rainSlidesStartTime = WeatherSettings.getPrefRadarLastdatapoll(context);
+        // TASK-90: first paint uses the last-good (or heuristic) capabilities window; the
+        // network refresh happens later off the UI thread and never blocks this Activity.
+        radarWindow = RadarCapabilities.current(context, Calendar.getInstance().getTimeInMillis());
+        radarTimeline = RadarTimeline.create(radarWindow,
+                WeatherSettings.getRadarTimeWindow(context));
+        usableRainFrames = radarTimeline.frameCount;
+        nextRainSlide = radarTimeline.playbackStartIndex(
+                WeatherSettings.getRadarPlaybackStart(context));
+        rainSlidesStartTime = radarTimeline.timeForIndex(0);
+        frameLoader = new RadarFrameLoader(context,
+                WeatherSettings.getRadarPrefetchProfile(context));
         WeatherSettings.setRotationMode(this);
         setContentView(R.layout.activity_weatherwarning);
         // TASK-52: pick the vector basemap or the legacy static map once per activity start.
@@ -736,6 +869,12 @@ public class WeatherWarningActivity extends Activity {
         rainSlideTime = (TextView) findViewById(R.id.warningactivity_rainslidetime);
         // TASK-70: wire the timeline caption and the play/stop/step transport row.
         setupRainTimelineControls();
+        // TASK-90 review: seed the visible frame from the last-good/cached window before any
+        // capabilities or network wait. LOADING keeps this frame and its time caption visible.
+        displayedRainFrame = nextRainSlide;
+        displayedRainFrameTime = frameTimeForIndex(nextRainSlide);
+        frameState = FrameLoadState.LOADING;
+        requestRadarFrame(nextRainSlide,false);
         /*
         rainSlideTime.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -749,6 +888,11 @@ public class WeatherWarningActivity extends Activity {
         gpsProgressHolder = (RelativeLayout) findViewById(R.id.gps_progress_holder);
         displayOsmNotice();
         radarMNSetGeoserverRunnable = new APIReaders.RadarMNSetGeoserverRunnable(getApplicationContext()){
+            {
+                // TASK-90: frames are loaded on demand; this runnable only refreshes
+                // capabilities once per process and reports the DWD anchor back.
+                lazyMode = true;
+            }
             @Override
             public void onStart() {
                 super.onStart();
@@ -788,16 +932,40 @@ public class WeatherWarningActivity extends Activity {
             @Override
             public void onFinished(long startTime, boolean success){
                 super.onFinished(startTime,success);
-                rainSlidesStartTime = startTime;
-                // TASK-87: the frames on disk, not success alone, define the timeline.
+                // TASK-90: capabilities may have refreshed while this job ran off-thread.
+                // Resolve the new DWD anchor and position the timeline without using the
+                // device clock. A changed reference time invalidates only forecast frames.
+                radarWindow = RadarCapabilities.current(context,
+                        Calendar.getInstance().getTimeInMillis());
+                RadarTimeline newTimeline = RadarTimeline.create(radarWindow,
+                        WeatherSettings.getRadarTimeWindow(context));
+                long newAnchor = radarWindow.anchorMillis;
+                long previousAnchor = RadarCapabilities.loadLastReferenceTime(context);
+                if (previousAnchor!=0L && newAnchor!=previousAnchor && frameLoader!=null){
+                    frameLoader.refreshAnchor(newAnchor,newTimeline);
+                }
+                RadarCapabilities.saveLastReferenceTime(context,newAnchor);
+                radarTimeline = newTimeline;
+                usableRainFrames = radarTimeline.frameCount;
+                nextRainSlide = radarTimeline.playbackStartIndex(
+                        WeatherSettings.getRadarPlaybackStart(context));
+                rainSlidesStartTime = radarTimeline.timeForIndex(0);
+                displayedRainFrame = nextRainSlide;
+                displayedRainFrameTime = frameTimeForIndex(nextRainSlide);
+                // A metadata refresh is not a frame failure: never flash the banner here.
+                if (frameState==FrameLoadState.UNAVAILABLE){
+                    frameState = FrameLoadState.LOADING;
+                }
+                validSlideSetObtained = success;
                 refreshUsableRainFrames();
                 runOnUiThread(new Runnable(){
                     @Override
                     public void run(){
-                        updateSlideTimeText(0);
                         refreshRadarTransportControls();
+                        requestRadarFrame(nextRainSlide,false);
                     }
                 });
+                hideRainSlideProgressBar();
                 if (useVectorMap){
                     // Vector radar uses the same cached frames and the same timer; only the
                     // drawing target differs (ImageSource.setImage instead of a bitmap).
@@ -807,7 +975,6 @@ public class WeatherWarningActivity extends Activity {
                     }
                     return;
                 }
-                hideRainSlideProgressBar();
                 if (success){
                     validSlideSetObtained = true;
                     if (precipitationAtPinPointColors!=null){
@@ -1505,19 +1672,40 @@ public class WeatherWarningActivity extends Activity {
     }
 
     public void updateSlideTimeText(){
-        updateSlideTimeText(nextRainSlide);
+        updateSlideTimeText(displayedRainFrame);
     }
 
-    /** TASK-87: the time label always describes the frame that was actually drawn. */
+    /**
+     * TASK-87/90: the time label always describes the frame that was actually drawn. While a
+     * lazy frame loads, the last good frame/time stay visible; only a real failure shows the
+     * honest unavailable banner.
+     */
     public void updateSlideTimeText(final int frame){
         if (rainSlideTime==null && rainSlideTimelineTime==null){
             return;
         }
+        int captionFrame = (frameState==FrameLoadState.AVAILABLE) ? frame : displayedRainFrame;
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
-        Date rainSlideDate = new Date(rainSlidesStartTime+frame*APIReaders.RadarMNSetGeoserverRunnable.TIMESTEP_5MINUTES);
+        Date rainSlideDate;
+        if (radarTimeline==null){
+            Date legacyDate = new Date(rainSlidesStartTime+frame*APIReaders.RadarMNSetGeoserverRunnable.TIMESTEP_5MINUTES);
+            rainSlideDate = frameState==FrameLoadState.AVAILABLE ? legacyDate
+                    : new Date(rainSlidesStartTime+displayedRainFrame*
+                            APIReaders.RadarMNSetGeoserverRunnable.TIMESTEP_5MINUTES);
+        } else {
+            // TASK-90: absolute timestamp from the capabilities-driven window.
+            rainSlideDate = new Date(frameState==FrameLoadState.AVAILABLE
+                    ? frameTimeForIndex(captionFrame) : displayedRainFrameTime);
+        }
         String radartime = simpleDateFormat.format(rainSlideDate);
+        // TASK-90: a frame outside the local today carries its date as well.
+        if (!RadarTimeline.isSameLocalDay(rainSlideDate.getTime(),
+                Calendar.getInstance().getTimeInMillis())){
+            radartime = new SimpleDateFormat("dd.MM. HH:mm",Locale.getDefault())
+                    .format(rainSlideDate);
+        }
         int textColor;
-        if (usableRainFrames<=1){
+        if (usableRainFrames<=1 || frameState==FrameLoadState.UNAVAILABLE){
             radartime = getString(R.string.radar_timeline_unavailable);
             textColor = resolveThemeColor(R.attr.colorAccentYellow);
         } else if (validSlideSetObtained) {
@@ -1665,7 +1853,8 @@ public class WeatherWarningActivity extends Activity {
             public void run() {
                 rainSlideProgressBar.setProgress(progress);
                 rainSlideProgressBar.invalidate();
-                rainSlideProgressBarText.setText(Math.round((float) progress/(float) (APIReaders.RadarMNSetGeoserverRunnable.DATASET_SIZE-1)*100f)+"%");
+                rainSlideProgressBarText.setText(Math.round((float) progress/
+                        (float) Math.max(1,usableRainFrames-1)*100f)+"%");
                 rainSlideProgressBarText.invalidate();
             }
         });
@@ -1694,6 +1883,11 @@ public class WeatherWarningActivity extends Activity {
     }
 
     private int getSeekBarPosition(int count){
+        // TASK-90 review: thumb position is derived from the displayed absolute timestamp,
+        // so it cannot disagree with the HH:mm caption by one slice.
+        if (radarTimeline!=null){
+            return radarTimeline.progressForIndexExact(count,SEEKBAR_MAX);
+        }
         return seekBarProgressForFrame(count,usableRainFrames);
     }
 
@@ -1705,9 +1899,16 @@ public class WeatherWarningActivity extends Activity {
                     @Override
                     public void onProgressChanged(SeekBar seekBar, int i, boolean fromUser) {
                         if (fromUser && (usableRainFrames>1)){
-                            // TASK-87: map the drag into the real cache length so the last
-                            // slice cannot wrap back to frame 0.
-                            nextRainSlide = frameForSeekBarProgress(i,usableRainFrames);
+                            // TASK-87: legacy mapping kept for the no-capabilities path.
+                            int legacyFrame = frameForSeekBarProgress(i,usableRainFrames);
+                            // TASK-90: the SeekBar maps to an absolute frame and clamps at the
+                            // ends; a scrub cancels outstanding prefetch work.
+                            nextRainSlide = (radarTimeline!=null)
+                                    ? radarTimeline.indexForProgressExact(i,SEEKBAR_MAX) : legacyFrame;
+                            if (frameLoader!=null){
+                                frameLoader.cancelPending();
+                            }
+                            rainSlidesPaused = true;
                             if (useVectorMap){
                                 // Swap the cached bitmap immediately; no network request here.
                                 applyVectorRadarFrame(nextRainSlide);
@@ -1719,6 +1920,7 @@ public class WeatherWarningActivity extends Activity {
                             // Both captions describe the same frame as the slider.
                             updateRainFrameText(nextRainSlide);
                             updateSlideTimeText(nextRainSlide);
+                            requestRadarFrame(nextRainSlide,false);
                         }
                     }
                     @Override
@@ -1757,6 +1959,37 @@ public class WeatherWarningActivity extends Activity {
         radarStopButton = (ImageButton) findViewById(R.id.warningactivity_radar_stop);
         radarStepBackButton = (ImageButton) findViewById(R.id.warningactivity_radar_step_back);
         radarStepForwardButton = (ImageButton) findViewById(R.id.warningactivity_radar_step_forward);
+        radarJumpToNowButton = (ImageButton) findViewById(R.id.warningactivity_radar_jump_to_now);
+        radarSpeedButton = (ImageButton) findViewById(R.id.warningactivity_radar_speed);
+        if (radarSpeedButton!=null){
+            radarSpeedButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view){
+                    radarSpeedIndex = (radarSpeedIndex+1)%RADAR_PLAYBACK_SPEEDS.length;
+                    radarPlaybackSpeed = RADAR_PLAYBACK_SPEEDS[radarSpeedIndex];
+                    String label = radarSpeedLabel(radarPlaybackSpeed);
+                    radarSpeedButton.setContentDescription(
+                            getString(R.string.a11y_radar_speed,label));
+                    radarSpeedButton.announceForAccessibility(
+                            getString(R.string.radar_speed_changed,label));
+                    // One line per user toggle: evidence that the 750 ms tick was rescaled.
+                    android.util.Log.i("TWFG_MAP90","speed="+label
+                            +" interval="+Math.round(RAINSLIDEDELAY/radarPlaybackSpeed)+"ms");
+                }
+            });
+        }
+        if (radarJumpToNowButton!=null){
+            radarJumpToNowButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view){
+                    // TASK-90: "now" is the DWD reference time, never the device clock.
+                    int nowIndex = radarTimeline!=null
+                            ? radarTimeline.playbackStartIndex(WeatherSettings.Radar.PLAYBACK_NOW)
+                            : 0;
+                    jumpToRainSlide(nowIndex);
+                }
+            });
+        }
         if (radarPlayButton!=null){
             radarPlayButton.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -1853,17 +2086,21 @@ public class WeatherWarningActivity extends Activity {
         }
         int target = normalizeRainFrame(frame,usableRainFrames);
         nextRainSlide = target;
+        if (frameLoader!=null){
+            frameLoader.cancelPending();
+        }
+        rainSlidesPaused = true;
         if (BuildConfig.DEBUG){
             android.util.Log.d("TWFG_MAP70","frame="+target+" running="+rainSlidesRunning+" paused="+rainSlidesPaused);
         }
         if (rainsliderSeekbarContainer!=null){
             rainsliderSeekbarContainer.setVisibility(View.VISIBLE);
         }
-        drawRadarSlide(target);
         updateRainSeekBar(target);
         updateSlideTimeText(target);
         updateRainFrameText(target);
         refreshRadarTransportControls();
+        requestRadarFrame(target,false);
     }
 
     /** Wraps a frame index into 0..DATASET_SIZE-1 (24 frames, 5 minutes apart). */
@@ -1917,6 +2154,15 @@ public class WeatherWarningActivity extends Activity {
         if (radarStepForwardButton!=null){
             radarStepForwardButton.setEnabled(canAnimate);
         }
+        if (radarJumpToNowButton!=null){
+            radarJumpToNowButton.setEnabled(canAnimate);
+        }
+        if (radarSpeedButton!=null){
+            // Speed only matters when real frames are available; never mask an outage.
+            radarSpeedButton.setEnabled(canAnimate && frameState!=FrameLoadState.UNAVAILABLE);
+            radarSpeedButton.setContentDescription(getString(R.string.a11y_radar_speed,
+                    radarSpeedLabel(radarPlaybackSpeed)));
+        }
         int motionVisibility = canAnimate ? View.VISIBLE : View.GONE;
         if (rainSlideTransportRow!=null){
             rainSlideTransportRow.setVisibility(motionVisibility);
@@ -1953,8 +2199,10 @@ public class WeatherWarningActivity extends Activity {
     }
 
     private int[] getPrecipitationArrayAtPinPoint(){
-        int[] resultarray = new int[24];
-        for (int i=0; i<APIReaders.RadarMNSetGeoserverRunnable.DATASET_SIZE; i++){
+        // TASK-90: the strip follows the dynamic frame count, not a hard-coded 24.
+        int count = Math.max(1,usableRainFrames);
+        int[] resultarray = new int[count];
+        for (int i=0; i<count; i++){
             resultarray[i] = getPrecipitationAtPinPoint(i);
         }
         return resultarray;
@@ -1973,10 +2221,16 @@ public class WeatherWarningActivity extends Activity {
             lastDrawnRainSlide=count;
             return;
         }
-        if (APIReaders.RadarMNSetGeoserverRunnable.radarCacheFileValid(context,count)) {
+        long frameTime = frameTimeForIndex(count);
+        boolean frameCached = (frameLoader!=null)
+                ? frameLoader.isCached(frameTime)
+                : APIReaders.RadarMNSetGeoserverRunnable.radarCacheFileValid(context,count);
+        if (frameCached) {
             radarBitmap.eraseColor(Color.TRANSPARENT);
             Canvas radarCanvas = new Canvas(radarBitmap);
-            Bitmap slideBitmap = RadarMN2.getScaledBitmap(context,count);
+            Bitmap slideBitmap = (frameLoader!=null)
+                    ? frameLoader.bitmapForTime(frameTime)
+                    : RadarMN2.getScaledBitmap(context,count);
             final Paint radarPaint = new Paint();
             radarPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_OVER));
             if (slideBitmap!=null){
@@ -3141,10 +3395,16 @@ public class WeatherWarningActivity extends Activity {
         if ((!useVectorMap) || (mapLibreMap==null) || (!vectorWarningStyleReady) || (!showRadarLayer)){
             return;
         }
-        if (!APIReaders.RadarMNSetGeoserverRunnable.radarCacheFileValid(context,count)){
+        if (frameLoader!=null){
+            if (!frameLoader.isCached(frameTimeForIndex(count))){
+                return;
+            }
+        } else if (!APIReaders.RadarMNSetGeoserverRunnable.radarCacheFileValid(context,count)){
             return;
         }
-        final Bitmap bitmap = RadarMN2.getBitmap(context,count);
+        final Bitmap bitmap = (frameLoader!=null)
+                ? frameLoader.bitmapForTime(frameTimeForIndex(count))
+                : RadarMN2.getBitmap(context,count);
         if (bitmap==null){
             return;
         }

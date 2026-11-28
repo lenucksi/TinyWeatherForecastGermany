@@ -213,7 +213,7 @@
                                 android:src="@drawable/ic_radar_pause_24dp"
                                 android:tint="?attr/colorText"
                                 android:background="@null"
-                                android:padding="14dp"
+                                android:padding="16dp"
                                 android:scaleType="fitCenter"
                                 android:contentDescription="@string/a11y_radar_pause"/>
 
@@ -224,7 +224,7 @@
                                 android:src="@drawable/ic_radar_stop_24dp"
                                 android:tint="?attr/colorText"
                                 android:background="@null"
-                                android:padding="14dp"
+                                android:padding="16dp"
                                 android:scaleType="fitCenter"
                                 android:contentDescription="@string/a11y_radar_stop"/>
 
@@ -235,7 +235,7 @@
                                 android:src="@drawable/ic_radar_step_back_24dp"
                                 android:tint="?attr/colorText"
                                 android:background="@null"
-                                android:padding="14dp"
+                                android:padding="16dp"
                                 android:scaleType="fitCenter"
                                 android:contentDescription="@string/a11y_radar_step_back"/>
 
@@ -246,9 +246,31 @@
                                 android:src="@drawable/ic_radar_step_forward_24dp"
                                 android:tint="?attr/colorText"
                                 android:background="@null"
-                                android:padding="14dp"
+                                android:padding="16dp"
                                 android:scaleType="fitCenter"
                                 android:contentDescription="@string/a11y_radar_step_forward"/>
+
+                        <ImageButton
+                                android:id="@+id/warningactivity_radar_jump_to_now"
+                                android:layout_width="48dp"
+                                android:layout_height="48dp"
+                                android:src="@drawable/ic_radar_now_24dp"
+                                android:tint="?attr/colorText"
+                                android:background="@null"
+                                android:padding="16dp"
+                                android:scaleType="fitCenter"
+                                android:contentDescription="@string/a11y_radar_jump_to_now"/>
+
+                        <ImageButton
+                                android:id="@+id/warningactivity_radar_speed"
+                                android:layout_width="48dp"
+                                android:layout_height="48dp"
+                                android:src="@drawable/ic_radar_speed_24dp"
+                                android:tint="?attr/colorText"
+                                android:background="@null"
+                                android:padding="16dp"
+                                android:scaleType="fitCenter"
+                                android:contentDescription="@string/a11y_radar_speed"/>
 
                     </LinearLayout>
 

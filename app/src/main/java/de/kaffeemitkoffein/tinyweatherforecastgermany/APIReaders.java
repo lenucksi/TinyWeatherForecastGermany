@@ -1513,6 +1513,12 @@ public class APIReaders {
 
         private final static int THREADS_USED = 24;
 
+        // TASK-90: when the activity owns a RadarFrameLoader the legacy bulk download is
+        // skipped. The runnable still performs the once-per-session GetCapabilities refresh
+        // and reports the DWD reference time back to the activity, which invalidates only the
+        // forecast frames of the changed run.
+        public boolean lazyMode = false;
+
         public void cancel() {
             cancellation.cancel();
             ExecutorService current = executor;
@@ -1761,6 +1767,17 @@ public class APIReaders {
         public void run() {
             onStart();
             RadarFrameCache.initialize(context);
+            if (lazyMode){
+                // TASK-90: capabilities are fetched at most once per process, off the UI
+                // thread. Frames themselves are loaded on demand by RadarFrameLoader.
+                RadarCapabilities.refreshOnce(context, cancellation);
+                RadarCapabilities.Window window = RadarCapabilities.current(context,
+                        Calendar.getInstance().getTimeInMillis());
+                startTime = window.anchorMillis;
+                RadarFrameCache.setAnchor(context);
+                onFinished(startTime, true);
+                return;
+            }
             /* either update or return immediately to reuse present data
              * conditions for update:
              * corrupted / incomplete dataset, OR outdated data, OR an explicit forced update

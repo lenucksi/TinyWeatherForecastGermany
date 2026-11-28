@@ -1328,14 +1328,15 @@ public class ForecastBitmap{
 
     final static String PRECITPITATION_LABEL_SAMPLE="+XXX";
 
-    private float getPrecipitationColorLabelFontSize(){
+    /** TASK-90: the strip width follows the actual frame count, never a fixed 24. */
+    private float getPrecipitationColorLabelFontSize(int frameCount){
         WindowManager windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
         if (windowManager!=null){
             DisplayMetrics displayMetrics = new DisplayMetrics();
             windowManager.getDefaultDisplay().getMetrics(displayMetrics);
             float screenWidth = displayMetrics.widthPixels;
             float bitmapHeight = ((float) displayMetrics.heightPixels) / ForecastBitmap.PRECIPITATION_BITMAP_AR;
-            float itemWidth = ((float)screenWidth) / APIReaders.RadarMNSetGeoserverRunnable.DATASET_SIZE;
+            float itemWidth = ((float)screenWidth) / Math.max(1,frameCount);
             float fontSize = bitmapHeight;
             Paint paintText = new Paint();
             do {
@@ -1348,6 +1349,12 @@ public class ForecastBitmap{
     }
 
     public static Bitmap CreatePrecipitationAtPinPointBitmap(Context context, int[] values, final View imageContainterView){
+        // TASK-90: the number of columns is the number of frames actually supplied.
+        // A partial or a full multi-day window no longer assumes the legacy 24 frames.
+        if (values==null || values.length==0){
+            return null;
+        }
+        final int frameCount = values.length;
         // derive bitmap size from view;
         // to achieve a horizontally stretched font, the bitmap width is tweaked
         final float bitmapStrechFactor = 2.5f;
@@ -1356,7 +1363,7 @@ public class ForecastBitmap{
         // create bitmap
         Bitmap bitmap = Bitmap.createBitmap(bitmapWidth, bitmapHeight, Bitmap.Config.ARGB_8888);
         bitmap.eraseColor(Color.TRANSPARENT);// calculate tile width
-        int tileWidth = bitmapWidth / APIReaders.RadarMNSetGeoserverRunnable.DATASET_SIZE;
+        int tileWidth = bitmapWidth / frameCount;
         // define font for label
         float fontSize = bitmapHeight;
         Paint paintText = new Paint();
@@ -1369,14 +1376,14 @@ public class ForecastBitmap{
             paintText.setTextSize(fontSize);
         } while ((fontSize>6) && (paintText.measureText(PRECITPITATION_LABEL_SAMPLE)>tileWidth));
 
-        for (int position=0; position<APIReaders.RadarMNSetGeoserverRunnable.DATASET_SIZE; position++){
+        for (int position=0; position<frameCount; position++){
             int value = values[position];
             if (value != Color.TRANSPARENT){
                 int offsetX = Math.round(tileWidth*position);
                 Canvas canvas = new Canvas(bitmap);
                 Paint paint = new Paint();
                 paint.setStyle(Paint.Style.FILL);
-                int radius = bitmap.getWidth()/24/4;
+                int radius = bitmap.getWidth()/frameCount/4;
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                     paint.setColor(value);
                     canvas.drawRoundRect(offsetX+1,0,offsetX+Math.round(tileWidth-1),bitmap.getHeight(),radius,radius,paint);
