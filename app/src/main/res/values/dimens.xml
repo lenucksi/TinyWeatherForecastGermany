@@ -21,6 +21,11 @@
 <resources>
     <dimen name="widget_textsize_double">24sp</dimen>
     <dimen name="widget_textsize_verylarge">18sp</dimen>
+    <!-- TASK-83: warning icon in classic/large widgets; ~11% larger than widget_textsize_verylarge -->
+    <dimen name="widget_warning_icon_size">20sp</dimen>
+    <!-- TASK-83: push widget icons down from the top edge toward the location text line -->
+    <dimen name="widget_warning_icon_top">14dp</dimen>
+    <dimen name="widget_weathericon_top_offset">32dp</dimen>
     <dimen name="widget_textsize_large">14sp</dimen>
     <dimen name="widget_textsize_medium">12sp</dimen>
     <dimen name="widget_textsize_small">7sp</dimen>
