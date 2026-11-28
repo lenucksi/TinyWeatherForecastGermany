@@ -31,7 +31,9 @@ public class WeatherContentProvider extends ContentProvider {
 
     static final String AUTHORITY = "de.kaffeemitkoffein.tinyweatherforecastgermany";
 
-    public static final int DATABASE_VERSION = 7;
+    // TASK-77: v8 adds provider ownership columns to the warnings table so several
+    // warning sources can coexist without overwriting each other's rows.
+    public static final int DATABASE_VERSION = 8;
     public static final String DATABASE_NAME = "weather";
     private SQLiteDatabase database;
 
@@ -472,6 +474,9 @@ public class WeatherContentProvider extends ContentProvider {
          */
 
         public static final String KEY_WARNINGS_id = "id";
+        public static final String KEY_WARNINGS_provider_id = "provider_id";
+        public static final String KEY_WARNINGS_provider_key = "provider_key";
+        public static final String KEY_WARNINGS_warning_level = "warning_level";
         public static final String KEY_WARNINGS_polling_time = "polling_time";
         public static final String KEY_WARNINGS_identifier = "identifier";
         public static final String KEY_WARNINGS_sender = "sender";
@@ -512,6 +517,9 @@ public class WeatherContentProvider extends ContentProvider {
 
         public static final String SQL_COMMAND_CREATE_TABLE_WARNINGS = "CREATE TABLE " + EXISTCLAUSE + TABLE_NAME_WARNINGS + "("
                 + KEY_WARNINGS_id + " INTEGER PRIMARY KEY ASC,"
+                + KEY_WARNINGS_provider_id + " TEXT,"
+                + KEY_WARNINGS_provider_key + " TEXT,"
+                + KEY_WARNINGS_warning_level + " TEXT,"
                 + KEY_WARNINGS_polling_time + " INTEGER,"
                 + KEY_WARNINGS_identifier + " TEXT,"
                 + KEY_WARNINGS_sender + " TEXT,"
@@ -904,6 +912,18 @@ public class WeatherContentProvider extends ContentProvider {
             db.execSQL(SQL_COMMAND_CREATE_TABLE_DATA);
         }
 
+        /** TASK-77: cached warnings predate providers; they are all DWD warnings. */
+        private static void migrateToVersion8(SQLiteDatabase db) {
+            addColumnIfMissing(db, TABLE_NAME_WARNINGS, KEY_WARNINGS_provider_id, "TEXT");
+            addColumnIfMissing(db, TABLE_NAME_WARNINGS, KEY_WARNINGS_provider_key, "TEXT");
+            addColumnIfMissing(db, TABLE_NAME_WARNINGS, KEY_WARNINGS_warning_level, "TEXT");
+            db.execSQL("UPDATE " + TABLE_NAME_WARNINGS + " SET " + KEY_WARNINGS_provider_id
+                    + " = '" + WarningProvider.ID_DWD + "' WHERE " + KEY_WARNINGS_provider_id + " IS NULL");
+            db.execSQL("UPDATE " + TABLE_NAME_WARNINGS + " SET " + KEY_WARNINGS_provider_key
+                    + " = '" + WarningProvider.ID_DWD + "' WHERE " + KEY_WARNINGS_provider_key + " IS NULL");
+            backfillEmptyText(db, TABLE_NAME_WARNINGS, KEY_WARNINGS_warning_level);
+        }
+
         /**
          * Upgrades are incremental: every version step has a defined migration
          * and only the schema change of that step is applied. Cached forecasts,
@@ -927,6 +947,7 @@ public class WeatherContentProvider extends ContentProvider {
                     case 5: migrateToVersion5(db); break;
                     case 6: migrateToVersion6(db); break;
                     case 7: migrateToVersion7(db); break;
+                    case 8: migrateToVersion8(db); break;
                     default:
                         throw new IllegalStateException("No migration defined for database version " + version);
                 }

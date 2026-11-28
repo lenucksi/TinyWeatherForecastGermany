@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- TASK-77 fixture. Structure observed on https://feeds.meteoalarm.org/feeds/meteoalarm-legacy-atom-denmark
+     on 2026-11-28. Ids/text are shortened for the JVM fixture; the second entry deliberately
+     points at a foreign host and must be rejected by the parser. -->
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:cap="urn:oasis:names:tc:emergency:cap:1.2">
+  <id>tag:meteoalarm.org,2021-02-19:DK</id>
+  <rights>Copyright © 2026 MeteoAlarm.Org. Licensed under terms equivalent to CC BY 4.0, with additional requirements for redistributing outlined in our Terms and Conditions.</rights>
+  <entry>
+    <cap:areaDesc>Hovedstaden</cap:areaDesc>
+    <cap:event>flood</cap:event>
+    <cap:severity>Moderate</cap:severity>
+    <link type="application/cap+xml" href="https://feeds.meteoalarm.org/api/v1/warnings/feeds-denmark/11111111-2222-3333-4444-555555555555"/>
+    <id>https://feeds.meteoalarm.org/api/v1/warnings/feeds-denmark/11111111-2222-3333-4444-555555555555</id>
+    <title>Yellow Flood Warning issued for Denmark - Hovedstaden</title>
+    <updated>2026-11-28T13:00:00Z</updated>
+  </entry>
+  <entry>
+    <link type="application/cap+xml" href="https://evil.example/warnings/feeds-denmark/99999999-2222-3333-4444-555555555555"/>
+    <title>Malicious entry</title>
+  </entry>
+</feed>

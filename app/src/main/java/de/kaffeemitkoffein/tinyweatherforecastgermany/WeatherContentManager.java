@@ -376,6 +376,12 @@ public class WeatherContentManager {
 
     public static ContentValues getContentValuesFromWeatherWarning(WeatherWarning weatherWarning) {
         ContentValues contentValues = new ContentValues();
+        contentValues.put(WeatherContentProvider.WeatherDatabaseHelper.KEY_WARNINGS_provider_id,
+                weatherWarning.provider_id == null ? WarningProvider.ID_DWD : weatherWarning.provider_id);
+        contentValues.put(WeatherContentProvider.WeatherDatabaseHelper.KEY_WARNINGS_provider_key,
+                weatherWarning.provider_key == null ? WarningProvider.ID_DWD : weatherWarning.provider_key);
+        contentValues.put(WeatherContentProvider.WeatherDatabaseHelper.KEY_WARNINGS_warning_level,
+                weatherWarning.warning_level == null ? "" : weatherWarning.warning_level);
         contentValues.put(WeatherContentProvider.WeatherDatabaseHelper.KEY_WARNINGS_polling_time, weatherWarning.polling_time);
         contentValues.put(WeatherContentProvider.WeatherDatabaseHelper.KEY_WARNINGS_identifier, weatherWarning.identifier);
         contentValues.put(WeatherContentProvider.WeatherDatabaseHelper.KEY_WARNINGS_sender, weatherWarning.sender);
@@ -422,6 +428,18 @@ public class WeatherContentManager {
             return null;
         } else {
             WeatherWarning weatherWarning = new WeatherWarning();
+            String storedProvider = c.getString(c.getColumnIndex(
+                    WeatherContentProvider.WeatherDatabaseHelper.KEY_WARNINGS_provider_id));
+            if (storedProvider != null) {
+                weatherWarning.provider_id = storedProvider;
+            }
+            String storedProviderKey = c.getString(c.getColumnIndex(
+                    WeatherContentProvider.WeatherDatabaseHelper.KEY_WARNINGS_provider_key));
+            if (storedProviderKey != null) {
+                weatherWarning.provider_key = storedProviderKey;
+            }
+            weatherWarning.warning_level = c.getString(c.getColumnIndex(
+                    WeatherContentProvider.WeatherDatabaseHelper.KEY_WARNINGS_warning_level));
             weatherWarning.polling_time = c.getLong(c.getColumnIndex(WeatherContentProvider.WeatherDatabaseHelper.KEY_WARNINGS_polling_time));
             weatherWarning.identifier = c.getString(c.getColumnIndex(WeatherContentProvider.WeatherDatabaseHelper.KEY_WARNINGS_identifier));
             weatherWarning.sender = c.getString(c.getColumnIndex(WeatherContentProvider.WeatherDatabaseHelper.KEY_WARNINGS_sender));

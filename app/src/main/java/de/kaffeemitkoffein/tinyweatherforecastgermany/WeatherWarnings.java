@@ -52,11 +52,25 @@ public class WeatherWarnings {
     }
 
     public static ArrayList<WeatherWarning> getCurrentWarnings(Context context, boolean initPolygons){
+        return getCurrentWarnings(context,initPolygons,null);
+    }
+
+    /**
+     * TASK-77: when a provider id is given, only that provider's rows are returned. This keeps
+     * a Danish station from being shown a cached German warning (and vice versa).
+     */
+    public static ArrayList<WeatherWarning> getCurrentWarnings(Context context, boolean initPolygons, String providerId){
         ContentResolver contentResolver = context.getApplicationContext().getContentResolver();
         Cursor cursor  = null;
         ArrayList<WeatherWarning> warnings = new ArrayList<WeatherWarning>();
         try {
-            cursor = contentResolver.query(WeatherContentManager.WARNING_URI_ALL, null,null,null,null);
+            String selection = null;
+            String[] selectionArgs = null;
+            if (providerId!=null){
+                selection = WeatherContentProvider.WeatherDatabaseHelper.KEY_WARNINGS_provider_id + " = ?";
+                selectionArgs = new String[]{providerId};
+            }
+            cursor = contentResolver.query(WeatherContentManager.WARNING_URI_ALL, null,selection,selectionArgs,null);
             int i=0;
             if (cursor.moveToFirst()){
                 do {
@@ -81,9 +95,82 @@ public class WeatherWarnings {
     }
 
     public static void cleanWeatherWarningsDatabase(Context context){
+        // TASK-77: the legacy no-arg call is now provider-scoped to DWD. Existing German
+        // behaviour is unchanged; warnings from other providers survive a DWD refresh.
+        cleanWeatherWarningsDatabase(context,WarningProvider.ID_DWD);
+    }
+
+    /** Deletes only the rows owned by one provider (optionally one of its feeds). */
+    public static void cleanWeatherWarningsDatabase(Context context, String providerId){
+        cleanWeatherWarningsDatabase(context,providerId,null);
+    }
+
+    public static void cleanWeatherWarningsDatabase(Context context, String providerId, String providerKey){
         ContentResolver contentResolver = context.getApplicationContext().getContentResolver();
-        int i = contentResolver.delete(WeatherContentManager.WARNING_URI_ALL,null,null);
+        String selection = null;
+        String[] selectionArgs = null;
+        if (providerId!=null){
+            selection = WeatherContentProvider.WeatherDatabaseHelper.KEY_WARNINGS_provider_id + " = ?";
+            selectionArgs = new String[]{providerId};
+            if (providerKey!=null){
+                selection = selection + " AND " + WeatherContentProvider.WeatherDatabaseHelper.KEY_WARNINGS_provider_key + " = ?";
+                selectionArgs = new String[]{providerId,providerKey};
+            }
+        }
+        int i = contentResolver.delete(WeatherContentManager.WARNING_URI_ALL,selection,selectionArgs);
         PrivateLog.log(context,PrivateLog.WARNINGS,PrivateLog.INFO,i+" warnings removed from database.");
+    }
+
+    /** Drops rows of one feed whose CAP ids are no longer present in the Atom index. */
+    public static int pruneFeed(Context context, String providerKey, Set<String> keepIds){
+        ContentResolver contentResolver = context.getApplicationContext().getContentResolver();
+        String selection = WeatherContentProvider.WeatherDatabaseHelper.KEY_WARNINGS_provider_key + " = ?";
+        String[] args;
+        if (keepIds==null || keepIds.isEmpty()){
+            args = new String[]{providerKey};
+        } else {
+            StringBuilder placeholders = new StringBuilder();
+            ArrayList<String> values = new ArrayList<>();
+            values.add(providerKey);
+            for (String id : keepIds){
+                if (placeholders.length()>0){
+                    placeholders.append(',');
+                }
+                placeholders.append('?');
+                values.add(id);
+            }
+            selection = selection + " AND " + WeatherContentProvider.WeatherDatabaseHelper.KEY_WARNINGS_identifier
+                    + " NOT IN (" + placeholders + ")";
+            args = values.toArray(new String[values.size()]);
+        }
+        return contentResolver.delete(WeatherContentManager.WARNING_URI_ALL,selection,args);
+    }
+
+    /** Returns the rows currently owned by one feed; used to keep immutable CAP ids. */
+    public static ArrayList<WeatherWarning> getCurrentWarningsForFeed(Context context, String providerKey){
+        ContentResolver contentResolver = context.getApplicationContext().getContentResolver();
+        Cursor cursor = null;
+        ArrayList<WeatherWarning> warnings = new ArrayList<>();
+        try {
+            cursor = contentResolver.query(WeatherContentManager.WARNING_URI_ALL,null,
+                    WeatherContentProvider.WeatherDatabaseHelper.KEY_WARNINGS_provider_key + " = ?",
+                    new String[]{providerKey},null);
+            if (cursor.moveToFirst()){
+                do {
+                    WeatherWarning warning = WeatherContentManager.getWeatherWarningFromCursor(cursor);
+                    if (warning!=null){
+                        warnings.add(warning);
+                    }
+                } while (cursor.moveToNext());
+            }
+        } catch (Exception e) {
+            PrivateLog.log(context,PrivateLog.WARNINGS,PrivateLog.ERR,"database error when getting feed warnings: "+e.getMessage());
+        } finally {
+            if (cursor!=null){
+                cursor.close();
+            }
+        }
+        return warnings;
     }
 
     public static ArrayList<WeatherWarning> getWarningsForLocation(Context context, ArrayList<WeatherWarning> warnings, Weather.WeatherLocation location){

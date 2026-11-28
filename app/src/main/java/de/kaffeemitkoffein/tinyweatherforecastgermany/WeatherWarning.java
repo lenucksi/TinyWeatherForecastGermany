@@ -77,6 +77,12 @@ public class WeatherWarning implements Comparable<WeatherWarning> {
     public final static String ID_UPDATE="Update";
     public final static String ID_SILENT_UPDATE="SILENT_UPDATE";
 
+    // TASK-77: provider ownership. Defaults keep every legacy/DWD warning on the
+    // unchanged German path; international providers set these explicitly.
+    String provider_id = WarningProvider.ID_DWD;
+    String provider_key = WarningProvider.ID_DWD;
+    String warning_level;
+
     long polling_time;
     String identifier;      // id of the warning
     String sender;          // sender, usually "opendata@dwd.de"
@@ -133,7 +139,10 @@ public class WeatherWarning implements Comparable<WeatherWarning> {
                 }
             }
         }
-        if (polygonlist.size()==0){
+        // TASK-77: the warncell->polygon database is Germany-specific. A foreign area code
+        // must never be fed into it: that would invent a shape on the map.
+        boolean dwdProvider = (provider_id == null) || WarningProvider.ID_DWD.equals(provider_id);
+        if ((polygonlist.size()==0) && dwdProvider){
             ArrayList<Areas.Area> areas = Areas.getAreas(context,area_warncellIDs);
             for (int i=0; i<areas.size(); i++){
                 polygonlist.addAll(areas.get(i).polygons);

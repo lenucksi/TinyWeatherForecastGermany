@@ -1,0 +1,30 @@
+TASK-92 / real DWD UV index frames used by UvRealFixtureTest.
+All three files are unmodified GetMap responses (HTTP 200, Content-Type image/png)
+from the DWD GeoServer WMS, fetched 2026-11-28. No pixels were edited or recoloured.
+
+Common request (WMS 1.1.0, bbox order minx,miny,maxx,maxy):
+https://maps.dwd.de/geoserver/dwd/wms?service=WMS&version=1.1.0&request=GetMap&layers=dwd%3AUVI_Global_CL&bbox=5.865999%2C47.270362%2C15.037507%2C55.057375&time=<TIME>&width=622&height=844&srs=EPSG%3A4326&styles=&format=image%2Fpng
+
+uvi-cl-real-20261128.png
+  time=2026-11-28T00:00:00.000Z
+  bytes=6743  sha256=ec71c6584c1cb04db1ef559b45f9e948d4325b7c4b2dcdbc005a70e24a466e1c
+  size=622x844
+uvi-cl-real-20261129.png
+  time=2026-11-29T00:00:00.000Z
+  bytes=6368  sha256=79aa11b0deb9161565cc6240f08aae351ab697cababc552219fb40f353537a82
+  size=622x844
+uvi-cl-real-20261130.png
+  time=2026-11-30T00:00:00.000Z
+  bytes=8443  sha256=375345895ad744fadf4d4318b4ca0571aa8427365bdb508b5de5cbdbad8821db
+  size=622x844
+
+Source/licence: Deutscher Wetterdienst, Open Data, CC BY 4.0 with source attribution
+(https://www.dwd.de/EN/ourservices/opendata/opendata.html). WMS legend, fetched from
+https://maps.dwd.de/geoserver/dwd/wms?service=WMS&version=1.1.0&request=GetLegendGraphic&layer=dwd%3AUVI_Global_CL&format=image%2Fpng
+shows black = UV index 0, green = 1, matching UVHazardIndex.UVIndexColors[0..1].
+
+Limitation: the WMS time extent is 2026-11-27..2026-12-01; requests for July/May/September
+return ServiceException InvalidDimensionValue. DWD's documented UV archive
+(ftp-outgoing.dwd.de, netCDF cxYYMMDD.nc; Pamore model archive) requires an account,
+so no historical seasonal frames were available anonymously on 2026-11-28. The 2026-12-01
+response was a real PNG but entirely 0xffffffff and is deliberately not used as a fixture.

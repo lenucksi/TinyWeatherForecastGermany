@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<!-- TASK-77 fixture. Field/profile structure (CAP 1.2, awareness_level parameter,
+     EMMA_ID geocode, no polygon) observed in live MeteoAlarm CAP documents on
+     2026-11-28. Text is abbreviated; no geometry is invented. -->
+<alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">
+  <identifier>2.49.0.1.578.0.20261128130000.001</identifier>
+  <sender>dmi@met.dk</sender>
+  <sent>2026-11-28T13:00:00+00:00</sent>
+  <status>Actual</status>
+  <msgType>Alert</msgType>
+  <scope>Public</scope>
+  <info>
+    <language>en-GB</language>
+    <category>Met</category>
+    <event>Flood</event>
+    <responseType>Monitor</responseType>
+    <urgency>Future</urgency>
+    <severity>Moderate</severity>
+    <certainty>Likely</certainty>
+    <onset>2026-11-28T18:00:00+00:00</onset>
+    <expires>2026-11-29T18:00:00+00:00</expires>
+    <senderName>Danish Meteorological Institute</senderName>
+    <headline>Yellow flood warning, Hovedstaden</headline>
+    <description>High water levels are expected along the coast.</description>
+    <parameter>
+      <valueName>awareness_type</valueName>
+      <value>7; flood</value>
+    </parameter>
+    <parameter>
+      <valueName>awareness_level</valueName>
+      <value>2; yellow; Moderate</value>
+    </parameter>
+    <area>
+      <areaDesc>Hovedstaden</areaDesc>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>DK001</value>
+      </geocode>
+    </area>
+  </info>
+</alert>

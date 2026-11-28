@@ -572,6 +572,15 @@ public class APIReaders {
             WeatherSettings.getSharedPreferences(context).edit()
                     .putString(PREF_CAP_ETAG, value == null ? "" : value).apply();
         }
+
+        /** TASK-77: provider-scoped validators keep feeds from invalidating each other. */
+        public static String loadEtag(Context context, String key) {
+            return WarningProvider.WarningProviderState.loadEtag(context, key);
+        }
+
+        public static void saveEtag(Context context, String key, String etag) {
+            WarningProvider.WarningProviderState.saveEtag(context, key, etag);
+        }
     }
 
     /**
@@ -639,10 +648,52 @@ public class APIReaders {
        private long pollingTime = Calendar.getInstance().getTimeInMillis();
        // TASK-50: set when the CAP ZIP answered 304 Not Modified; the DB must stay untouched.
        private boolean notModified = false;
+       // TASK-77: exactly one provider is selected from the station; never poll all of them.
+       private WarningProvider provider = WarningProvider.DWD;
+       private WarningProvider.WarningRequest request;
+       private String preferredLanguage = "en";
 
        public WeatherWarningsRunnable(Context context) {
            this.context = context;
            weatherLocation = WeatherSettings.getSetStationLocation(context);
+           provider = WarningProvider.Registry.forLocation(weatherLocation);
+           preferredLanguage = preferredLanguage(context);
+           request = provider.buildRequest(weatherLocation,
+                   provider.countryKey(weatherLocation), preferredLanguage);
+       }
+
+       /** Device language selects the preferred CAP info block; no text is translated. */
+       static String preferredLanguage(Context context) {
+           if (context == null) {
+               return "en";
+           }
+           Locale locale;
+           if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+               locale = context.getResources().getConfiguration().getLocales().get(0);
+           } else {
+               locale = context.getResources().getConfiguration().locale;
+           }
+           return locale.getLanguage().toLowerCase(Locale.ROOT).startsWith("de") ? "de" : "en";
+       }
+
+       /** Bounded body read: a malicious feed cannot make the app allocate arbitrary memory. */
+       static String readBounded(InputStream input, int maxBytes) throws IOException {
+           ByteArrayOutputStream output = new ByteArrayOutputStream();
+           byte[] buffer = new byte[4096];
+           int total = 0;
+           int read;
+           while ((read = input.read(buffer)) != -1) {
+               int allowed = Math.min(read, maxBytes - total);
+               if (allowed <= 0) {
+                   break;
+               }
+               output.write(buffer, 0, allowed);
+               total += allowed;
+               if (total >= maxBytes) {
+                   break;
+               }
+           }
+           return new String(output.toByteArray(), StandardCharsets.UTF_8);
        }
 
        public void cancel() {
@@ -800,6 +851,11 @@ public class APIReaders {
 
            parseAreas(document,warning);
 
+           WarningProvider.WarningLevel level =
+                   WarningProvider.WarningLevel.fromDwdSeverity(warning.severity);
+           if (level!=null){
+               warning.warning_level = level.name();
+           }
            return warning;
        }
 
@@ -893,8 +949,128 @@ public class APIReaders {
            }
        }
 
+       /** Conditional GET of the selected provider's Atom index (no token, https only). */
+       private InputStream getProviderIndexStream() throws IOException {
+           if (request==null || request.indexUrl==null){
+               return null;
+           }
+           long last = WarningProvider.WarningProviderState.loadLastUpdate(context,request.stateKey);
+           long now = Calendar.getInstance().getTimeInMillis();
+           if ((last>0) && (request.minPollIntervalMillis>0)
+                   && (now-last<request.minPollIntervalMillis)){
+               notModified = true;
+               return null;
+           }
+           URL url = new URL(request.indexUrl);
+           Http.ConditionalResponse response = Http.getConditional(url,
+                   CapCache.loadEtag(context,request.etagKey),cancellation);
+           notModified = response.notModified;
+           CapCache.saveEtag(context,request.etagKey,response.etag);
+           return response.stream;
+       }
+
+       /**
+        * TASK-77: Atom index -> bounded CAP downloads -> normalised warnings. Only immutable
+        * CAP ids that are not already cached are downloaded; on any failure the last good
+        * rows for that feed are kept and no other provider's rows are touched.
+        */
+       private ArrayList<WeatherWarning> doMeteoAlarmBackground() {
+           ArrayList<WeatherWarning> warnings = new ArrayList<WeatherWarning>();
+           ArrayList<WeatherWarning> fresh = new ArrayList<WeatherWarning>();
+           try {
+               InputStream stream = getProviderIndexStream();
+               if (stream==null){
+                   return warnings;
+               }
+               String xml;
+               try {
+                   xml = readBounded(stream, WarningProvider.CapFeedDecoder.MAX_INDEX_BYTES);
+               } finally {
+                   stream.close();
+               }
+               List<WarningProvider.CapFeedDecoder.CapReference> references =
+                       WarningProvider.CapFeedDecoder.parseIndex(xml);
+               ArrayList<WeatherWarning> existing =
+                       WeatherWarnings.getCurrentWarningsForFeed(context,request.stateKey);
+               Map<String,WeatherWarning> cachedById = new HashMap<String,WeatherWarning>();
+               for (WeatherWarning warning : existing){
+                   if (warning.identifier!=null){
+                       cachedById.put(warning.identifier,warning);
+                   }
+               }
+               Set<String> cachedIds = WarningProvider.WarningProviderState.loadCapIds(context,request.stateKey);
+               Set<String> keepIds = new HashSet<String>();
+               Set<String> downloadedIds = new HashSet<String>();
+               int downloads = 0;
+               for (WarningProvider.CapFeedDecoder.CapReference reference : references){
+                   WeatherWarning cached = cachedById.get(reference.capId);
+                   if ((cached!=null) && cachedIds.contains(reference.capId)){
+                       warnings.add(cached);
+                       keepIds.add(reference.capId);
+                       continue;
+                   }
+                   if (downloads>=request.maxCapDocuments){
+                       // Keep last-good data when the per-poll download budget is used up.
+                       if (cached!=null){
+                           warnings.add(cached);
+                           keepIds.add(reference.capId);
+                       }
+                       continue;
+                   }
+                   downloads++;
+                   try {
+                       InputStream capStream = Http.get(new URL(reference.url),cancellation);
+                       String capXml;
+                       try {
+                           capXml = readBounded(capStream,WarningProvider.CapFeedDecoder.MAX_CAP_BYTES);
+                       } finally {
+                           capStream.close();
+                       }
+                       WeatherWarning warning = WarningProvider.CapFeedDecoder.parseCap(capXml,
+                               reference,provider,request.countryKey,preferredLanguage,pollingTime);
+                       if (warning!=null){
+                           fresh.add(warning);
+                           warnings.add(warning);
+                           keepIds.add(reference.capId);
+                           downloadedIds.add(reference.capId);
+                       }
+                   } catch (Exception e){
+                       PrivateLog.log(context,PrivateLog.DATA,PrivateLog.ERR,
+                               "Skipping MeteoAlarm CAP "+reference.capId+": "+e.getMessage());
+                       if (cached!=null){
+                           warnings.add(cached);
+                           keepIds.add(reference.capId);
+                       }
+                   }
+               }
+               WeatherWarnings.pruneFeed(context,request.stateKey,keepIds);
+               WeatherWarnings.writeWarningsToDatabase(context,fresh);
+               WarningProvider.WarningProviderState.rememberCapIds(context,request.stateKey,downloadedIds);
+               WarningProvider.WarningProviderState.saveLastUpdate(context,request.stateKey,
+                       Calendar.getInstance().getTimeInMillis());
+           } catch (MalformedURLException e){
+               PrivateLog.log(context,PrivateLog.DATA,PrivateLog.ERR,"Malformed MeteoAlarm URL:"+e.getMessage());
+               return null;
+           } catch (IOException e){
+               PrivateLog.log(context,PrivateLog.DATA,PrivateLog.ERR,"Unable to open MeteoAlarm stream:"+e.getMessage());
+               return null;
+           } catch (Exception e){
+               PrivateLog.log(context,PrivateLog.DATA,PrivateLog.ERR,"MeteoAlarm poll failed:"+e.getMessage());
+               return null;
+           }
+           return warnings;
+       }
+
        public ArrayList<WeatherWarning> doInBackground() {
            notModified = false;
+           if (request==null || WarningProvider.ID_NONE.equals(provider.id())){
+               // No provider covers this station yet: keep the last good rows.
+               notModified = true;
+               return new ArrayList<WeatherWarning>();
+           }
+           if (!provider.isDwd()){
+               return doMeteoAlarmBackground();
+           }
            ArrayList<WeatherWarning> warnings = new ArrayList<WeatherWarning>();
            try {
                InputStream responseStream = getWeatherWarningInputStream();
@@ -958,12 +1134,18 @@ public class APIReaders {
                // 304: do not clean or rewrite the warning table; only the caller refreshes
                // lastUpdate and the views. Hand back the cached rows for those callbacks.
                PrivateLog.log(context,PrivateLog.DATA,PrivateLog.INFO,"CAP ZIP unchanged (304), warning database kept.");
-               ArrayList<WeatherWarning> cached = WeatherWarnings.getCurrentWarnings(context,false);
+               ArrayList<WeatherWarning> cached = WeatherWarnings.getCurrentWarnings(context,false,provider.id());
                onPositiveResult(cached==null ? new ArrayList<WeatherWarning>() : cached);
            } else
            if (warnings!=null){
-               WeatherWarnings.cleanWeatherWarningsDatabase(context);
-               WeatherWarnings.writeWarningsToDatabase(context,warnings);
+               if (provider.isDwd()){
+                   WeatherWarnings.cleanWeatherWarningsDatabase(context);
+                   WeatherWarnings.writeWarningsToDatabase(context,warnings);
+               } else {
+                   // TASK-77: the MeteoAlarm feed maintained only its own rows already.
+                   PrivateLog.log(context,PrivateLog.DATA,PrivateLog.INFO,
+                           "MeteoAlarm rows updated for "+request.stateKey+".");
+               }
                onPositiveResult(warnings);
            } else {
                PrivateLog.log(context,PrivateLog.DATA,PrivateLog.ERR,"getting warnings failed.");
