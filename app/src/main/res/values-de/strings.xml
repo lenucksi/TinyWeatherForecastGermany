@@ -599,4 +599,11 @@
     <string name="map_layer_wind">Windbögen</string>
     <string name="map_layer_pin">Stationsmarkierung</string>
     <string name="warning_no_geometry">Für diese Warnung liegt keine Kartenfläche vor; die aktuelle Kartenansicht bleibt erhalten.</string>
+
+    <!-- TASK-67: Navigationssteuerung der Vektorkarte (Zoom und Standort). -->
+    <string name="a11y_map_zoom_in">Karte vergrößern</string>
+    <string name="a11y_map_zoom_out">Karte verkleinern</string>
+    <string name="a11y_map_locate">Zum eigenen Standort zoomen</string>
+    <string name="map_locate_device">Karte auf deinen Standort zentriert.</string>
+    <string name="map_locate_fallback">Kein Gerätestandort verfügbar; die eingestellte Station wird angezeigt.</string>
 </resources>

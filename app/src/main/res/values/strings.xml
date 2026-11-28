@@ -616,4 +616,11 @@
     <string name="map_layer_wind" tools:ignore="MissingTranslation">Wind arcs</string>
     <string name="map_layer_pin" tools:ignore="MissingTranslation">Station pin</string>
     <string name="warning_no_geometry" tools:ignore="MissingTranslation">This warning has no map area; keeping the current map view.</string>
+
+    <!-- TASK-67: vector map navigation controls (zoom pair and locate button). -->
+    <string name="a11y_map_zoom_in" tools:ignore="MissingTranslation">Zoom in on the map</string>
+    <string name="a11y_map_zoom_out" tools:ignore="MissingTranslation">Zoom out of the map</string>
+    <string name="a11y_map_locate" tools:ignore="MissingTranslation">Zoom to my location</string>
+    <string name="map_locate_device" tools:ignore="MissingTranslation">Map centred on your location.</string>
+    <string name="map_locate_fallback" tools:ignore="MissingTranslation">No device location available; showing the configured station instead.</string>
 </resources>

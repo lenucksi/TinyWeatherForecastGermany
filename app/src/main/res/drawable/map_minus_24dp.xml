@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  This file is part of TinyWeatherForecastGermany.
+
+  Copyright (c) 2026 Pawel Dube
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+-->
+<!-- TASK-67: the project has a plus icon but no minus icon; keeping the glyph in a
+     vector drawable avoids another density set. ?attr/colorText keeps it dark on
+     light themes and light on dark themes, matching ?attr/ic_add. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+        android:width="24dp"
+        android:height="24dp"
+        android:viewportWidth="24"
+        android:viewportHeight="24">
+    <path
+            android:pathData="M5,11h14v2H5z"
+            android:fillColor="?attr/colorText" />
+</vector>
