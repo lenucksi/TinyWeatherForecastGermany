@@ -202,6 +202,58 @@
                         android:summary="@string/preference_display_show_radar_by_default_summary"
                         android:defaultValue="true"/>
 
+                <!-- TASK-89: radar data, cache and playback configuration. TASK-90 consumes
+                     these values; this screen only stores them. -->
+                <PreferenceCategory
+                        android:key="PREF_category_radar"
+                        android:title="@string/preference_category_radar">
+
+                    <CheckBoxPreference
+                            android:key="PREF_radar_use_mobile_data"
+                            android:title="@string/preference_radar_use_mobile_data_title"
+                            android:summary="@string/preference_radar_use_mobile_data_summary"
+                            android:defaultValue="false"/>
+
+                    <ListPreference
+                            android:key="PREF_radar_time_window"
+                            android:title="@string/preference_radar_time_window_title"
+                            android:summary="@string/preference_radar_time_window_summary"
+                            android:entries="@array/radar_time_window_text"
+                            android:entryValues="@array/radar_time_window_values"
+                            android:defaultValue="24h"/>
+
+                    <ListPreference
+                            android:key="PREF_radar_prefetch_profile"
+                            android:title="@string/preference_radar_prefetch_profile_title"
+                            android:summary="@string/preference_radar_prefetch_profile_summary"
+                            android:entries="@array/radar_prefetch_profile_text"
+                            android:entryValues="@array/radar_prefetch_profile_values"
+                            android:defaultValue="balanced"/>
+
+                    <ListPreference
+                            android:key="PREF_radar_playback_start"
+                            android:title="@string/preference_radar_playback_start_title"
+                            android:summary="@string/preference_radar_playback_start_summary"
+                            android:entries="@array/radar_playback_start_text"
+                            android:entryValues="@array/radar_playback_start_values"
+                            android:defaultValue="now"/>
+
+                    <CheckBoxPreference
+                            android:key="PREF_map_layer_radar"
+                            android:title="@string/preference_radar_layer_visible_title"
+                            android:summary="@string/preference_radar_layer_visible_summary"
+                            android:defaultValue="true"/>
+
+                    <ListPreference
+                            android:key="PREF_radar_opacity"
+                            android:title="@string/preference_radar_opacity_title"
+                            android:summary="@string/preference_radar_opacity_summary"
+                            android:entries="@array/radar_opacity_text"
+                            android:entryValues="@array/radar_opacity_values"
+                            android:defaultValue="55"/>
+
+                </PreferenceCategory>
+
                 <CheckBoxPreference
                         android:key="PREF_adminmap_show"
                         android:title="@string/preference_map_show_admin_by_default_title"

@@ -101,6 +101,15 @@ public class WeatherSettings {
     public static final String PREF_TEXTFORECAST_FILTER = "PREF_textforecast_filter";
     public static final String PREF_RADAR_SHOW = "PREF_radar_show";
 
+    // TASK-89: radar data/download/playback configuration. The loader (TASK-90) reads these
+    // through the getters below; the visibility switch reuses PREF_MAP_LAYER_RADAR so the
+    // Settings screen and the in-map layer selector stay on the same stored value.
+    public static final String PREF_RADAR_USE_MOBILE_DATA = "PREF_radar_use_mobile_data";
+    public static final String PREF_RADAR_TIME_WINDOW = "PREF_radar_time_window";
+    public static final String PREF_RADAR_PREFETCH_PROFILE = "PREF_radar_prefetch_profile";
+    public static final String PREF_RADAR_PLAYBACK_START = "PREF_radar_playback_start";
+    public static final String PREF_RADAR_OPACITY = "PREF_radar_opacity";
+
     // TASK-65: per-layer switches of the vector warning map. They are deliberately independent
     // from the vector/static map preference (VectorMapConfig) and from the legacy hide_rain flag.
     public static final String PREF_MAP_LAYER_WARNINGS = "PREF_map_layer_warnings";
@@ -221,6 +230,14 @@ public class WeatherSettings {
     public static final boolean PREF_GPSMANUAL_DEFAULT = false;
     public static final boolean PREF_TEXTFORECAST_FILTER_DEFAULT = false;
     public static final boolean PREF_RADAR_SHOW_DEFAULT = true;
+
+    // TASK-89 defaults: no mobile data, a full day of history, balanced prefetch, start at
+    // "now", radar layer visible and slightly translucent so the basemap stays readable.
+    public static final boolean PREF_RADAR_USE_MOBILE_DATA_DEFAULT = false;
+    public static final String PREF_RADAR_TIME_WINDOW_DEFAULT = Radar.WINDOW_24H;
+    public static final String PREF_RADAR_PREFETCH_PROFILE_DEFAULT = Radar.PREFETCH_BALANCED;
+    public static final String PREF_RADAR_PLAYBACK_START_DEFAULT = Radar.PLAYBACK_NOW;
+    public static final String PREF_RADAR_OPACITY_DEFAULT = "55";
 
     // All vector layers start visible; the user can switch any of them off in the map UI.
     public static final boolean PREF_MAP_LAYER_WARNINGS_DEFAULT = true;
@@ -801,6 +818,148 @@ public class WeatherSettings {
     public static boolean showRadarByDefault(Context context){
         SharedPreferences sharedPreferences = getSharedPreferences(context);
         return sharedPreferences.getBoolean(PREF_RADAR_SHOW,PREF_RADAR_SHOW_DEFAULT);
+    }
+
+    /**
+     * TASK-89: pure value constants and timestamp arithmetic for the radar settings.
+     * All timestamps are UTC epoch millis; the next-day boundary is therefore not affected
+     * by the device timezone or by daylight-saving transitions.
+     */
+    public static final class Radar {
+        private Radar(){}
+
+        public static final String WINDOW_2H = "2h";
+        public static final String WINDOW_24H = "24h";
+        public static final String WINDOW_FULL = "full";
+
+        public static final String PREFETCH_MINIMAL = "minimal";
+        public static final String PREFETCH_BALANCED = "balanced";
+        public static final String PREFETCH_FULL = "full";
+
+        public static final String PLAYBACK_NOW = "now";
+        public static final String PLAYBACK_OLDEST = "oldest";
+        public static final String PLAYBACK_PLUS_24H = "plus24h";
+        public static final String PLAYBACK_NEXT_MIDNIGHT = "next_midnight";
+
+        public static final long MILLIS_PER_DAY = 24L * 60L * 60L * 1000L;
+
+        /** First 00:00 UTC strictly after the given instant. */
+        public static long nextUtcMidnight(long referenceTimeUtcMillis){
+            return (Math.floorDiv(referenceTimeUtcMillis,MILLIS_PER_DAY)+1L)*MILLIS_PER_DAY;
+        }
+
+        /** Resolves a stored playback-start option; unknown values behave like {@link #PLAYBACK_NOW}. */
+        public static long resolvePlaybackStartMillis(String option, long referenceTimeUtcMillis,
+                                                       long windowStartUtcMillis){
+            if (PLAYBACK_OLDEST.equals(option)){
+                return windowStartUtcMillis;
+            }
+            if (PLAYBACK_PLUS_24H.equals(option)){
+                if (referenceTimeUtcMillis>Long.MAX_VALUE-MILLIS_PER_DAY){
+                    return Long.MAX_VALUE;
+                }
+                return referenceTimeUtcMillis+MILLIS_PER_DAY;
+            }
+            if (PLAYBACK_NEXT_MIDNIGHT.equals(option)){
+                long midnight = nextUtcMidnight(referenceTimeUtcMillis);
+                // Guard the same overflow for instants close to the maximum representable date.
+                return midnight<referenceTimeUtcMillis ? Long.MAX_VALUE : midnight;
+            }
+            return referenceTimeUtcMillis;
+        }
+    }
+
+    private static String sanitizeRadarOption(String value, String[] allowed, String defaultValue){
+        if (value!=null){
+            for (String candidate : allowed){
+                if (candidate.equals(value)){
+                    return value;
+                }
+            }
+        }
+        return defaultValue;
+    }
+
+    /** True when prefetch/lazy loads may use metered (mobile/5G) connections. Default OFF. */
+    public static boolean useRadarOnMobileData(Context context){
+        return getSharedPreferences(context).getBoolean(PREF_RADAR_USE_MOBILE_DATA,
+                PREF_RADAR_USE_MOBILE_DATA_DEFAULT);
+    }
+
+    public static void setRadarUseMobileData(Context context, boolean value){
+        getSharedPreferences(context).edit().putBoolean(PREF_RADAR_USE_MOBILE_DATA,value).apply();
+    }
+
+    public static String getRadarTimeWindow(Context context){
+        return sanitizeRadarOption(getSharedPreferences(context).getString(PREF_RADAR_TIME_WINDOW,
+                PREF_RADAR_TIME_WINDOW_DEFAULT),
+                new String[]{Radar.WINDOW_2H,Radar.WINDOW_24H,Radar.WINDOW_FULL},
+                PREF_RADAR_TIME_WINDOW_DEFAULT);
+    }
+
+    public static void setRadarTimeWindow(Context context, String value){
+        getSharedPreferences(context).edit().putString(PREF_RADAR_TIME_WINDOW,
+                sanitizeRadarOption(value,
+                        new String[]{Radar.WINDOW_2H,Radar.WINDOW_24H,Radar.WINDOW_FULL},
+                        PREF_RADAR_TIME_WINDOW_DEFAULT)).apply();
+    }
+
+    public static String getRadarPrefetchProfile(Context context){
+        return sanitizeRadarOption(getSharedPreferences(context).getString(PREF_RADAR_PREFETCH_PROFILE,
+                PREF_RADAR_PREFETCH_PROFILE_DEFAULT),
+                new String[]{Radar.PREFETCH_MINIMAL,Radar.PREFETCH_BALANCED,Radar.PREFETCH_FULL},
+                PREF_RADAR_PREFETCH_PROFILE_DEFAULT);
+    }
+
+    public static void setRadarPrefetchProfile(Context context, String value){
+        getSharedPreferences(context).edit().putString(PREF_RADAR_PREFETCH_PROFILE,
+                sanitizeRadarOption(value,
+                        new String[]{Radar.PREFETCH_MINIMAL,Radar.PREFETCH_BALANCED,Radar.PREFETCH_FULL},
+                        PREF_RADAR_PREFETCH_PROFILE_DEFAULT)).apply();
+    }
+
+    public static String getRadarPlaybackStart(Context context){
+        return sanitizeRadarOption(getSharedPreferences(context).getString(PREF_RADAR_PLAYBACK_START,
+                PREF_RADAR_PLAYBACK_START_DEFAULT),
+                new String[]{Radar.PLAYBACK_NOW,Radar.PLAYBACK_OLDEST,
+                        Radar.PLAYBACK_PLUS_24H,Radar.PLAYBACK_NEXT_MIDNIGHT},
+                PREF_RADAR_PLAYBACK_START_DEFAULT);
+    }
+
+    public static void setRadarPlaybackStart(Context context, String value){
+        getSharedPreferences(context).edit().putString(PREF_RADAR_PLAYBACK_START,
+                sanitizeRadarOption(value,
+                        new String[]{Radar.PLAYBACK_NOW,Radar.PLAYBACK_OLDEST,
+                                Radar.PLAYBACK_PLUS_24H,Radar.PLAYBACK_NEXT_MIDNIGHT},
+                        PREF_RADAR_PLAYBACK_START_DEFAULT)).apply();
+    }
+
+    /** Opacity in percent (0..100); the default 55 corresponds to an alpha of 0.55. */
+    public static int getRadarOpacityPercent(Context context){
+        String stored = getSharedPreferences(context).getString(PREF_RADAR_OPACITY,PREF_RADAR_OPACITY_DEFAULT);
+        try {
+            int percent = Integer.parseInt(stored);
+            return Math.max(0,Math.min(100,percent));
+        } catch (NumberFormatException e){
+            return Integer.parseInt(PREF_RADAR_OPACITY_DEFAULT);
+        }
+    }
+
+    /** Opacity as an alpha factor suitable for MapLibre/paint properties (0f..1f). */
+    public static float getRadarOpacity(Context context){
+        return getRadarOpacityPercent(context)/100f;
+    }
+
+    public static void setRadarOpacity(Context context, int percent){
+        int clamped = Math.max(0,Math.min(100,percent));
+        getSharedPreferences(context).edit().putString(PREF_RADAR_OPACITY,String.valueOf(clamped)).apply();
+    }
+
+    /** Convenience for TASK-90: stored option resolved against UTC reference and window start. */
+    public static long getRadarPlaybackStartMillis(Context context, long referenceTimeUtcMillis,
+                                                    long windowStartUtcMillis){
+        return Radar.resolvePlaybackStartMillis(getRadarPlaybackStart(context),
+                referenceTimeUtcMillis,windowStartUtcMillis);
     }
 
     public static boolean showAdminMapByDefault(Context context){
