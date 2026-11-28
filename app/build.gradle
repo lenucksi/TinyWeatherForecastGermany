@@ -144,7 +144,7 @@ dependencies {
 
     // Gadgetbridge's WeatherSpec (AGPLv3) uses androidx.annotation.Nullable,
     // which has CLASS retention - javac only, no runtime dependency needed.
-    compileOnly 'androidx.annotation:annotation:1.9.1'
+    compileOnly 'androidx.annotation:annotation:1.11.0'
 
     // MapLibre brings androidx.annotation 1.8.2 in at runtime. Gradle's
     // consistent-resolution feature would otherwise derive a strict 1.8.2
@@ -152,7 +152,7 @@ dependencies {
     // above. Align the runtime resolution on 1.9.1 instead; this is a constraint,
     // not a new dependency declaration (MapLibre already needs the artifact).
     constraints {
-        implementation('androidx.annotation:annotation:1.9.1') {
+        implementation('androidx.annotation:annotation:1.11.0') {
             because 'keep javac annotation API aligned with MapLibre runtime transitive'
         }
     }
