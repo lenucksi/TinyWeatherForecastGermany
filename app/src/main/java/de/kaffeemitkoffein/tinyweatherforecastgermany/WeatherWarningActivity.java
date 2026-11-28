@@ -132,7 +132,12 @@ public class WeatherWarningActivity extends Activity {
     boolean showRadarLayer = true;
     boolean showWindArcs = true;
     boolean showStationPin = true;
-    boolean[] layerChoices = new boolean[]{true,true,true,true,true};
+    // TASK-74: sixth vector layer. The UV raster is installed above the basemap but below
+    // every warning fill and the radar, so warning colours stay dominant.
+    boolean showUvLayer = true;
+    /** Set when launched with EXTRA_SHOW_UV_LAYER; survives rotation as a one-shot override. */
+    boolean uvLayerExtraPending = false;
+    boolean[] layerChoices = new boolean[]{true,true,true,true,true,true};
     AlertDialog layerDialog;
     boolean restoreLayerDialogOnResume = false;
     // Notification deep link: consumed once warnings/style are ready, restored on rotation.
@@ -195,8 +200,12 @@ public class WeatherWarningActivity extends Activity {
     public final static String SIS_MAP_LAYER_RADAR="MAP_LAYER_RADAR";
     public final static String SIS_MAP_LAYER_WIND="MAP_LAYER_WIND";
     public final static String SIS_MAP_LAYER_PIN="MAP_LAYER_PIN";
+    public final static String SIS_MAP_LAYER_UV="MAP_LAYER_UV";
     public final static String SIS_MAP_LAYER_DIALOG_OPEN="MAP_LAYER_DIALOG_OPEN";
+    public final static String SIS_SHOW_UV_LAYER_EXTRA="SHOW_UV_LAYER_EXTRA";
     public final static String SIS_PENDING_WARNING_IDENTIFIER="PENDING_WARNING_IDENTIFIER";
+    /** TASK-74: explicit in-app entry point that preselects the UV overlay for one launch. */
+    public final static String EXTRA_SHOW_UV_LAYER="show_uv_layer";
 
     // TASK-53: stable ids for the vector warning GeoJSON sources and layers.
     private final static String WARNING_SOURCE_ID="twfg-warning-polygons";
@@ -214,6 +223,11 @@ public class WeatherWarningActivity extends Activity {
     // TASK-54: one georeferenced ImageSource for all cached radar frames.
     private final static String RADAR_SOURCE_ID="twfg-radar-imagesource";
     private final static String RADAR_LAYER_ID="twfg-radar-raster";
+    // TASK-74: one cached DWD UVI PNG rendered as a georeferenced ImageSource. No WMS call
+    // happens per frame; refresh reuses WeatherLayer.isOutdated()/getLayerImages().
+    private final static String UVI_SOURCE_ID="twfg-uvi-imagesource";
+    private final static String UVI_LAYER_ID="twfg-uvi-raster";
+    private final static float UVI_RASTER_OPACITY=0.55f;
     // TASK-91: bottom-to-top contract for the managed layers. The raster sits above both
     // translucent fills (rain stays visible) but below both outlines (borders stay crisp).
     private final static String[] WARNING_FILL_LAYER_IDS={WARNING_FILL_LAYER_ID,EXCLUDED_FILL_LAYER_ID};
@@ -227,6 +241,8 @@ public class WeatherWarningActivity extends Activity {
     // warning/radar colour in the map code is reflected in the legend automatically.
     private final static int[] MAP_LEGEND_WARNING_COLORS=WeatherWarning.Severity.colors;
     private final static int[] MAP_LEGEND_RADAR_COLORS=buildMapLegendRadarColors();
+    // TASK-74: the very same 15 ARGB steps the 1x1 point decoder uses to classify DWD pixels.
+    private final static int[] MAP_LEGEND_UVI_COLORS=UVHazardIndex.UVIndexColors;
 
     private static int[] buildMapLegendRadarColors(){
         // RAINCOLORS[0] is the transparent clutter/no-data entry; the radar paints
@@ -612,7 +628,9 @@ public class WeatherWarningActivity extends Activity {
         state.putBoolean(SIS_MAP_LAYER_RADAR,showRadarLayer);
         state.putBoolean(SIS_MAP_LAYER_WIND,showWindArcs);
         state.putBoolean(SIS_MAP_LAYER_PIN,showStationPin);
+        state.putBoolean(SIS_MAP_LAYER_UV,showUvLayer);
         state.putBoolean(SIS_MAP_LAYER_DIALOG_OPEN,layerDialog!=null && layerDialog.isShowing());
+        state.putBoolean(SIS_SHOW_UV_LAYER_EXTRA,uvLayerExtraPending);
         state.putString(SIS_PENDING_WARNING_IDENTIFIER,pendingWarningIdentifier);
         // TASK-52: MapView needs the saved state to restore its camera/native map.
         if (useVectorMap && mapLibreMapView!=null){
@@ -642,11 +660,19 @@ public class WeatherWarningActivity extends Activity {
                 : WeatherSettings.showMapLayerWind(context);
         showStationPin = state!=null ? state.getBoolean(SIS_MAP_LAYER_PIN,WeatherSettings.showMapLayerPin(context))
                 : WeatherSettings.showMapLayerPin(context);
+        uvLayerExtraPending = (state!=null) && state.getBoolean(SIS_SHOW_UV_LAYER_EXTRA,false);
+        showUvLayer = state!=null ? state.getBoolean(SIS_MAP_LAYER_UV,WeatherSettings.showMapLayerUv(context))
+                : WeatherSettings.showMapLayerUv(context);
+        // The menu entry preselects UV for this activity instance only; rotation keeps it.
+        if (uvLayerExtraPending){
+            showUvLayer=true;
+        }
         syncLayerChoices();
     }
 
     private void syncLayerChoices(){
-        layerChoices = new boolean[]{showWarningPolygons,showExcludedAreas,showRadarLayer,showWindArcs,showStationPin};
+        layerChoices = new boolean[]{showWarningPolygons,showExcludedAreas,showRadarLayer,
+                showWindArcs,showStationPin,showUvLayer};
     }
 
     @Override
@@ -787,6 +813,14 @@ public class WeatherWarningActivity extends Activity {
             String warningIdentifier = launchIntent.getStringExtra(WeatherSyncAdapter.EXTRA_WARNING_IDENTIFIER);
             if ((warningIdentifier!=null) && (!warningIdentifier.isEmpty())){
                 pendingWarningIdentifier = warningIdentifier;
+            }
+            // TASK-74: an in-app shortcut can preselect the UV overlay without changing the
+            // persisted switch. Like the warning identifier it is consumed once and kept in
+            // the instance state so a rotation does not silently drop the selection.
+            if (launchIntent.getBooleanExtra(EXTRA_SHOW_UV_LAYER,false)){
+                uvLayerExtraPending = true;
+                showUvLayer = true;
+                syncLayerChoices();
             }
         }
         useVectorMap = VectorMapConfig.isVectorMapEnabled(context);
@@ -1174,7 +1208,7 @@ public class WeatherWarningActivity extends Activity {
         String[] labels = new String[]{
                 getString(R.string.map_layer_warnings),getString(R.string.map_layer_excluded),
                 getString(R.string.map_layer_radar),getString(R.string.map_layer_wind),
-                getString(R.string.map_layer_pin)};
+                getString(R.string.map_layer_pin),getString(R.string.map_layer_uv)};
         AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle(R.string.map_layers_title)
                 .setMultiChoiceItems(labels,checked,new DialogInterface.OnMultiChoiceClickListener(){
@@ -1202,6 +1236,12 @@ public class WeatherWarningActivity extends Activity {
                                 showStationPin=isChecked;
                                 WeatherSettings.setMapLayerPin(context,isChecked);
                                 break;
+                            case 5:
+                                showUvLayer=isChecked;
+                                // An explicit user choice wins over the launch extra.
+                                uvLayerExtraPending=false;
+                                WeatherSettings.setMapLayerUv(context,isChecked);
+                                break;
                             default:
                                 break;
                         }
@@ -1228,6 +1268,11 @@ public class WeatherWarningActivity extends Activity {
         syncLayerChoices();
         if (useVectorMap){
             applyVectorWarningLayers();
+            if (showUvLayer){
+                refreshVectorUvLayer();
+            } else {
+                removeVectorUvLayer();
+            }
             if (showRadarLayer){
                 applyVectorRadarFrame(nextRainSlide);
             } else {
@@ -1306,6 +1351,31 @@ public class WeatherWarningActivity extends Activity {
             labelRow.addLabel(getString(label));
         }
         root.addView(labelRow,new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT));
+        }
+
+        // TASK-74: the UV-index scale is the 15 DWD steps used by the point decoder, not the
+        // magenta CAP-UV *warning* swatch above. Keep both distinct in code and in strings.
+        if (!useVectorMap || showUvLayer){
+            addLegendHeader(root,R.string.map_legend_uv_index,textColor,headerSize,true);
+            addLegendNote(root,R.string.map_legend_uv_source,textColor,textSize);
+            LinearLayout uviRow = new LinearLayout(this);
+            uviRow.setOrientation(LinearLayout.HORIZONTAL);
+            uviRow.setContentDescription(getString(R.string.map_legend_uv_scale));
+            for (int color : MAP_LEGEND_UVI_COLORS){
+                View step = new View(this);
+                step.setBackgroundColor(color);
+                step.setLayoutParams(new LinearLayout.LayoutParams(0,legendDp(28),1f));
+                step.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+                uviRow.addView(step);
+            }
+            root.addView(uviRow,new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT));
+            LinearLabelRow uviLabels = new LinearLabelRow(this,textColor,textSize*0.7f,
+                    MAP_LEGEND_UVI_COLORS.length);
+            for (int i=0; i<MAP_LEGEND_UVI_COLORS.length; i++){
+                uviLabels.addLabel(i<MAP_LEGEND_UVI_COLORS.length-1
+                        ? String.valueOf(i) : getString(R.string.map_legend_uv_max));
+            }
+            root.addView(uviLabels,new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT));
         }
 
         if (!useVectorMap || showExcludedAreas){
@@ -1485,13 +1555,18 @@ public class WeatherWarningActivity extends Activity {
 
     private static class LinearLabelRow extends LinearLayout{
         LinearLabelRow(Context context,int textColor,float textSize){
+            this(context,textColor,textSize,4);
+        }
+        /** TASK-74: the UV ladder has 15 steps; radar keeps its original four labels. */
+        LinearLabelRow(Context context,int textColor,float textSize,int count){
             super(context);
             setOrientation(LinearLayout.HORIZONTAL);
-            for (int i=0; i<4; i++){
+            for (int i=0; i<count; i++){
                 TextView label = new TextView(context);
                 label.setTextColor(textColor);
                 label.setTextSize(TypedValue.COMPLEX_UNIT_PX,textSize);
                 label.setGravity(Gravity.CENTER);
+                label.setIncludeFontPadding(false);
                 addView(label,new LayoutParams(0,ViewGroup.LayoutParams.WRAP_CONTENT,1f));
             }
         }
@@ -3210,6 +3285,52 @@ public class WeatherWarningActivity extends Activity {
         return true;
     }
 
+    /**
+     * TASK-74: pure ordering rule for the UV overlay. It belongs above the basemap but below
+     * every managed fill/raster/outline, so warning colours remain dominant. Returns the
+     * lowest installed guard layer as the addLayerBelow() anchor, or null when none exists.
+     */
+    static String uvBelowLayerId(List<String> layerIds){
+        String result=null;
+        int lowest=Integer.MAX_VALUE;
+        if (layerIds!=null){
+            List<String> guards=new ArrayList<String>();
+            guards.addAll(Arrays.asList(WARNING_FILL_LAYER_IDS));
+            guards.add(RADAR_LAYER_ID);
+            guards.addAll(Arrays.asList(WARNING_OUTLINE_LAYER_IDS));
+            for (String guard : guards){
+                int index=layerIds.indexOf(guard);
+                if ((index>=0) && (index<lowest)){
+                    lowest=index;
+                    result=guard;
+                }
+            }
+        }
+        return result;
+    }
+
+    /** TASK-74: pure check that UV is installed and below every managed overlay layer. */
+    static boolean uvOrderIsCorrect(List<String> layerIds){
+        if (layerIds==null){
+            return false;
+        }
+        int uv=layerIds.indexOf(UVI_LAYER_ID);
+        if (uv<0){
+            return false;
+        }
+        List<String> guards=new ArrayList<String>();
+        guards.addAll(Arrays.asList(WARNING_FILL_LAYER_IDS));
+        guards.add(RADAR_LAYER_ID);
+        guards.addAll(Arrays.asList(WARNING_OUTLINE_LAYER_IDS));
+        for (String guard : guards){
+            int index=layerIds.indexOf(guard);
+            if ((index>=0) && (index<uv)){
+                return false;
+            }
+        }
+        return true;
+    }
+
     /** Fills go below the raster; with no raster they sit below the lowest outline. */
     private static void addWarningFillLayer(Style style,Layer fill){
         List<String> ids=vectorLayerIds(style);
@@ -3589,6 +3710,136 @@ public class WeatherWarningActivity extends Activity {
     }
 
     /**
+     * TASK-74: the cached DWD UVI PNG carries no pixel correction; its four corners come
+     * straight from WeatherLayer.WarnMapGeo. WMS 1.1.0 with EPSG:4326 uses bbox order
+     * minx,miny,maxx,maxy (lon/lat), so mapGeo is {west,south,east,north}: the image top row
+     * is maxy and the bottom row is miny. LatLngQuad takes TOP-LEFT, TOP-RIGHT, BOTTOM-RIGHT,
+     * BOTTOM-LEFT - never lat/lon sorted. (The TASK-72 research note had north/south swapped;
+     * the WMS bbox order above is the authoritative mapping.)
+     */
+    static LatLngQuad uvLatLngQuad(float[] mapGeo){
+        return new LatLngQuad(
+                new LatLng(mapGeo[3],mapGeo[0]), // TL: west / north (maxy)
+                new LatLng(mapGeo[3],mapGeo[2]), // TR: east / north
+                new LatLng(mapGeo[1],mapGeo[2]), // BR: east / south (miny)
+                new LatLng(mapGeo[1],mapGeo[0]));// BL: west / south
+    }
+
+    /** TASK-74: installs or re-anchors the UV raster below all warning layers. No network here. */
+    private static void repositionVectorUvLayer(Style style){
+        List<String> ids=vectorLayerIds(style);
+        boolean hasUv=ids.contains(UVI_LAYER_ID);
+        if (hasUv && uvOrderIsCorrect(ids)){
+            return;
+        }
+        if (hasUv){
+            removeManagedStyleLayer(style,UVI_LAYER_ID);
+            ids.remove(UVI_LAYER_ID);
+        }
+        RasterLayer raster=new RasterLayer(UVI_LAYER_ID,UVI_SOURCE_ID)
+                .withProperties(PropertyFactory.rasterOpacity(UVI_RASTER_OPACITY),
+                        PropertyFactory.rasterFadeDuration(0f));
+        String belowId=uvBelowLayerId(ids);
+        if (belowId!=null){
+            style.addLayerBelow(raster,belowId);
+        } else {
+            style.addLayer(raster);
+        }
+    }
+
+    /**
+     * TASK-74: swaps the already-cached UVI PNG into the single ImageSource. Unlike TASK-54
+     * radar there is no Http/URL call: the WeatherLayer update path refreshes the cache, this
+     * method only renders it. The legacy pixel-correction helpers are deliberately unused.
+     */
+    private void applyVectorUvLayer(){
+        if ((!useVectorMap) || (mapLibreMap==null) || (!vectorWarningStyleReady) || (!showUvLayer)){
+            return;
+        }
+        final WeatherLayer uvLayer=WeatherLayer.getLayer(WeatherLayer.Layers.UVI_CLOUDS_0);
+        final Bitmap bitmap=BitmapFactory.decodeFile(uvLayer.getFullChacheFilepath(context));
+        if (bitmap==null){
+            return;
+        }
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if ((!useVectorMap) || (mapLibreMap==null) || (!vectorWarningStyleReady) || (!showUvLayer)){
+                    return;
+                }
+                Style style;
+                try {
+                    style = mapLibreMap.getStyle();
+                } catch (Exception e){
+                    return;
+                }
+                if (style==null){
+                    return;
+                }
+                ImageSource source=style.getSourceAs(UVI_SOURCE_ID);
+                if (source==null){
+                    source=new ImageSource(UVI_SOURCE_ID,uvLatLngQuad(WeatherLayer.WarnMapGeo),bitmap);
+                    style.addSource(source);
+                } else {
+                    source.setImage(bitmap);
+                }
+                repositionVectorUvLayer(style);
+            }
+        });
+    }
+
+    /** TASK-74: refreshes through the existing WeatherLayer update path; never blocks the map. */
+    private void refreshVectorUvLayer(){
+        if ((!useVectorMap) || (!showUvLayer)){
+            return;
+        }
+        final WeatherLayer uvLayer=WeatherLayer.getLayer(WeatherLayer.Layers.UVI_CLOUDS_0);
+        if (!uvLayer.isOutdated(context)){
+            applyVectorUvLayer();
+            return;
+        }
+        ArrayList<WeatherLayer> layersToFetch=new ArrayList<WeatherLayer>();
+        layersToFetch.add(uvLayer);
+        APIReaders.getLayerImages reader=new APIReaders.getLayerImages(context,layersToFetch){
+            @Override
+            public void onFinished(boolean success){
+                super.onFinished(success);
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        applyVectorUvLayer();
+                    }
+                });
+            }
+        };
+        if (scheduledExecutorService!=null){
+            scheduledExecutorService.execute(reader);
+        }
+    }
+
+    /** Hides the UV overlay in vector mode when the user switches it off. */
+    private void removeVectorUvLayer(){
+        if ((mapLibreMap==null) || (!vectorWarningStyleReady)){
+            return;
+        }
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Style style;
+                try {
+                    style = mapLibreMap.getStyle();
+                } catch (Exception e){
+                    return;
+                }
+                if (style!=null){
+                    style.removeLayer(UVI_LAYER_ID);
+                    removeManagedStyleSource(style,UVI_SOURCE_ID);
+                }
+            }
+        });
+    }
+
+    /**
      * TASK-55: station pin and wind-distance arcs on the vector map. Both use WGS84
      * coordinates from WeatherSettings/RadarMN2.getDestinationCoordinates - no hand pixel
      * correction from the legacy static map is applied here.
@@ -3756,6 +4007,11 @@ public class WeatherWarningActivity extends Activity {
                         public void onStyleLoaded(Style style){
                             vectorWarningStyleReady = true;
                             applyVectorWarningLayers();
+                            // TASK-74: UV is installed after the fills but before the radar so
+                            // the final stack is basemap < UV < fills < radar < outlines.
+                            if (showUvLayer){
+                                refreshVectorUvLayer();
+                            }
                             // TASK-54 + TASK-91: install the radar source/layer from a cached
                             // frame if one is already available. The helper anchors it above
                             // the fills and below the outlines on every style reload/rotation;

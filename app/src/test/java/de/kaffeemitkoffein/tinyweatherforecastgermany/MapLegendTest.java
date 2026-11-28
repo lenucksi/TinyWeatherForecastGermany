@@ -54,6 +54,20 @@ public class MapLegendTest {
     }
 
     @Test
+    public void uvLegendUsesTheUvIndexDecoderColours() {
+        assertEquals(15, UVHazardIndex.UVIndexColors.length);
+        assertEquals(0xff000000, UVHazardIndex.UVIndexColors[0]);
+        assertEquals(0xfff7e400, UVHazardIndex.UVIndexColors[3]);
+        assertEquals(0xfff4c8e5, UVHazardIndex.UVIndexColors[14]);
+        // Every swatch must classify back to its own index in the app's decoder.
+        for (int i = 0; i < UVHazardIndex.UVIndexColors.length; i++) {
+            assertEquals(i, UVHazardIndex.getUvIndexFromColor(UVHazardIndex.UVIndexColors[i]));
+        }
+        // The magenta CAP-UV warning swatch is a different colour and is not this scale.
+        assertFalse(UVHazardIndex.UVIndexColors[14] == WeatherWarning.Severity.colors[5]);
+    }
+
+    @Test
     public void radarLegendUsesEveryPaintedRainColor() {
         int[] ladder = new int[Radarmap.RAINCOLORS.length - 1];
         System.arraycopy(Radarmap.RAINCOLORS, 1, ladder, 0, ladder.length);
@@ -87,6 +101,12 @@ public class MapLegendTest {
         for (String token : new String[]{
                 "MAP_LEGEND_WARNING_COLORS=WeatherWarning.Severity.colors",
                 "MAP_LEGEND_RADAR_COLORS=buildMapLegendRadarColors",
+                "MAP_LEGEND_UVI_COLORS=UVHazardIndex.UVIndexColors",
+                "R.string.map_legend_uv_index",
+                "R.string.map_legend_uv_source",
+                "R.string.map_legend_uv_scale",
+                "R.string.map_legend_uv_max",
+                "if (!useVectorMap || showUvLayer)",
                 "System.arraycopy(source,1,result,0,result.length)",
                 "Math.round(opacity*255f)",
                 "WARNING_FILL_OPACITY",
@@ -131,7 +151,9 @@ public class MapLegendTest {
                 "map_legend_minor", "map_legend_moderate", "map_legend_severe",
                 "map_legend_extreme", "map_legend_heat", "map_legend_uv",
                 "map_legend_radar", "map_legend_radar_scale", "map_legend_excluded",
-                "map_legend_others", "map_legend_pin", "map_legend_wind"
+                "map_legend_others", "map_legend_pin", "map_legend_wind",
+                "map_legend_uv_index", "map_legend_uv_source", "map_legend_uv_scale",
+                "map_legend_uv_max"
         };
         for (String name : names) {
             assertTrue("missing English string: " + name,

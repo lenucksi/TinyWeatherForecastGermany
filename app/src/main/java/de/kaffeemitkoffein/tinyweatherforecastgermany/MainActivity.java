@@ -1497,6 +1497,7 @@ public class MainActivity extends Activity {
             setOverflowMenuItemColor(this,menu,R.id.menu_about,R.string.about_button);
             setOverflowMenuItemColor(this,menu,R.id.menu_license,R.string.license_button);
             setOverflowMenuItemColor(this,menu,R.id.menu_whatsnew,R.string.whatsnew_button);
+            setOverflowMenuItemColor(this,menu,R.id.menu_uv_map,R.string.menu_uv_map);
         }
         // disable weather warnings if desired by user
         if (WeatherSettings.areWarningsDisabled(context)){
@@ -1570,6 +1571,14 @@ public class MainActivity extends Activity {
         if (item_id == R.id.menu_maps) {
             Intent i = new Intent(this, WeatherLayersActivity.class);
             startActivity(i);
+        }
+        if (item_id == R.id.menu_uv_map) {
+            // TASK-74: explicit in-app intent, no implicit PendingIntent. The existing
+            // menu_maps path above keeps opening the legacy layer list unchanged.
+            Intent i = new Intent(this, WeatherWarningActivity.class);
+            i.putExtra(WeatherWarningActivity.EXTRA_SHOW_UV_LAYER,true);
+            startActivity(i);
+            return true;
         }
         return super.onOptionsItemSelected(mi);
     }

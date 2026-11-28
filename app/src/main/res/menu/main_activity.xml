@@ -82,4 +82,12 @@
         android:orderInCategory="10">
     </item>
 
+    <!-- TASK-74: opens the warning map directly with the UV raster preselected. -->
+    <item android:id="@+id/menu_uv_map"
+        android:title="@string/menu_uv_map"
+        android:icon="?attr/ic_map"
+        android:showAsAction="never"
+        android:orderInCategory="11">
+    </item>
+
 </menu>
