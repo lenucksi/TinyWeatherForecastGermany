@@ -632,4 +632,6 @@
     <string name="a11y_radar_stop" tools:ignore="MissingTranslation">Stop radar animation and reset to the first frame</string>
     <string name="a11y_radar_step_back" tools:ignore="MissingTranslation">Previous radar frame</string>
     <string name="a11y_radar_step_forward" tools:ignore="MissingTranslation">Next radar frame</string>
+    <!-- TASK-87: honest state when the cache has no usable animation. -->
+    <string name="radar_timeline_unavailable" tools:ignore="MissingTranslation">Radar unavailable – no animation</string>
 </resources>
