@@ -309,6 +309,58 @@
                         android:layout_height="match_parent"
                         android:contentDescription="@string/a11y_warning_map"/>
 
+                <!-- TASK-67: vertical + / - / locate stack on the right, anchored above
+                     the attribution and therefore clear of it and of the SeekBar below.
+                     Each view keeps a 48dp touch target; 16dp internal padding shrinks the
+                     drawn glyph, and @null keeps the background fully transparent. -->
+                <LinearLayout
+                        android:id="@+id/warningactivity_map_controls"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:layout_alignParentRight="true"
+                        android:layout_above="@id/warningactivity_maplibre_attribution"
+                        android:layout_marginRight="6dp"
+                        android:layout_marginBottom="6dp"
+                        android:visibility="gone">
+
+                    <ImageButton
+                            android:id="@+id/warningactivity_map_zoom_in"
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:src="?attr/ic_add"
+                            android:tint="?attr/colorText"
+                            android:background="@null"
+                            android:padding="16dp"
+                            android:scaleType="fitCenter"
+                            android:contentDescription="@string/a11y_map_zoom_in"/>
+
+                    <ImageButton
+                            android:id="@+id/warningactivity_map_zoom_out"
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:layout_marginTop="4dp"
+                            android:src="@drawable/map_minus_24dp"
+                            android:tint="?attr/colorText"
+                            android:background="@null"
+                            android:padding="16dp"
+                            android:scaleType="fitCenter"
+                            android:contentDescription="@string/a11y_map_zoom_out"/>
+
+                    <ImageButton
+                            android:id="@+id/warningactivity_map_locate"
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:layout_marginTop="4dp"
+                            android:src="?attr/ic_gps_fixed"
+                            android:tint="?attr/colorText"
+                            android:background="@null"
+                            android:padding="16dp"
+                            android:scaleType="fitCenter"
+                            android:contentDescription="@string/a11y_map_locate"/>
+
+                </LinearLayout>
+
                 <TextView
                         android:id="@+id/warningactivity_maplibre_attribution"
                         android:layout_width="wrap_content"
