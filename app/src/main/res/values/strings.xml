@@ -632,6 +632,10 @@
     <string name="a11y_radar_stop" tools:ignore="MissingTranslation">Stop radar animation and reset to the first frame</string>
     <string name="a11y_radar_step_back" tools:ignore="MissingTranslation">Previous radar frame</string>
     <string name="a11y_radar_step_forward" tools:ignore="MissingTranslation">Next radar frame</string>
+    <string name="a11y_radar_jump_to_now" tools:ignore="MissingTranslation">Jump to the current radar frame</string>
+    <!-- TASK-90 review: playback speed toggle (in-memory cycle, 0.5x..3x). -->
+    <string name="a11y_radar_speed" tools:ignore="MissingTranslation">Playback speed %1$s, tap to change</string>
+    <string name="radar_speed_changed" tools:ignore="MissingTranslation">Playback speed %1$s</string>
     <!-- TASK-87: honest state when the cache has no usable animation. -->
     <string name="radar_timeline_unavailable" tools:ignore="MissingTranslation">Radar unavailable – no animation</string>
 

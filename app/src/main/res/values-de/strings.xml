@@ -615,6 +615,10 @@
     <string name="a11y_radar_stop">Radar-Animation stoppen und zum ersten Bild zurückkehren</string>
     <string name="a11y_radar_step_back">Vorheriges Radar-Bild</string>
     <string name="a11y_radar_step_forward">Nächstes Radar-Bild</string>
+    <string name="a11y_radar_jump_to_now">Zum aktuellen Radar-Bild springen</string>
+    <!-- TASK-90 review: Umschalter für die Wiedergabegeschwindigkeit. -->
+    <string name="a11y_radar_speed">Wiedergabegeschwindigkeit %1$s, antippen zum Ändern</string>
+    <string name="radar_speed_changed">Wiedergabegeschwindigkeit %1$s</string>
     <!-- TASK-87: ehrlicher Zustand ohne nutzbare Radar-Animation. -->
     <string name="radar_timeline_unavailable">Radar nicht verfügbar – keine Animation</string>
 
