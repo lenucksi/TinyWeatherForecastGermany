@@ -51,6 +51,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 import java.util.zip.ZipInputStream;
 
@@ -1500,9 +1502,11 @@ public class APIReaders {
         long startTime = 0;
         private boolean forceUpdate = false;
         public boolean ssl_exception = false;
-        int progress = 0;
-        int errors = 0;
-        int threadsDone = 0;
+        // Worker counters are written from 24 threads; plain ints lose increments.
+        private final AtomicInteger progress = new AtomicInteger(0);
+        private final AtomicInteger errors = new AtomicInteger(0);
+        private final AtomicInteger threadsDone = new AtomicInteger(0);
+        private final AtomicBoolean finished = new AtomicBoolean(false);
 
         private final Cancellation cancellation = new Cancellation();
         private volatile ExecutorService executor;
@@ -1603,9 +1607,18 @@ public class APIReaders {
             }
         }
 
+        /**
+         * TASK-88: index-based view of the currently displayed anchor set. The physical
+         * files are keyed by layer, epoch second and dimensions in cache/radar/.
+         */
+        public static File getRadarMNFileForTime(Context context, long startTimeMillis, int count){
+            return RadarFrameCache.file(context, RadarFrameCache.LAYER_RAIN_RADAR,
+                    RadarFrameCache.epochSeconds(startTimeMillis+count*TIMESTEP_5MINUTES),
+                    RadarMN2.getFixedRadarMapWidth(context),RadarMN2.getFixedRadarMapHeight(context));
+        }
+
         public static File getRadarMNFile(Context context, int count){
-            File cacheDir = context.getCacheDir();
-            return new File(cacheDir,RADAR_CACHE_FILENAME_PREFIX+count+RADAR_CACHE_FILENAME_SUFFIX);
+            return getRadarMNFileForTime(context,WeatherSettings.getPrefRadarLastdatapoll(context),count);
         }
 
         public static boolean radarCacheFileExists(Context context, int count){
@@ -1615,29 +1628,24 @@ public class APIReaders {
 
         public static boolean radarCacheFileValid(Context context, int count){
             File cacheFile = getRadarMNFile(context,count);
-            if (cacheFile.exists()){
-                if (cacheFile.length()>5000){
-                    return true;
-                }
-            }
-            return false;
+            RadarFrameCache.touch(cacheFile);
+            return RadarFrameCache.isValidPng(cacheFile,RadarMN2.getFixedRadarMapWidth(context),
+                    RadarMN2.getFixedRadarMapHeight(context));
         }
 
         public static boolean fullRadarDataSet(Context context){
-            int count = 0;
+            // A partial set is not a set: every one of the 24 frames must be a valid PNG.
             for (int i=0; i<DATASET_SIZE; i++){
-                if (radarCacheFileExists(context,i)){
-                    if (radarCacheFileValid(context,i)){
-                        count++;
-                    }
+                if (!radarCacheFileValid(context,i)){
+                    return false;
                 }
             }
-            // a full set consists of 23 OR 24 images, one less is tolerated.
-            return count >= DATASET_SIZE-2;
+            return true;
         }
 
         public static boolean deleteCacheFile(Context context, int count){
             File cacheFile=getRadarMNFile(context,count);
+            RadarFrameCache.unregister(cacheFile);
             return cacheFile.delete();
         }
 
@@ -1648,71 +1656,80 @@ public class APIReaders {
         }
 
         private boolean putRadarMapToCache(InputStream inputStream, int count){
-            File cacheFile = getRadarMNFile(context,count);
-            try {
-                FileOutputStream fileOutputStream = new FileOutputStream(cacheFile);
-                int filesize=0;
-                int i;
-                byte[] cache = new byte[8192];
-                while ((i=inputStream.read(cache))!=-1){
-                    fileOutputStream.write(cache,0,i);
-                    filesize=filesize+i;
-                }
-                fileOutputStream.close();
-                inputStream.close();
-            } catch (Exception e){
-                return false;
+            File target = getRadarMNFileForTime(context,startTime,count);
+            int width = RadarMN2.getFixedRadarMapWidth(context);
+            int height = RadarMN2.getFixedRadarMapHeight(context);
+            boolean stored = RadarFrameCache.writeAtomic(target,width,height,inputStream);
+            if (stored){
+                // The displayed anchor stays pinned until the whole set is confirmed.
+                RadarFrameCache.register(context,target,width,height,false);
             }
-            return true;
+            return stored;
         }
 
         public void fetchRadarSet(int start, int stop){
             // data available for 2h with 5 min steps => 24 data sets at max
-            for (int i=start; i<=stop; i++){
-                if (cancellation.isCancelled() || Thread.currentThread().isInterrupted()){
-                    return;
-                }
-                try {
-                    putRadarMapToCache(getRadarInputStream(startTime+i*TIMESTEP_5MINUTES),i);
+            try {
+                for (int i=start; i<=stop; i++){
+                    if (cancellation.isCancelled() || Thread.currentThread().isInterrupted()){
+                        return;
+                    }
+                    boolean stored = false;
+                    try {
+                        stored = putRadarMapToCache(getRadarInputStream(startTime+i*TIMESTEP_5MINUTES),i);
+                    } catch (IOException e){
+                        // a failed request must not be counted as a successful frame
+                    }
+                    if (!stored){
+                        incrementErrors();
+                    }
                     incrementProgress();
-                } catch (IOException e){
-                    incrementErrors();
-                    incrementProgress();
                 }
+            } finally {
+                checkThreadsDone();
             }
-            threadsDone++;
-            checkThreadsDone();
         }
 
         private void checkThreadsDone(){
-            if (threadsDone>=THREADS_USED){
-                if (errors>3){
-                    startTime = WeatherSettings.getPrefRadarLastdatapoll(context);
-                    onFinished(startTime,false);
-                } else {
-                    WeatherSettings.setPrefRadarLastdatapoll(context,startTime);
-                    onFinished(startTime,true);
-                }
+            if (threadsDone.incrementAndGet()<THREADS_USED){
+                return;
+            }
+            if (!finished.compareAndSet(false,true)){
+                return;
+            }
+            ExecutorService current = executor;
+            if (current!=null){
+                current.shutdown();
+            }
+            if (cancellation.isCancelled() || (errors.get()>0)){
+                // A cancelled or incomplete fetch must not become the displayed set:
+                // keep the previous complete set as fallback.
+                RadarFrameCache.setAnchor(context);
+                onFinished(WeatherSettings.getPrefRadarLastdatapoll(context),false);
+            } else {
+                WeatherSettings.setPrefRadarLastdatapoll(context,startTime);
+                RadarFrameCache.setAnchor(context);
+                onFinished(startTime,true);
             }
         }
 
         public void incrementProgress(){
-            progress++;
-            onProgress(startTime,progress);
+            onProgress(startTime,progress.incrementAndGet());
         }
 
         public void incrementErrors(){
-            errors++;
+            errors.incrementAndGet();
         }
 
         private void multiFetchRadarSet(){
-            progress = 0;
-            threadsDone = 0;
+            progress.set(0);
+            threadsDone.set(0);
+            errors.set(0);
+            finished.set(false);
             // use 0 to 24 for full set
             startTime = roundUTCUpToNextFiveMinutes(Calendar.getInstance().getTimeInMillis());
-            // need to delete if read is incomplete
-            deleteCacheFiles(context);
-            errors = 0;
+            // Do NOT delete the cache here: the previous complete set remains the fallback
+            // while a new set downloads, and failed frames never replace valid old ones.
             ExecutorService executor = Executors.newFixedThreadPool(THREADS_USED);
             this.executor = executor;
             final int slidesPerThread = DATASET_SIZE / THREADS_USED;
@@ -1743,10 +1760,11 @@ public class APIReaders {
         @Override
         public void run() {
             onStart();
-            forceUpdate = false;
+            RadarFrameCache.initialize(context);
             /* either update or return immediately to reuse present data
              * conditions for update:
-             * corrupted / incomplete dataset, OR forced update (currently not used in production) AND there is internet access.
+             * corrupted / incomplete dataset, OR outdated data, OR an explicit forced update
+             * (setForceUpdate must not be silently reset here) AND internet access.
              */
             if ((!fullRadarDataSet(context) || (WeatherSettings.isRadarDataOutdated(context)) || (forceUpdate)) && (Weather.suitableNetworkAvailable(context))){
                 // onFinished is called form multiFetch
@@ -1754,6 +1772,7 @@ public class APIReaders {
             } else {
                 // when re-using data, the startTime needs to be loaded from settings
                 startTime = WeatherSettings.getPrefRadarLastdatapoll(context);
+                RadarFrameCache.setAnchor(context);
                 onFinished(startTime,true);
             }
         }
