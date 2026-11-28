@@ -72,6 +72,7 @@ import org.maplibre.android.maps.Style;
 import org.maplibre.android.maps.UiSettings;
 import org.maplibre.android.style.expressions.Expression;
 import org.maplibre.android.style.layers.FillLayer;
+import org.maplibre.android.style.layers.Layer;
 import org.maplibre.android.style.layers.LineLayer;
 import org.maplibre.android.style.layers.PropertyFactory;
 import org.maplibre.android.style.layers.RasterLayer;
@@ -213,7 +214,12 @@ public class WeatherWarningActivity extends Activity {
     // TASK-54: one georeferenced ImageSource for all cached radar frames.
     private final static String RADAR_SOURCE_ID="twfg-radar-imagesource";
     private final static String RADAR_LAYER_ID="twfg-radar-raster";
-    private final static Float RADAR_RASTER_OPACITY=0.8f;
+    // TASK-91: bottom-to-top contract for the managed layers. The raster sits above both
+    // translucent fills (rain stays visible) but below both outlines (borders stay crisp).
+    private final static String[] WARNING_FILL_LAYER_IDS={WARNING_FILL_LAYER_ID,EXCLUDED_FILL_LAYER_ID};
+    private final static String[] WARNING_OUTLINE_LAYER_IDS={WARNING_LINE_LAYER_ID,EXCLUDED_LINE_LAYER_ID};
+    // TASK-89: the alpha comes from WeatherSettings.getRadarOpacity(context); there is no
+    // hard-coded raster opacity in this class any more.
     // TASK-67: zoom step for the custom buttons and the locate camera target level.
     private final static double MAP_ZOOM_STEP=1d;
     private final static double MAP_LOCATE_ZOOM=11d;
@@ -3146,6 +3152,125 @@ public class WeatherWarningActivity extends Activity {
         }
     }
 
+    /** TASK-91: ids of the installed style layers, bottom to top. */
+    private static List<String> vectorLayerIds(Style style){
+        List<String> ids=new ArrayList<String>();
+        List<Layer> layers=style.getLayers();
+        if (layers!=null){
+            for (Layer layer : layers){
+                if ((layer!=null) && (layer.getId()!=null)){
+                    ids.add(layer.getId());
+                }
+            }
+        }
+        return ids;
+    }
+
+    /**
+     * TASK-91: pure ordering rule, unit-testable without a native map. Returns the lowest
+     * installed outline id - the raster is inserted directly below it - or null when no
+     * outline is installed (then the raster goes on top, still above every fill).
+     */
+    static String radarBelowLayerId(List<String> layerIds){
+        String result=null;
+        int lowest=Integer.MAX_VALUE;
+        if (layerIds!=null){
+            for (String outlineId : WARNING_OUTLINE_LAYER_IDS){
+                int index=layerIds.indexOf(outlineId);
+                if ((index>=0) && (index<lowest)){
+                    lowest=index;
+                    result=outlineId;
+                }
+            }
+        }
+        return result;
+    }
+
+    /** TASK-91: pure check that the raster is above every fill and below every outline. */
+    static boolean radarOrderIsCorrect(List<String> layerIds){
+        if (layerIds==null){
+            return false;
+        }
+        int radar=layerIds.indexOf(RADAR_LAYER_ID);
+        if (radar<0){
+            return false;
+        }
+        for (String fillId : WARNING_FILL_LAYER_IDS){
+            int index=layerIds.indexOf(fillId);
+            if ((index>=0) && (index>radar)){
+                return false;
+            }
+        }
+        for (String outlineId : WARNING_OUTLINE_LAYER_IDS){
+            int index=layerIds.indexOf(outlineId);
+            if ((index>=0) && (index<radar)){
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /** Fills go below the raster; with no raster they sit below the lowest outline. */
+    private static void addWarningFillLayer(Style style,Layer fill){
+        List<String> ids=vectorLayerIds(style);
+        String belowId=ids.contains(RADAR_LAYER_ID) ? RADAR_LAYER_ID : radarBelowLayerId(ids);
+        if (belowId!=null){
+            style.addLayerBelow(fill,belowId);
+        } else {
+            style.addLayer(fill);
+        }
+    }
+
+    /** Outlines are anchored above the topmost managed layer, never below the raster. */
+    private static void addWarningOutlineLayer(Style style,Layer outline){
+        List<String> ids=vectorLayerIds(style);
+        String aboveId=null;
+        for (String id : ids){
+            if (id.equals(RADAR_LAYER_ID) || id.equals(WARNING_FILL_LAYER_ID) ||
+                    id.equals(EXCLUDED_FILL_LAYER_ID) || id.equals(WARNING_LINE_LAYER_ID) ||
+                    id.equals(EXCLUDED_LINE_LAYER_ID)){
+                aboveId=id;
+            }
+        }
+        if (aboveId!=null){
+            style.addLayerAbove(outline,aboveId);
+        } else {
+            style.addLayer(outline);
+        }
+    }
+
+    /**
+     * TASK-91: installs or re-anchors the raster above the fills and below the outlines.
+     * MapLibre Android 13 has no moveLayer(), so a misplaced layer is removed and re-added
+     * at the computed anchor; this also refreshes the TASK-89 opacity on every frame.
+     */
+    private static void repositionVectorRadarLayer(Style style,float opacity){
+        List<String> ids=vectorLayerIds(style);
+        boolean hasRadar=ids.contains(RADAR_LAYER_ID);
+        if (hasRadar && radarOrderIsCorrect(ids)){
+            Layer existing=style.getLayer(RADAR_LAYER_ID);
+            if (existing!=null){
+                existing.setProperties(PropertyFactory.rasterOpacity(opacity),
+                        PropertyFactory.rasterFadeDuration(0f));
+            }
+            return;
+        }
+        if (hasRadar){
+            removeManagedStyleLayer(style,RADAR_LAYER_ID);
+            ids.remove(RADAR_LAYER_ID);
+        }
+        RasterLayer raster=new RasterLayer(RADAR_LAYER_ID,RADAR_SOURCE_ID)
+                .withProperties(PropertyFactory.rasterOpacity(opacity),
+                        PropertyFactory.rasterFadeDuration(0f));
+        String belowId=radarBelowLayerId(ids);
+        if (belowId!=null){
+            style.addLayerBelow(raster,belowId);
+        } else {
+            // No outlines installed: the top of the stack is still above every fill.
+            style.addLayer(raster);
+        }
+    }
+
     /**
      * TASK-53: convert the parsed CAP polygons of the current warnings into GeoJSON and push
      * them into MapLibre. Layers are only installed once the OpenFreeMap style is ready;
@@ -3189,20 +3314,16 @@ public class WeatherWarningActivity extends Activity {
                                 .withProperties(
                                         PropertyFactory.fillColor(Expression.get(WarningGeoJson.PROPERTY_COLOR)),
                                         PropertyFactory.fillOpacity(WARNING_FILL_OPACITY));
-                        // Radar must stay underneath the coloured fills even when this layer
-                        // is (re-)added after a style reload or an undock/toggle cycle.
-                        if (style.getLayer(RADAR_LAYER_ID)!=null){
-                            style.addLayerAbove(fill,RADAR_LAYER_ID);
-                        } else {
-                            style.addLayer(fill);
-                        }
+                        // TASK-91: the fill must be underneath the radar, even when this
+                        // layer is (re-)added after a style reload or a toggle cycle.
+                        addWarningFillLayer(style,fill);
                     }
                     if (style.getLayer(WARNING_LINE_LAYER_ID)==null){
                         LineLayer outline = new LineLayer(WARNING_LINE_LAYER_ID,WARNING_SOURCE_ID)
                                 .withProperties(
                                         PropertyFactory.lineColor(Expression.get(WarningGeoJson.PROPERTY_COLOR)),
                                         PropertyFactory.lineWidth(2f));
-                        style.addLayer(outline);
+                        addWarningOutlineLayer(style,outline);
                     }
                 } else {
                     removeManagedStyleLayer(style,WARNING_FILL_LAYER_ID);
@@ -3223,7 +3344,7 @@ public class WeatherWarningActivity extends Activity {
                                 .withProperties(
                                         PropertyFactory.fillColor(EXCLUDED_FILL_COLOR),
                                         PropertyFactory.fillOpacity(EXCLUDED_FILL_OPACITY));
-                        style.addLayer(excludedFill);
+                        addWarningFillLayer(style,excludedFill);
                     }
                     if (style.getLayer(EXCLUDED_LINE_LAYER_ID)==null){
                         LineLayer excludedOutline = new LineLayer(EXCLUDED_LINE_LAYER_ID,EXCLUDED_SOURCE_ID)
@@ -3231,12 +3352,18 @@ public class WeatherWarningActivity extends Activity {
                                         PropertyFactory.lineColor(EXCLUDED_LINE_COLOR),
                                         PropertyFactory.lineWidth(2f),
                                         PropertyFactory.lineDasharray(new Float[]{2f,1f}));
-                        style.addLayer(excludedOutline);
+                        addWarningOutlineLayer(style,excludedOutline);
                     }
                 } else {
                     removeManagedStyleLayer(style,EXCLUDED_FILL_LAYER_ID);
                     removeManagedStyleLayer(style,EXCLUDED_LINE_LAYER_ID);
                     removeManagedStyleSource(style,EXCLUDED_SOURCE_ID);
+                }
+                // TASK-91: warning layers can be added/removed by the TASK-65 selector while
+                // the raster is already installed. Re-anchor it after every such change so
+                // the fill/raster/outline order survives toggles and restyles.
+                if (style.getLayer(RADAR_LAYER_ID)!=null){
+                    repositionVectorRadarLayer(style,WeatherSettings.getRadarOpacity(context));
                 }
             }
         });
@@ -3430,18 +3557,11 @@ public class WeatherWarningActivity extends Activity {
                 } else {
                     source.setImage(bitmap);
                 }
-                if (style.getLayer(RADAR_LAYER_ID)==null){
-                    RasterLayer raster = new RasterLayer(RADAR_LAYER_ID,RADAR_SOURCE_ID)
-                            .withProperties(
-                                    PropertyFactory.rasterOpacity(RADAR_RASTER_OPACITY),
-                                    PropertyFactory.rasterFadeDuration(0f));
-                    // Keep the coloured warning fills readable above the radar overlay.
-                    if (style.getLayer(WARNING_FILL_LAYER_ID)!=null){
-                        style.addLayerBelow(raster,WARNING_FILL_LAYER_ID);
-                    } else {
-                        style.addLayer(raster);
-                    }
-                }
+                // TASK-89: the alpha is read from the settings on every frame so a changed
+                // preference takes effect without a restart; TASK-91 re-anchors the raster
+                // above the fills and below the outlines after each style/toggle cycle.
+                final float radarOpacity=WeatherSettings.getRadarOpacity(context);
+                repositionVectorRadarLayer(style,radarOpacity);
             }
         });
     }
@@ -3636,8 +3756,10 @@ public class WeatherWarningActivity extends Activity {
                         public void onStyleLoaded(Style style){
                             vectorWarningStyleReady = true;
                             applyVectorWarningLayers();
-                            // TASK-54: install the radar source/layer from a cached frame if
-                            // one is already available; the timer updates it as frames arrive.
+                            // TASK-54 + TASK-91: install the radar source/layer from a cached
+                            // frame if one is already available. The helper anchors it above
+                            // the fills and below the outlines on every style reload/rotation;
+                            // the timer updates the image (and the settings opacity) per frame.
                             applyVectorRadarFrame(nextRainSlide);
                             // TASK-55: station pin and wind arcs after the style is ready.
                             applyVectorOverlays();
