@@ -791,6 +791,14 @@ public class WeatherWarningActivity extends Activity {
             if (!hide_rain){
                     cancelRainSlides=true;
             }
+            // TASK-66: a manual refresh must invalidate the radar cache as well. The
+            // downloader reuses a complete/fresh set, so an injected QA frame would
+            // otherwise survive every refresh. Clear first, then queue a clean fetch.
+            RadarMN2.clearRadarCache(context);
+            cancelRainSlides = true;
+            if (radarMNSetGeoserverRunnable!=null){
+                scheduledExecutorService.execute(radarMNSetGeoserverRunnable);
+            }
             return true;
         }
         if (item_id==R.id.map_legend) {
@@ -2830,17 +2838,22 @@ public class WeatherWarningActivity extends Activity {
             return;
         }
         float pinSize = WeatherSettings.getMapPinSize(context)/2f;
-        int pinSizePixels = Math.max(1,Math.round(18*getResources().getDisplayMetrics().density*pinSize));
+        int sourcePinPixels = Math.max(1,Math.round(18*getResources().getDisplayMetrics().density*pinSize));
+        // TASK-66: the full-size padded sprite dwarfed the vector basemap and warning
+        // polygons. Scale it down while keeping the actual sprite tip on the station.
+        int pinSizePixels = RadarMN2.scaleVectorPinSize(sourcePinPixels);
         Bitmap pinSource = BitmapFactory.decodeResource(getResources(),R.mipmap.pin);
         if (pinSource==null){
             return;
         }
         Bitmap pinBitmap = Bitmap.createScaledBitmap(pinSource,pinSizePixels,pinSizePixels,false);
-        // MapLibre anchors marker icons at their centre. Pad the bitmap downwards so the
-        // pin tip (bottom of the original sprite) lands on the station coordinate.
-        Bitmap anchored = Bitmap.createBitmap(pinSizePixels,pinSizePixels*2,Bitmap.Config.ARGB_8888);
+        // MapLibre 13.8 has no setAnchor(): a Marker icon is anchored at the centre of its
+        // bitmap. Pad to a square canvas and shift the sprite so its bottom-left tip (not
+        // its bounding-box centre) is exactly at that centre, i.e. at the station LatLng.
+        int canvasSize = RadarMN2.vectorPinCanvasSize(pinSizePixels);
+        Bitmap anchored = Bitmap.createBitmap(canvasSize,canvasSize,Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(anchored);
-        canvas.drawBitmap(pinBitmap,0,0,null);
+        canvas.drawBitmap(pinBitmap,RadarMN2.vectorPinOffsetX(pinSizePixels),0,null);
         vectorPinMarker = mapLibreMap.addMarker(new MarkerOptions()
                 .position(new LatLng(ownLocation.latitude,ownLocation.longitude))
                 .icon(IconFactory.getInstance(context).fromBitmap(anchored)));
