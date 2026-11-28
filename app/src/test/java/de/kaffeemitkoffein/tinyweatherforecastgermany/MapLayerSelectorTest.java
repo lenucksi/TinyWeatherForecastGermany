@@ -50,6 +50,8 @@ public class MapLayerSelectorTest {
         assertTrue(WeatherSettings.showMapLayerRadar(context));
         assertTrue(WeatherSettings.showMapLayerWind(context));
         assertTrue(WeatherSettings.showMapLayerPin(context));
+        assertTrue("the UV overlay is the sixth default-on layer",
+                WeatherSettings.showMapLayerUv(context));
     }
 
     @Test
@@ -60,17 +62,23 @@ public class MapLayerSelectorTest {
         WeatherSettings.setMapLayerRadar(context,false);
         WeatherSettings.setMapLayerWind(context,true);
         WeatherSettings.setMapLayerPin(context,false);
+        WeatherSettings.setMapLayerUv(context,false);
         // Re-read from the shared preferences file, not from activity fields.
         assertFalse(WeatherSettings.showMapLayerWarnings(context));
         assertTrue(WeatherSettings.showMapLayerExcluded(context));
         assertFalse(WeatherSettings.showMapLayerRadar(context));
         assertTrue(WeatherSettings.showMapLayerWind(context));
         assertFalse(WeatherSettings.showMapLayerPin(context));
+        assertFalse(WeatherSettings.showMapLayerUv(context));
         // Flip one switch back; the others must not follow it.
         WeatherSettings.setMapLayerRadar(context,true);
         assertTrue(WeatherSettings.showMapLayerRadar(context));
         assertFalse(WeatherSettings.showMapLayerWarnings(context));
         assertFalse(WeatherSettings.showMapLayerPin(context));
+        assertFalse("UV persistence must stay independent of radar",WeatherSettings.showMapLayerUv(context));
+        WeatherSettings.setMapLayerUv(context,true);
+        assertTrue(WeatherSettings.showMapLayerUv(context));
+        assertFalse(WeatherSettings.showMapLayerWarnings(context));
     }
 
     @Test
@@ -91,18 +99,23 @@ public class MapLayerSelectorTest {
                 "if (showWarningPolygons){",
                 "if (showExcludedAreas){",
                 "(!showRadarLayer)",
+                "(!showUvLayer)",
                 "(!showWindArcs)",
                 "(!showStationPin)",
                 "useVectorMap ? showRadarLayer : !hide_rain",
                 "removeManagedStyleSource(style,WARNING_SOURCE_ID)",
                 "removeManagedStyleSource(style,EXCLUDED_SOURCE_ID)",
                 "removeManagedStyleSource(style,RADAR_SOURCE_ID)",
+                "removeManagedStyleSource(style,UVI_SOURCE_ID)",
+                "refreshVectorUvLayer()",
                 "style.addLayerBelow(fill,belowId)",
                 "WeatherSettings.setMapLayerWarnings(context,isChecked)",
                 "WeatherSettings.setMapLayerExcluded(context,isChecked)",
                 "WeatherSettings.setMapLayerRadar(context,isChecked)",
                 "WeatherSettings.setMapLayerWind(context,isChecked)",
-                "WeatherSettings.setMapLayerPin(context,isChecked)"
+                "WeatherSettings.setMapLayerPin(context,isChecked)",
+                "WeatherSettings.setMapLayerUv(context,isChecked)",
+                "getString(R.string.map_layer_uv)"
         }) {
             assertTrue("missing layer wiring: "+token,activity.contains(token));
         }
@@ -117,11 +130,15 @@ public class MapLayerSelectorTest {
         for (String token : new String[]{
                 "SIS_MAP_LAYER_DIALOG_OPEN",
                 "state.putBoolean(SIS_MAP_LAYER_DIALOG_OPEN,layerDialog!=null && layerDialog.isShowing())",
+                "state.putBoolean(SIS_MAP_LAYER_UV,showUvLayer)",
+                "state.putBoolean(SIS_SHOW_UV_LAYER_EXTRA,uvLayerExtraPending)",
                 "state.putString(SIS_PENDING_WARNING_IDENTIFIER,pendingWarningIdentifier)",
                 "showLayerSelector()",
                 "setMultiChoiceItems(labels,checked",
                 "restoreLayerState(state)",
-                "EXTRA_WARNING_IDENTIFIER"
+                "EXTRA_WARNING_IDENTIFIER",
+                "EXTRA_SHOW_UV_LAYER",
+                "uvLayerExtraPending"
         }) {
             assertTrue("missing state wiring: "+token,activity.contains(token));
         }
@@ -140,6 +157,8 @@ public class MapLayerSelectorTest {
         assertTrue(legend.contains("if (!useVectorMap || showExcludedAreas)"));
         assertTrue(legend.contains("if (!useVectorMap || showStationPin)"));
         assertTrue(legend.contains("if (!useVectorMap || showWindArcs)"));
+        assertTrue("UV legend follows the sixth toggle",
+                legend.contains("if (!useVectorMap || showUvLayer)"));
         // The TASK-64 content itself (colours, labels, sizing) is unchanged.
         assertTrue(legend.contains("MAP_LEGEND_WARNING_COLORS[i]"));
         assertTrue(legend.contains("MAP_LEGEND_RADAR_COLORS"));
@@ -150,7 +169,8 @@ public class MapLayerSelectorTest {
         String english = read("app/src/main/res/values/strings.xml");
         String german = read("app/src/main/res/values-de/strings.xml");
         String[] names = new String[]{"map_layers_title","map_layer_warnings","map_layer_excluded",
-                "map_layer_radar","map_layer_wind","map_layer_pin","warning_no_geometry"};
+                "map_layer_radar","map_layer_wind","map_layer_pin","map_layer_uv","menu_uv_map",
+                "warning_no_geometry"};
         for (String name : names){
             assertTrue("missing English string: "+name,english.contains("<string name=\""+name+"\""));
             assertTrue("missing German string: "+name,german.contains("<string name=\""+name+"\""));

@@ -590,6 +590,11 @@
     <string name="map_legend_others">Kartenmarkierungen</string>
     <string name="map_legend_pin">Stationsmarkierung: Standort der ausgewählten Station</string>
     <string name="map_legend_wind">Windbögen: vorhergesagte Windrichtung und -entfernung</string>
+    <!-- TASK-74: UV-Index-Raster. Nicht zu verwechseln mit map_legend_uv (CAP-Warnfarbe). -->
+    <string name="map_legend_uv_index">UV-Index (DWD-Raster)</string>
+    <string name="map_legend_uv_source">Datengrundlage: Deutscher Wetterdienst, CC BY 4.0</string>
+    <string name="map_legend_uv_scale">UV-Indexfarben: schwarz, grün, gelbgrün, gelb, orange, rot, magenta, violett und rosa.</string>
+    <string name="map_legend_uv_max">&gt;=13</string>
 
     <!-- TASK-65: Ebenenauswahl der Vektorkarte. -->
     <string name="map_layers_title">Kartenebenen</string>
@@ -598,6 +603,8 @@
     <string name="map_layer_radar">Radar</string>
     <string name="map_layer_wind">Windbögen</string>
     <string name="map_layer_pin">Stationsmarkierung</string>
+    <string name="map_layer_uv">UV-Index-Overlay</string>
+    <string name="menu_uv_map">UV-Karte</string>
     <string name="warning_no_geometry">Für diese Warnung liegt keine Kartenfläche vor; die aktuelle Kartenansicht bleibt erhalten.</string>
 
     <!-- TASK-67: Navigationssteuerung der Vektorkarte (Zoom und Standort). -->

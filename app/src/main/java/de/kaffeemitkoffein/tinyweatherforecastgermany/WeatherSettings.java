@@ -117,6 +117,7 @@ public class WeatherSettings {
     public static final String PREF_MAP_LAYER_RADAR = "PREF_map_layer_radar";
     public static final String PREF_MAP_LAYER_WIND = "PREF_map_layer_wind";
     public static final String PREF_MAP_LAYER_PIN = "PREF_map_layer_pin";
+    public static final String PREF_MAP_LAYER_UV = "PREF_map_layer_uv";
 
     public static final String PREF_ADMINMAP_SHOW="PREF_adminmap_show";
     public static final String PREF_MAP_DISPLAY_MUNICIPALITIES ="PREF_map_display_municipalities";
@@ -245,6 +246,7 @@ public class WeatherSettings {
     public static final boolean PREF_MAP_LAYER_RADAR_DEFAULT = true;
     public static final boolean PREF_MAP_LAYER_WIND_DEFAULT = true;
     public static final boolean PREF_MAP_LAYER_PIN_DEFAULT = true;
+    public static final boolean PREF_MAP_LAYER_UV_DEFAULT = true;
 
     public static final boolean PREF_ADMINMAP_SHOW_DEFAULT=false;
     public static final boolean PREF_MAP_DISPLAY_MUNICIPALITIES_DEFAULT = false;
@@ -1015,6 +1017,14 @@ public class WeatherSettings {
 
     public static void setMapLayerPin(Context context,boolean value){
         setMapLayer(context,PREF_MAP_LAYER_PIN,value);
+    }
+
+    public static boolean showMapLayerUv(Context context){
+        return getMapLayer(context,PREF_MAP_LAYER_UV,PREF_MAP_LAYER_UV_DEFAULT);
+    }
+
+    public static void setMapLayerUv(Context context,boolean value){
+        setMapLayer(context,PREF_MAP_LAYER_UV,value);
     }
 
     public static boolean getDisplayMunicipalities(Context context){
